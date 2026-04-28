@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API = "http://localhost:3000";
 const WP_NUMBER = "543571587003";
 
 // ─── FONTS ────────────────────────────────────────────────────────────────────
@@ -291,6 +291,16 @@ function parseResponse(text) {
   return parsed;
 }
 
+// ─── DEVICE ID ────────────────────────────────────────────────────────────────
+function getDeviceId() {
+  let id = localStorage.getItem("mgfc_device_id");
+  if (!id) {
+    id = "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("mgfc_device_id", id);
+  }
+  return id;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOGIN
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -299,22 +309,64 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
+  const [bloqueado, setBloqueado] = useState(false);
 
   const handleLogin = async () => {
     if (!dni || !password) { setError("Ingresá tu DNI y contraseña."); return; }
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setBloqueado(false);
     try {
+      const deviceId = getDeviceId();
       const res  = await fetch(`${API}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni: dni.trim(), password: password.trim() }),
+        body: JSON.stringify({ dni: dni.trim(), password: password.trim(), deviceId }),
       });
       const data = await res.json();
-      if (data.success) { onLogin(data.user, data.alertaVencimiento); }
-      else { setError(data.error || "Credenciales inválidas"); }
+      if (data.success) {
+        // Guardar sessionToken en localStorage
+        localStorage.setItem("mgfc_session_token", data.sessionToken);
+        onLogin(data.user, data.alertaVencimiento, data.sessionToken, data.dispositivoNuevo);
+      } else if (data.error === "DISPOSITIVO_BLOQUEADO") {
+        setBloqueado(true);
+      } else {
+        setError(data.error || "Credenciales inválidas");
+      }
     } catch { setError("No se puede conectar con el servidor."); }
     setLoading(false);
   };
+
+  // Pantalla dispositivo bloqueado
+  if (bloqueado) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "'Courier New', monospace" }}>
+        <LogoWatermark />
+        <div style={{ maxWidth: "400px", width: "100%", textAlign: "center", position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: "60px", marginBottom: "20px" }}>🔒</div>
+          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "28px", color: C.red, letterSpacing: "2px", marginBottom: "16px" }}>
+            ACCESO BLOQUEADO
+          </div>
+          <div style={{ background: "#1a0505", border: `1px solid ${C.red}`, borderRadius: "12px", padding: "24px", marginBottom: "24px" }}>
+            <p style={{ color: "#fca5a5", fontSize: "15px", lineHeight: "1.7", fontFamily: "Barlow, sans-serif" }}>
+              PARA VOLVER A USAR ESTE DISPOSITIVO DEBÉS SOLICITAR AUTORIZACIÓN A UN ADMINISTRADOR.
+            </p>
+            <p style={{ color: C.gold, fontSize: "14px", marginTop: "12px", fontFamily: "Barlow, sans-serif" }}>
+              GRACIAS.
+            </p>
+          </div>
+          <button
+            onClick={() => window.open(`https://wa.me/543571587003?text=${encodeURIComponent("Hola, necesito autorización para habilitar mi dispositivo en MG Fitness Center AI. DNI: " + dni)}`, "_blank")}
+            style={{ padding: "14px 24px", background: "linear-gradient(135deg,#16a34a,#15803d)", border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer" }}>
+            💬 CONTACTAR ADMINISTRADOR
+          </button>
+          <div style={{ marginTop: "16px" }}>
+            <button onClick={() => setBloqueado(false)} style={{ background: "transparent", border: "none", color: C.gray, fontSize: "12px", cursor: "pointer", fontFamily: "Barlow, sans-serif" }}>
+              ← Volver
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", position: "relative", overflow: "hidden" }}>
@@ -611,6 +663,44 @@ function AdminPanel({ user, onLogout }) {
                       }}>
                       {renewLoading === u.id ? "RENOVANDO..." : "🔄 RENOVAR 30 DÍAS"}
                     </button>
+
+                    {/* Reset dispositivo */}
+                    {u.device_token && (
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm(`¿Resetear dispositivo de ${u.nombre} ${u.apellido}? El socio podrá ingresar desde cualquier dispositivo.`)) return;
+                          try {
+                            const res = await fetch(`${API}/api/admin/resetear-dispositivo`, {
+                              method: "POST", headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ userId: u.id }),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              setUsuarios(prev => prev.map(x => x.id === u.id ? { ...x, device_token: null, device_locked: false } : x));
+                              setMsg("✅ Dispositivo reseteado — el socio puede ingresar desde cualquier dispositivo");
+                              setTimeout(() => setMsg(null), 4000);
+                            }
+                          } catch {}
+                        }}
+                        style={{
+                          marginLeft: "10px", padding: "10px 20px",
+                          background: u.device_locked ? `linear-gradient(135deg,${C.red},#b91c1c)` : "#1a1a1a",
+                          border: `1px solid ${u.device_locked ? C.red : "#333"}`,
+                          borderRadius: "6px", color: u.device_locked ? C.white : C.gray,
+                          fontSize: "14px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px",
+                          cursor: "pointer",
+                        }}>
+                        {u.device_locked ? "🔒 DESBLOQUEAR DISPOSITIVO" : "📱 RESETEAR DISPOSITIVO"}
+                      </button>
+                    )}
+
+                    {/* Info dispositivo */}
+                    {u.device_token && (
+                      <div style={{ marginTop: "10px", fontSize: "11px", color: C.gray, fontFamily: "Barlow, sans-serif" }}>
+                        📱 Dispositivo registrado: {u.device_registered_at ? new Date(u.device_registered_at).toLocaleString("es-AR") : "—"}
+                        {u.device_locked && <span style={{ color: C.red, marginLeft: "8px", fontWeight: "700" }}>⚠️ BLOQUEADO</span>}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1026,14 +1116,70 @@ ${buildHistoryCtx()}
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
   const [user, setUser]                   = useState(null);
+  const [sessionToken, setSessionToken]   = useState(null);
   const [alertaVenc, setAlertaVenc]       = useState(null);
   const [alertaVisible, setAlertaVisible] = useState(false);
+  const [sesionCerrada, setSesionCerrada] = useState(false);
 
-  const handleLogin = (userData, alerta) => {
+  const handleLogin = (userData, alerta, token, dispositivoNuevo) => {
     setUser(userData);
+    setSessionToken(token);
     if (alerta) { setAlertaVenc(alerta); setAlertaVisible(true); }
+    if (dispositivoNuevo) {
+      setTimeout(() => alert("⚠️ Sesión anterior cerrada. Este es ahora tu dispositivo autorizado."), 500);
+    }
   };
-  const handleLogout = () => { setUser(null); setAlertaVenc(null); setAlertaVisible(false); };
+
+  const handleLogout = () => {
+    setUser(null); setSessionToken(null);
+    setAlertaVenc(null); setAlertaVisible(false);
+    setSesionCerrada(false);
+    localStorage.removeItem("mgfc_session_token");
+  };
+
+  // Verificación periódica de sesión cada 60 segundos
+  useEffect(() => {
+    if (!user || !sessionToken) return;
+    const interval = setInterval(async () => {
+      try {
+        const deviceId = getDeviceId();
+        const res  = await fetch(`${API}/api/verify-session`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id, sessionToken, deviceId }),
+        });
+        const data = await res.json();
+        if (!data.valid) {
+          setSesionCerrada(true);
+          setUser(null);
+          setSessionToken(null);
+        }
+      } catch {}
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [user, sessionToken]);
+
+  // Pantalla sesión cerrada remotamente
+  if (sesionCerrada) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "'Courier New', monospace" }}>
+        <div style={{ maxWidth: "380px", width: "100%", textAlign: "center" }}>
+          <div style={{ fontSize: "50px", marginBottom: "16px" }}>📵</div>
+          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "26px", color: C.fire, letterSpacing: "2px", marginBottom: "12px" }}>
+            SESIÓN CERRADA
+          </div>
+          <div style={{ background: "#1a0a05", border: `1px solid ${C.fire}`, borderRadius: "10px", padding: "20px", marginBottom: "20px" }}>
+            <p style={{ color: C.grayL, fontSize: "14px", lineHeight: "1.7", fontFamily: "Barlow, sans-serif" }}>
+              Tu sesión fue cerrada porque iniciaste sesión desde otro dispositivo.
+            </p>
+          </div>
+          <button onClick={() => { setSesionCerrada(false); }} style={{ padding: "14px 28px", background: `linear-gradient(135deg,${C.red},${C.fire})`, border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer" }}>
+            → VOLVER A INGRESAR
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) return <Login onLogin={handleLogin} />;
 
