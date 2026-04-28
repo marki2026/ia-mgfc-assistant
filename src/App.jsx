@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-const API = "http://localhost:3000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const WP_NUMBER = "543571587003";
 
-// ─── FONTS ────────────────────────────────────────────────────────────────────
+// ─── FONTS & STYLES ───────────────────────────────────────────────────────────
 const FONT_LINK = document.createElement("link");
 FONT_LINK.rel = "stylesheet";
 FONT_LINK.href = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap";
 document.head.appendChild(FONT_LINK);
 
-// ─── GLOBAL STYLES ────────────────────────────────────────────────────────────
 const GLOBAL_STYLE = document.createElement("style");
 GLOBAL_STYLE.textContent = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,32 +16,51 @@ GLOBAL_STYLE.textContent = `
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: #0a0a0a; }
   ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 2px; }
-  @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:.85} }
   @keyframes pulse-fire { 0%,100%{box-shadow:0 0 20px #f97316aa} 50%{box-shadow:0 0 40px #dc2626cc,0 0 80px #f9731644} }
   @keyframes slide-up { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
   @keyframes glow-text { 0%,100%{text-shadow:0 0 20px #f97316,0 0 40px #dc2626} 50%{text-shadow:0 0 40px #fbbf24,0 0 80px #f97316} }
-  @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   .slide-up { animation: slide-up 0.4s ease forwards; }
-  .glow { animation: glow-text 2s ease infinite; }
   .pulse { animation: pulse-fire 2s ease infinite; }
+  .fadeIn { animation: fadeIn 0.3s ease forwards; }
 `;
 document.head.appendChild(GLOBAL_STYLE);
 
 // ─── COLORS ───────────────────────────────────────────────────────────────────
 const C = {
-  bg:       "#000000",
-  bg2:      "#0a0a0a",
-  bg3:      "#111111",
-  blue:     "#1a3a8f",
-  blueL:    "#2563eb",
-  fire:     "#f97316",
-  gold:     "#fbbf24",
-  red:      "#dc2626",
-  white:    "#ffffff",
-  gray:     "#64748b",
-  grayL:    "#94a3b8",
-  border:   "#1e1e1e",
+  bg: "#000000", bg2: "#0a0a0a", bg3: "#111111",
+  blue: "#1a3a8f", blueL: "#2563eb",
+  fire: "#f97316", gold: "#fbbf24", red: "#dc2626",
+  white: "#ffffff", gray: "#64748b", grayL: "#94a3b8",
+  green: "#22c55e",
 };
+
+// ─── DEVICE ID ────────────────────────────────────────────────────────────────
+function getDeviceId() {
+  let id = localStorage.getItem("mgfc_device_id");
+  if (!id) {
+    id = "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("mgfc_device_id", id);
+  }
+  return id;
+}
+
+// ─── SESSION PERSISTENCE ──────────────────────────────────────────────────────
+function saveSession(user, token) {
+  localStorage.setItem("mgfc_user",  JSON.stringify(user));
+  localStorage.setItem("mgfc_token", token);
+}
+function loadSession() {
+  try {
+    const user  = JSON.parse(localStorage.getItem("mgfc_user") || "null");
+    const token = localStorage.getItem("mgfc_token");
+    return user && token ? { user, token } : null;
+  } catch { return null; }
+}
+function clearSession() {
+  localStorage.removeItem("mgfc_user");
+  localStorage.removeItem("mgfc_token");
+}
 
 // ─── DATE HELPERS ─────────────────────────────────────────────────────────────
 function formatDateTime(iso) {
@@ -51,19 +69,14 @@ function formatDateTime(iso) {
     year: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
-function getDaysSince(iso) {
-  return Math.floor((Date.now() - new Date(iso)) / 86400000);
-}
+function getDaysSince(iso) { return Math.floor((Date.now() - new Date(iso)) / 86400000); }
 function dayLabel(iso) {
   const d = getDaysSince(iso);
-  if (d === 0) return "Hoy";
-  if (d === 1) return "Ayer";
-  return `Hace ${d}d`;
+  return d === 0 ? "Hoy" : d === 1 ? "Ayer" : `Hace ${d}d`;
 }
 function getDiasRestantes(fechaExp) {
   if (!fechaExp) return null;
-  const diff = Math.ceil((new Date(fechaExp) - new Date()) / 86400000);
-  return diff;
+  return Math.ceil((new Date(fechaExp) - new Date()) / 86400000);
 }
 function getTrainingWeek(fechaInicio) {
   if (!fechaInicio) return 1;
@@ -86,8 +99,14 @@ function computeStreak(sesiones) {
   }
   return streak;
 }
+function getHorarioLabel(hora) {
+  if (hora >= 5  && hora < 12) return "🌅 Mañana";
+  if (hora >= 12 && hora < 17) return "☀️ Tarde";
+  if (hora >= 17 && hora < 21) return "🌆 Noche";
+  return "🌙 Madrugada";
+}
 
-// ─── WHATSAPP ────────────────────────────────────────────────────────────────
+// ─── WHATSAPP ─────────────────────────────────────────────────────────────────
 function abrirWhatsApp(alerta, motivo, nombre, apellido) {
   const texto = encodeURIComponent(
     `🚨 *CONSULTA COACH - MG FITNESS CENTER*\n\n` +
@@ -99,31 +118,29 @@ function abrirWhatsApp(alerta, motivo, nombre, apellido) {
   window.open(`https://wa.me/${WP_NUMBER}?text=${texto}`, "_blank");
 }
 
-// ─── LOGO WATERMARK SVG ───────────────────────────────────────────────────────
+// ─── LOGO SVG ─────────────────────────────────────────────────────────────────
+function LogoSVG({ size = 120 }) {
+  return (
+    <svg viewBox="0 0 200 200" width={size} height={size} className="pulse">
+      <circle cx="100" cy="100" r="95" fill="none" stroke="#2563eb" strokeWidth="5"/>
+      <circle cx="100" cy="100" r="85" fill="#1a3a8f"/>
+      <rect x="48" y="72" width="104" height="14" rx="7" fill="#888"/>
+      <rect x="40" y="60" width="20" height="36" rx="5" fill="#aaa"/>
+      <rect x="140" y="60" width="20" height="36" rx="5" fill="#aaa"/>
+      <rect x="34" y="65" width="12" height="26" rx="3" fill="#999"/>
+      <rect x="154" y="65" width="12" height="26" rx="3" fill="#999"/>
+      <text x="100" y="128" textAnchor="middle" fill="white" fontSize="20" fontWeight="900" fontFamily="Bebas Neue, Impact, sans-serif" letterSpacing="1">MG FITNESS</text>
+      <rect x="60" y="132" width="80" height="20" rx="3" fill="#dc2626"/>
+      <text x="100" y="147" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="Bebas Neue, sans-serif" letterSpacing="2">CENTER</text>
+      <text x="100" y="168" textAnchor="middle" fill="#fbbf24" fontSize="9" fontFamily="Barlow Condensed, sans-serif" fontWeight="600" letterSpacing="2">100% ACTITUD</text>
+    </svg>
+  );
+}
+
 function LogoWatermark() {
   return (
-    <div style={{
-      position: "fixed", top: "50%", left: "50%",
-      transform: "translate(-50%, -50%)",
-      pointerEvents: "none", zIndex: 0, opacity: 0.04,
-      width: "600px", height: "600px",
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <svg viewBox="0 0 300 300" width="600" height="600">
-        <circle cx="150" cy="150" r="145" fill="none" stroke="#2563eb" strokeWidth="8"/>
-        <circle cx="150" cy="150" r="130" fill="#1a3a8f"/>
-        {/* Dumbbell */}
-        <rect x="80" y="110" width="140" height="18" rx="9" fill="#888"/>
-        <rect x="68" y="95" width="28" height="48" rx="6" fill="#aaa"/>
-        <rect x="204" y="95" width="28" height="48" rx="6" fill="#aaa"/>
-        <rect x="60" y="100" width="16" height="38" rx="4" fill="#999"/>
-        <rect x="224" y="100" width="16" height="38" rx="4" fill="#999"/>
-        {/* Text */}
-        <text x="150" y="185" textAnchor="middle" fill="white" fontSize="32" fontWeight="900" fontFamily="Bebas Neue, sans-serif" letterSpacing="2">MG FITNESS</text>
-        <rect x="95" y="192" width="110" height="26" rx="4" fill="#dc2626"/>
-        <text x="150" y="210" textAnchor="middle" fill="white" fontSize="18" fontWeight="700" fontFamily="Bebas Neue, sans-serif" letterSpacing="3">CENTER</text>
-        <text x="150" y="235" textAnchor="middle" fill="#fbbf24" fontSize="13" fontFamily="Barlow Condensed, sans-serif" fontWeight="600" letterSpacing="2">100% ACTITUD</text>
-      </svg>
+    <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none", zIndex: 0, opacity: 0.04, width: "600px", height: "600px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <LogoSVG size={600} />
     </div>
   );
 }
@@ -132,81 +149,37 @@ function LogoWatermark() {
 function DiasRestantesBadge({ fechaExp }) {
   const dias = getDiasRestantes(fechaExp);
   if (dias === null) return null;
-  const color = dias <= 3 ? C.red : dias <= 7 ? C.fire : dias <= 15 ? C.gold : "#22c55e";
+  const color = dias < 0 ? C.red : dias <= 3 ? C.red : dias <= 7 ? C.fire : dias <= 15 ? C.gold : C.green;
   const label = dias < 0 ? "VENCIDO" : dias === 0 ? "VENCE HOY" : `${dias} DÍAS`;
   return (
-    <div style={{
-      display: "inline-flex", alignItems: "center", gap: "6px",
-      padding: "4px 12px", borderRadius: "20px",
-      border: `1px solid ${color}`, background: `${color}18`,
-    }}>
-      <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: color, animation: dias <= 7 ? "pulse-fire 1.5s infinite" : "none" }} />
-      <span style={{ fontSize: "11px", fontWeight: "700", color, fontFamily: "Bebas Neue", letterSpacing: "0.1em" }}>
-        {label}
-      </span>
+    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "20px", border: `1px solid ${color}`, background: `${color}18` }}>
+      <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: color }} />
+      <span style={{ fontSize: "11px", fontWeight: "700", color, fontFamily: "Bebas Neue", letterSpacing: "0.1em" }}>{label}</span>
     </div>
   );
 }
-
-// ─── INPUT STYLE ─────────────────────────────────────────────────────────────
-const inputSt = {
-  width: "100%", background: "#111", border: "1px solid #333",
-  borderRadius: "6px", color: C.white, padding: "12px 14px",
-  fontSize: "15px", outline: "none", fontFamily: "Barlow, sans-serif",
-  transition: "border-color 0.2s",
-};
-const labelSt = {
-  display: "block", fontSize: "11px", fontWeight: "700",
-  letterSpacing: "0.15em", color: C.gray, marginBottom: "6px",
-  fontFamily: "Bebas Neue", textTransform: "uppercase",
-};
 
 // ─── TOGGLE ───────────────────────────────────────────────────────────────────
 function Toggle({ value, onChange }) {
   return (
-    <div onClick={onChange} style={{
-      width: "48px", height: "26px", borderRadius: "13px",
-      background: value ? C.fire : "#222",
-      border: `1px solid ${value ? C.fire : "#444"}`,
-      position: "relative", cursor: "pointer", transition: "all .2s", flexShrink: 0,
-    }}>
-      <div style={{
-        position: "absolute", top: "3px", left: value ? "24px" : "3px",
-        width: "18px", height: "18px", borderRadius: "50%",
-        background: C.white, transition: "left .2s",
-        boxShadow: value ? `0 0 8px ${C.fire}` : "none",
-      }} />
+    <div onClick={onChange} style={{ width: "48px", height: "26px", borderRadius: "13px", background: value ? C.fire : "#222", border: `1px solid ${value ? C.fire : "#444"}`, position: "relative", cursor: "pointer", transition: "all .2s", flexShrink: 0 }}>
+      <div style={{ position: "absolute", top: "3px", left: value ? "24px" : "3px", width: "18px", height: "18px", borderRadius: "50%", background: C.white, transition: "left .2s", boxShadow: value ? `0 0 8px ${C.fire}` : "none" }} />
     </div>
   );
 }
 
+// ─── STYLES ───────────────────────────────────────────────────────────────────
+const inputSt = { width: "100%", background: "#111", border: "1px solid #333", borderRadius: "6px", color: C.white, padding: "12px 14px", fontSize: "15px", outline: "none", fontFamily: "Barlow, sans-serif" };
+const labelSt = { display: "block", fontSize: "12px", fontWeight: "700", letterSpacing: "0.15em", color: C.gray, marginBottom: "6px", fontFamily: "Bebas Neue", textTransform: "uppercase" };
+
 // ─── SECTION CARD ─────────────────────────────────────────────────────────────
 function SectionCard({ icon, label, content, isAlert, isRutina, isIntensity, extra }) {
-  const borderColor = isAlert ? C.red : isRutina ? C.blue : "#222";
-  const bgColor = isAlert ? "#1a0505" : "#0d0d0d";
   return (
-    <div className="slide-up" style={{
-      background: bgColor, border: `1px solid ${borderColor}`,
-      borderRadius: "10px", padding: "16px", marginBottom: "10px",
-    }}>
-      <div style={{
-        fontSize: "16px", fontWeight: "700", letterSpacing: "0.2em",
-        color: isAlert ? C.red : C.fire, marginBottom: "10px",
-        fontFamily: "Bebas Neue", borderBottom: `1px solid ${isAlert ? C.red : "#2a2a2a"}`,
-        paddingBottom: "8px",
-      }}>
+    <div className="slide-up" style={{ background: isAlert ? "#1a0505" : "#0d0d0d", border: `1px solid ${isAlert ? C.red : isRutina ? C.blue : "#222"}`, borderRadius: "10px", padding: "16px", marginBottom: "10px" }}>
+      <div style={{ fontSize: "16px", fontWeight: "700", letterSpacing: "0.2em", color: isAlert ? C.red : C.fire, marginBottom: "10px", fontFamily: "Bebas Neue", borderBottom: `1px solid ${isAlert ? C.red : "#2a2a2a"}`, paddingBottom: "8px" }}>
         {icon} {label}
       </div>
-      <div style={{
-        fontSize: isIntensity ? "36px" : "15px",
-        fontWeight: isIntensity ? "900" : "400",
-        fontFamily: isIntensity ? "Bebas Neue" : "Barlow, sans-serif",
-        color: isIntensity
-          ? (content?.includes("ALTA") ? C.fire : content?.includes("MEDIA") ? C.gold : "#22c55e")
-          : isAlert ? "#fca5a5" : C.grayL,
-        lineHeight: "1.5", whiteSpace: "pre-wrap",
-        textShadow: isIntensity ? `0 0 30px currentColor` : "none",
-      }}>
+      <div style={{ fontSize: isIntensity ? "36px" : "15px", fontWeight: isIntensity ? "900" : "400", fontFamily: isIntensity ? "Bebas Neue" : "Barlow, sans-serif", color: isIntensity ? (content?.includes("ALTA") ? C.fire : content?.includes("MEDIA") ? C.gold : C.green) : isAlert ? "#fca5a5" : C.grayL, lineHeight: "1.5", whiteSpace: "pre-wrap", textShadow: isIntensity ? "0 0 30px currentColor" : "none" }}>
         {content}
       </div>
       {extra}
@@ -241,11 +214,12 @@ REGLAS:
 - Analizá el historial para detectar sobreentrenamiento, fatiga acumulada, grupos repetidos en menos de 48h
 - Si mismo grupo muscular trabajado hace menos de 48h: emitir ALERTA
 - Si más de 6 días consecutivos: recomendar recuperación
-- Si el usuario es MUJER EN ETAPA MENSTRUAL: priorizar ejercicios de baja-media intensidad, movilidad, core suave, evitar esfuerzo máximo y ejercicios de alto impacto. Mencionarlo en el MOTIVO.
-- Si el usuario es MUJER (sin etapa menstrual): considerar variaciones hormonales normales al recomendar intensidad
+- Si es semana de DESCARGA: reducir intensidad al 50-60%
+- Si el usuario es MUJER EN ETAPA MENSTRUAL: priorizar baja-media intensidad, movilidad, evitar esfuerzo máximo
 - Si hay dolor, considerarlo siempre
+- Considerá el horario habitual de entrenamiento del usuario para personalizar recomendaciones
 
-FORMATO (respetar etiquetas exactas):
+FORMATO (etiquetas exactas):
 
 DECISIÓN PRINCIPAL:
 (acción concreta)
@@ -291,25 +265,16 @@ function parseResponse(text) {
   return parsed;
 }
 
-// ─── DEVICE ID ────────────────────────────────────────────────────────────────
-function getDeviceId() {
-  let id = localStorage.getItem("mgfc_device_id");
-  if (!id) {
-    id = "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem("mgfc_device_id", id);
-  }
-  return id;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOGIN
 // ═══════════════════════════════════════════════════════════════════════════════
 function Login({ onLogin }) {
-  const [dni, setDni]           = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState(null);
+  const [dni, setDni]             = useState("");
+  const [password, setPassword]   = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState(null);
   const [bloqueado, setBloqueado] = useState(false);
+  const [dniGuardado, setDniGuardado] = useState("");
 
   const handleLogin = async () => {
     if (!dni || !password) { setError("Ingresá tu DNI y contraseña."); return; }
@@ -317,16 +282,15 @@ function Login({ onLogin }) {
     try {
       const deviceId = getDeviceId();
       const res  = await fetch(`${API}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dni: dni.trim(), password: password.trim(), deviceId }),
       });
       const data = await res.json();
       if (data.success) {
-        // Guardar sessionToken en localStorage
-        localStorage.setItem("mgfc_session_token", data.sessionToken);
+        saveSession(data.user, data.sessionToken);
         onLogin(data.user, data.alertaVencimiento, data.sessionToken, data.dispositivoNuevo);
       } else if (data.error === "DISPOSITIVO_BLOQUEADO") {
+        setDniGuardado(dni.trim());
         setBloqueado(true);
       } else {
         setError(data.error || "Credenciales inválidas");
@@ -335,34 +299,23 @@ function Login({ onLogin }) {
     setLoading(false);
   };
 
-  // Pantalla dispositivo bloqueado
   if (bloqueado) {
     return (
-      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "'Courier New', monospace" }}>
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "Bebas Neue, sans-serif" }}>
         <LogoWatermark />
-        <div style={{ maxWidth: "400px", width: "100%", textAlign: "center", position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: "60px", marginBottom: "20px" }}>🔒</div>
-          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "28px", color: C.red, letterSpacing: "2px", marginBottom: "16px" }}>
-            ACCESO BLOQUEADO
-          </div>
+        <div style={{ maxWidth: "400px", width: "100%", textAlign: "center", position: "relative", zIndex: 1 }} className="slide-up">
+          <div style={{ fontSize: "64px", marginBottom: "20px" }}>🔒</div>
+          <div style={{ fontSize: "28px", color: C.red, letterSpacing: "2px", marginBottom: "16px" }}>ACCESO BLOQUEADO</div>
           <div style={{ background: "#1a0505", border: `1px solid ${C.red}`, borderRadius: "12px", padding: "24px", marginBottom: "24px" }}>
-            <p style={{ color: "#fca5a5", fontSize: "15px", lineHeight: "1.7", fontFamily: "Barlow, sans-serif" }}>
-              PARA VOLVER A USAR ESTE DISPOSITIVO DEBÉS SOLICITAR AUTORIZACIÓN A UN ADMINISTRADOR.
-            </p>
-            <p style={{ color: C.gold, fontSize: "14px", marginTop: "12px", fontFamily: "Barlow, sans-serif" }}>
-              GRACIAS.
+            <p style={{ color: "#fca5a5", fontSize: "15px", lineHeight: "1.8", fontFamily: "Barlow, sans-serif" }}>
+              PARA VOLVER A USAR ESTE DISPOSITIVO DEBÉS SOLICITAR AUTORIZACIÓN A UN ADMINISTRADOR. GRACIAS.
             </p>
           </div>
-          <button
-            onClick={() => window.open(`https://wa.me/543571587003?text=${encodeURIComponent("Hola, necesito autorización para habilitar mi dispositivo en MG Fitness Center AI. DNI: " + dni)}`, "_blank")}
-            style={{ padding: "14px 24px", background: "linear-gradient(135deg,#16a34a,#15803d)", border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer" }}>
+          <button onClick={() => window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent(`Hola, necesito autorización para habilitar mi dispositivo. DNI: ${dniGuardado}`)}`, "_blank")}
+            style={{ padding: "14px 24px", background: "linear-gradient(135deg,#16a34a,#15803d)", border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer", width: "100%", marginBottom: "12px" }}>
             💬 CONTACTAR ADMINISTRADOR
           </button>
-          <div style={{ marginTop: "16px" }}>
-            <button onClick={() => setBloqueado(false)} style={{ background: "transparent", border: "none", color: C.gray, fontSize: "12px", cursor: "pointer", fontFamily: "Barlow, sans-serif" }}>
-              ← Volver
-            </button>
-          </div>
+          <button onClick={() => setBloqueado(false)} style={{ background: "transparent", border: "none", color: C.gray, fontSize: "13px", cursor: "pointer", fontFamily: "Barlow, sans-serif" }}>← Volver</button>
         </div>
       </div>
     );
@@ -371,38 +324,12 @@ function Login({ onLogin }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", position: "relative", overflow: "hidden" }}>
       <LogoWatermark />
-
-      {/* Fire gradient bg */}
       <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse at 50% 100%, #7c1d0a22 0%, transparent 70%)", pointerEvents: "none" }} />
-
       <div style={{ width: "100%", maxWidth: "400px", position: "relative", zIndex: 1 }} className="slide-up">
-
-        {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
-          <div style={{ display: "inline-block", position: "relative" }}>
-            <svg viewBox="0 0 200 200" width="120" height="120" className="pulse">
-              <circle cx="100" cy="100" r="95" fill="none" stroke="#2563eb" strokeWidth="5"/>
-              <circle cx="100" cy="100" r="85" fill="#1a3a8f"/>
-              <rect x="48" y="72" width="104" height="14" rx="7" fill="#888"/>
-              <rect x="40" y="60" width="20" height="36" rx="5" fill="#aaa"/>
-              <rect x="140" y="60" width="20" height="36" rx="5" fill="#aaa"/>
-              <rect x="34" y="65" width="12" height="26" rx="3" fill="#999"/>
-              <rect x="154" y="65" width="12" height="26" rx="3" fill="#999"/>
-              <text x="100" y="128" textAnchor="middle" fill="white" fontSize="20" fontWeight="900" fontFamily="Bebas Neue, Impact, sans-serif" letterSpacing="1">MG FITNESS</text>
-              <rect x="60" y="132" width="80" height="20" rx="3" fill="#dc2626"/>
-              <text x="100" y="147" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="Bebas Neue, sans-serif" letterSpacing="2">CENTER</text>
-              <text x="100" y="168" textAnchor="middle" fill="#fbbf24" fontSize="9" fontFamily="Barlow Condensed, sans-serif" fontWeight="600" letterSpacing="2">100% ACTITUD</text>
-            </svg>
-          </div>
-
+          <LogoSVG size={120} />
           <div style={{ marginTop: "16px" }}>
-            <h1 style={{
-              fontFamily: "Bebas Neue, Impact, sans-serif",
-              fontSize: "42px", letterSpacing: "3px", lineHeight: "1",
-              background: "linear-gradient(180deg, #ffffff 0%, #f97316 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-              textShadow: "none",
-            }}>
+            <h1 style={{ fontFamily: "Bebas Neue, Impact, sans-serif", fontSize: "42px", letterSpacing: "3px", lineHeight: "1", background: "linear-gradient(180deg, #ffffff 0%, #f97316 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               AI ASSISTANT
             </h1>
             <div style={{ fontFamily: "Barlow Condensed, sans-serif", fontSize: "14px", color: C.gold, fontWeight: "700", letterSpacing: "4px", marginTop: "4px" }}>
@@ -410,44 +337,183 @@ function Login({ onLogin }) {
             </div>
           </div>
         </div>
-
-        {/* Form */}
         <div style={{ background: "#0d0d0d", border: "1px solid #222", borderRadius: "12px", padding: "28px" }}>
           <div style={{ marginBottom: "16px" }}>
             <label style={labelSt}>DNI</label>
-            <input type="text" value={dni} onChange={e => setDni(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleLogin()}
-              placeholder="Número de documento" style={inputSt} autoComplete="off" />
+            <input type="text" value={dni} onChange={e => setDni(e.target.value)} onKeyDown={e => e.key === "Enter" && handleLogin()} placeholder="Número de documento" style={inputSt} autoComplete="off" />
           </div>
           <div style={{ marginBottom: "24px" }}>
             <label style={labelSt}>Contraseña</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleLogin()}
-              placeholder="••••••••" style={inputSt} autoComplete="off" />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleLogin()} placeholder="••••••••" style={inputSt} autoComplete="off" />
           </div>
-
-          {error && (
-            <div style={{ marginBottom: "16px", padding: "10px 14px", background: "#1a0505", border: `1px solid ${C.red}`, borderRadius: "6px", color: "#fca5a5", fontSize: "13px", fontFamily: "Barlow, sans-serif" }}>
-              {error}
-            </div>
-          )}
-
-          <button onClick={handleLogin} disabled={loading} className={loading ? "" : "pulse"} style={{
-            width: "100%", padding: "16px",
-            background: loading ? "#222" : `linear-gradient(135deg, ${C.red} 0%, ${C.fire} 100%)`,
-            border: "none", borderRadius: "8px", color: C.white,
-            fontSize: "18px", fontWeight: "900", letterSpacing: "3px",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontFamily: "Bebas Neue, sans-serif",
-          }}>
+          {error && <div style={{ marginBottom: "16px", padding: "10px 14px", background: "#1a0505", border: `1px solid ${C.red}`, borderRadius: "6px", color: "#fca5a5", fontSize: "13px", fontFamily: "Barlow, sans-serif" }}>{error}</div>}
+          <button onClick={handleLogin} disabled={loading} className={loading ? "" : "pulse"} style={{ width: "100%", padding: "16px", background: loading ? "#222" : `linear-gradient(135deg, ${C.red} 0%, ${C.fire} 100%)`, border: "none", borderRadius: "8px", color: C.white, fontSize: "18px", fontWeight: "900", letterSpacing: "3px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "Bebas Neue, sans-serif" }}>
             {loading ? "VERIFICANDO..." : "→ INGRESAR"}
           </button>
         </div>
+        <div style={{ textAlign: "center", marginTop: "16px", fontSize: "11px", color: "#333", fontFamily: "Barlow, sans-serif" }}>Almafuerte · Córdoba · 3571 58 7003</div>
+      </div>
+    </div>
+  );
+}
 
-        <div style={{ textAlign: "center", marginTop: "16px", fontSize: "11px", color: "#333", fontFamily: "Barlow, sans-serif" }}>
-          Almafuerte · Córdoba · 3571 58 7003
+// ═══════════════════════════════════════════════════════════════════════════════
+// CAMBIAR CONTRASEÑA
+// ═══════════════════════════════════════════════════════════════════════════════
+function CambiarPassword({ user, onClose }) {
+  const [actual, setActual]   = useState("");
+  const [nueva, setNueva]     = useState("");
+  const [confirmar, setConf]  = useState("");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg]         = useState(null);
+  const [ok, setOk]           = useState(false);
+
+  const handleCambiar = async () => {
+    if (!actual || !nueva || !confirmar) { setMsg({ error: true, text: "Completá todos los campos" }); return; }
+    if (nueva !== confirmar) { setMsg({ error: true, text: "Las contraseñas nuevas no coinciden" }); return; }
+    if (nueva.length < 6)   { setMsg({ error: true, text: "Mínimo 6 caracteres" }); return; }
+    setLoading(true);
+    try {
+      const res  = await fetch(`${API}/api/cambiar-password`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, passwordActual: actual, passwordNueva: nueva }),
+      });
+      const data = await res.json();
+      if (data.success) { setOk(true); setMsg({ error: false, text: "✅ Contraseña cambiada correctamente" }); }
+      else              { setMsg({ error: true, text: data.error }); }
+    } catch { setMsg({ error: true, text: "Error de conexión" }); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#000000cc", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+      <div style={{ background: "#0d0d0d", border: "1px solid #333", borderRadius: "16px", padding: "28px", width: "100%", maxWidth: "380px" }} className="slide-up">
+        <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "22px", color: C.fire, letterSpacing: "2px", marginBottom: "20px" }}>🔑 CAMBIAR CONTRASEÑA</div>
+        {[
+          { label: "CONTRASEÑA ACTUAL", val: actual, set: setActual },
+          { label: "NUEVA CONTRASEÑA",  val: nueva,  set: setNueva },
+          { label: "CONFIRMAR NUEVA",   val: confirmar, set: setConf },
+        ].map(f => (
+          <div key={f.label} style={{ marginBottom: "14px" }}>
+            <label style={labelSt}>{f.label}</label>
+            <input type="password" value={f.val} onChange={e => f.set(e.target.value)} style={inputSt} placeholder="••••••••" />
+          </div>
+        ))}
+        {msg && <div style={{ marginBottom: "14px", padding: "10px", background: msg.error ? "#1a0505" : "#0d2010", border: `1px solid ${msg.error ? C.red : C.green}`, borderRadius: "6px", color: msg.error ? "#fca5a5" : "#86efac", fontSize: "13px", fontFamily: "Barlow, sans-serif" }}>{msg.text}</div>}
+        <div style={{ display: "flex", gap: "10px" }}>
+          {!ok && <button onClick={handleCambiar} disabled={loading} style={{ flex: 1, padding: "12px", background: `linear-gradient(135deg,${C.red},${C.fire})`, border: "none", borderRadius: "8px", color: C.white, fontSize: "15px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: loading ? "not-allowed" : "pointer" }}>
+            {loading ? "GUARDANDO..." : "GUARDAR"}
+          </button>}
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", background: "transparent", border: "1px solid #333", borderRadius: "8px", color: C.gray, fontSize: "15px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px", cursor: "pointer" }}>
+            {ok ? "CERRAR" : "CANCELAR"}
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ESTADÍSTICAS
+// ═══════════════════════════════════════════════════════════════════════════════
+function Estadisticas({ sesiones }) {
+  if (sesiones.length < 3) return (
+    <div style={{ textAlign: "center", padding: "40px 24px", color: C.gray, fontSize: "14px", fontFamily: "Barlow, sans-serif" }}>
+      Necesitás al menos 3 sesiones registradas para ver estadísticas.
+    </div>
+  );
+
+  // Energía promedio por semana
+  const porSemana = sesiones.reduce((acc, s) => {
+    const k = `Sem ${s.training_week}`;
+    if (!acc[k]) acc[k] = { energias: [], pesos: [], count: 0 };
+    acc[k].energias.push(parseInt(s.energia) || 0);
+    if (s.peso) acc[k].pesos.push(parseFloat(s.peso));
+    acc[k].count++;
+    return acc;
+  }, {});
+
+  const semanas = Object.entries(porSemana).slice(-8).map(([sem, d]) => ({
+    sem,
+    energia: (d.energias.reduce((a,b) => a+b, 0) / d.energias.length).toFixed(1),
+    peso: d.pesos.length ? (d.pesos.reduce((a,b) => a+b, 0) / d.pesos.length).toFixed(1) : null,
+    count: d.count,
+  }));
+
+  // Horario más frecuente
+  const horarios = sesiones.reduce((acc, s) => {
+    if (s.hora_del_dia !== undefined) {
+      const h = getHorarioLabel(s.hora_del_dia);
+      acc[h] = (acc[h] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const horarioFav = Object.entries(horarios).sort((a,b) => b[1]-a[1])[0];
+
+  // Grupo muscular más trabajado
+  const grupos = sesiones.reduce((acc, s) => {
+    if (s.entrenamiento) {
+      const g = s.entrenamiento.split(",")[0].trim().toUpperCase();
+      acc[g] = (acc[g] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const grupoTop = Object.entries(grupos).sort((a,b) => b[1]-a[1])[0];
+
+  const maxEnergia = Math.max(...semanas.map(s => parseFloat(s.energia)));
+
+  return (
+    <div className="fadeIn">
+      {/* Cards rápidas */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
+        {[
+          { l: "SESIONES TOTALES", v: sesiones.length, icon: "📋" },
+          { l: "HORARIO FAVORITO", v: horarioFav ? horarioFav[0] : "—", icon: "⏰" },
+          { l: "GRUPO FAVORITO",   v: grupoTop ? grupoTop[0].slice(0,12) : "—", icon: "💪" },
+          { l: "ENERGÍA PROMEDIO", v: sesiones.length ? (sesiones.reduce((a,s) => a + (parseInt(s.energia)||0), 0) / sesiones.length).toFixed(1) : "—", icon: "⚡" },
+        ].map(s => (
+          <div key={s.l} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "14px" }}>
+            <div style={{ fontSize: "20px", marginBottom: "4px" }}>{s.icon}</div>
+            <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "18px", color: C.fire }}>{s.v}</div>
+            <div style={{ fontSize: "9px", color: C.gray, letterSpacing: "0.1em" }}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Gráfico energía por semana */}
+      <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "16px", marginBottom: "16px" }}>
+        <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "16px", color: C.fire, letterSpacing: "2px", marginBottom: "16px" }}>
+          ⚡ ENERGÍA PROMEDIO POR SEMANA
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", height: "120px" }}>
+          {semanas.map((s, i) => {
+            const altura = maxEnergia > 0 ? (parseFloat(s.energia) / 10) * 100 : 0;
+            const color  = parseFloat(s.energia) >= 7 ? C.green : parseFloat(s.energia) >= 5 ? C.gold : C.red;
+            return (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                <div style={{ fontSize: "10px", color, fontFamily: "Bebas Neue, sans-serif" }}>{s.energia}</div>
+                <div style={{ width: "100%", height: `${altura}%`, minHeight: "4px", background: color, borderRadius: "4px 4px 0 0", transition: "height 0.5s ease" }} />
+                <div style={{ fontSize: "8px", color: C.gray, textAlign: "center" }}>{s.sem.replace("Sem ", "S")}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Progreso de peso */}
+      {semanas.some(s => s.peso) && (
+        <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "16px" }}>
+          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "16px", color: C.blueL, letterSpacing: "2px", marginBottom: "12px" }}>
+            ⚖️ PESO PROMEDIO POR SEMANA (kg)
+          </div>
+          {semanas.filter(s => s.peso).map((s, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #111" }}>
+              <span style={{ fontSize: "12px", color: C.gray, fontFamily: "Bebas Neue, sans-serif" }}>{s.sem}</span>
+              <span style={{ fontSize: "16px", color: C.white, fontFamily: "Bebas Neue, sans-serif" }}>{s.peso} kg</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -456,14 +522,16 @@ function Login({ onLogin }) {
 // ADMIN PANEL
 // ═══════════════════════════════════════════════════════════════════════════════
 function AdminPanel({ user, onLogout }) {
-  const [usuarios, setUsuarios]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [selected, setSelected]   = useState(null);
-  const [renewLoading, setRenew]  = useState(false);
-  const [newUser, setNewUser]     = useState({ dni: "", nombre: "", apellido: "", password: "", role: "usuario" });
-  const [creating, setCreating]   = useState(false);
+  const [usuarios, setUsuarios]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [selected, setSelected]     = useState(null);
+  const [renewLoading, setRenew]    = useState(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [msg, setMsg]             = useState(null);
+  const [creating, setCreating]     = useState(false);
+  const [msg, setMsg]               = useState(null);
+  const [resetPwdId, setResetPwdId] = useState(null);
+  const [resetPwdVal, setResetPwdVal] = useState("");
+  const [newUser, setNewUser] = useState({ dni: "", nombre: "", apellido: "", password: "", role: "usuario" });
 
   useEffect(() => {
     fetch(`${API}/api/admin/usuarios`)
@@ -472,42 +540,48 @@ function AdminPanel({ user, onLogout }) {
       .catch(() => setLoading(false));
   }, []);
 
+  const showMsg = (text) => { setMsg(text); setTimeout(() => setMsg(null), 4000); };
+
   const renovar = async (userId) => {
     setRenew(userId);
-    try {
-      const res  = await fetch(`${API}/api/admin/renovar`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setUsuarios(prev => prev.map(u => u.id === userId ? { ...u, fecha_expiracion: data.nuevaFecha } : u));
-        setMsg("✅ Suscripción renovada por 30 días");
-        setTimeout(() => setMsg(null), 3000);
-      }
-    } catch {}
+    const res  = await fetch(`${API}/api/admin/renovar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
+    const data = await res.json();
+    if (data.success) {
+      setUsuarios(prev => prev.map(u => u.id === userId ? { ...u, fecha_expiracion: data.nuevaFecha } : u));
+      showMsg("✅ Suscripción renovada 30 días");
+    }
     setRenew(null);
   };
 
-  const crearUsuario = async () => {
-    if (!newUser.dni || !newUser.nombre || !newUser.apellido || !newUser.password) {
-      setMsg("⚠️ Completá todos los campos"); setTimeout(() => setMsg(null), 3000); return;
+  const resetearDispositivo = async (userId, nombre, apellido) => {
+    if (!window.confirm(`¿Resetear dispositivo de ${nombre} ${apellido}?`)) return;
+    const res  = await fetch(`${API}/api/admin/resetear-dispositivo`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
+    const data = await res.json();
+    if (data.success) {
+      setUsuarios(prev => prev.map(u => u.id === userId ? { ...u, device_token: null, device_locked: false } : u));
+      showMsg("✅ Dispositivo reseteado");
     }
+  };
+
+  const resetearPassword = async (userId) => {
+    if (!resetPwdVal || resetPwdVal.length < 4) { showMsg("❌ Mínimo 4 caracteres"); return; }
+    const res  = await fetch(`${API}/api/admin/resetear-password`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, nuevaPassword: resetPwdVal }) });
+    const data = await res.json();
+    if (data.success) { showMsg("✅ Contraseña reseteada"); setResetPwdId(null); setResetPwdVal(""); }
+    else showMsg(`❌ ${data.error}`);
+  };
+
+  const crearUsuario = async () => {
+    if (!newUser.dni || !newUser.nombre || !newUser.apellido || !newUser.password) { showMsg("⚠️ Completá todos los campos"); return; }
     setCreating(true);
-    try {
-      const res  = await fetch(`${API}/api/admin/crear-usuario`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setUsuarios(prev => [data.usuario, ...prev]);
-        setNewUser({ dni: "", nombre: "", apellido: "", password: "", role: "usuario" });
-        setShowCreate(false);
-        setMsg("✅ Usuario creado correctamente");
-        setTimeout(() => setMsg(null), 3000);
-      } else { setMsg(`❌ ${data.error}`); setTimeout(() => setMsg(null), 3000); }
-    } catch {}
+    const res  = await fetch(`${API}/api/admin/crear-usuario`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newUser) });
+    const data = await res.json();
+    if (data.success) {
+      setUsuarios(prev => [data.usuario, ...prev]);
+      setNewUser({ dni: "", nombre: "", apellido: "", password: "", role: "usuario" });
+      setShowCreate(false);
+      showMsg("✅ Socio creado correctamente");
+    } else showMsg(`❌ ${data.error}`);
     setCreating(false);
   };
 
@@ -516,31 +590,22 @@ function AdminPanel({ user, onLogout }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.white, fontFamily: "Barlow, sans-serif", position: "relative" }}>
       <LogoWatermark />
-
-      {/* Header */}
       <div style={{ background: "#0d0d0d", borderBottom: "2px solid #dc2626", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
         <div>
-          <div style={{ ...hdr, fontSize: "24px", background: `linear-gradient(90deg, ${C.white}, ${C.fire})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            PANEL ADMINISTRADOR
-          </div>
+          <div style={{ ...hdr, fontSize: "22px", background: `linear-gradient(90deg, ${C.white}, ${C.fire})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>PANEL ADMINISTRADOR</div>
           <div style={{ fontSize: "11px", color: C.gray }}>MG Fitness Center · {user.nombre} {user.apellido}</div>
         </div>
         <button onClick={onLogout} style={{ padding: "8px 16px", background: "transparent", border: `1px solid ${C.gray}`, borderRadius: "6px", color: C.gray, fontSize: "12px", cursor: "pointer", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px" }}>SALIR</button>
       </div>
 
       <div style={{ maxWidth: "900px", margin: "0 auto", padding: "24px 16px", position: "relative", zIndex: 1 }}>
-
-        {msg && (
-          <div style={{ marginBottom: "16px", padding: "12px 16px", background: "#0d2010", border: "1px solid #22c55e", borderRadius: "8px", color: "#86efac", fontSize: "14px" }}>
-            {msg}
-          </div>
-        )}
+        {msg && <div style={{ marginBottom: "16px", padding: "12px 16px", background: msg.startsWith("✅") ? "#0d2010" : "#1a0505", border: `1px solid ${msg.startsWith("✅") ? C.green : C.red}`, borderRadius: "8px", color: msg.startsWith("✅") ? "#86efac" : "#fca5a5", fontSize: "14px" }}>{msg}</div>}
 
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px", marginBottom: "24px" }}>
           {[
             { l: "SOCIOS TOTALES",  v: usuarios.length },
-            { l: "ACTIVOS",         v: usuarios.filter(u => getDiasRestantes(u.fecha_expiracion) > 0).length },
+            { l: "ACTIVOS",         v: usuarios.filter(u => (getDiasRestantes(u.fecha_expiracion) || 0) > 0).length },
             { l: "POR VENCER (7d)", v: usuarios.filter(u => { const d = getDiasRestantes(u.fecha_expiracion); return d !== null && d >= 0 && d <= 7; }).length },
           ].map(s => (
             <div key={s.l} style={{ background: "#0d0d0d", border: "1px solid #222", borderRadius: "10px", padding: "16px", textAlign: "center" }}>
@@ -550,14 +615,9 @@ function AdminPanel({ user, onLogout }) {
           ))}
         </div>
 
-        {/* Crear usuario */}
+        {/* Crear socio */}
         <div style={{ marginBottom: "20px" }}>
-          <button onClick={() => setShowCreate(!showCreate)} style={{
-            padding: "12px 24px", background: `linear-gradient(135deg, ${C.blue}, ${C.blueL})`,
-            border: "none", borderRadius: "8px", color: C.white,
-            fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px",
-            cursor: "pointer",
-          }}>
+          <button onClick={() => setShowCreate(!showCreate)} style={{ padding: "12px 24px", background: `linear-gradient(135deg,${C.blue},${C.blueL})`, border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer" }}>
             {showCreate ? "✕ CANCELAR" : "+ NUEVO SOCIO"}
           </button>
         </div>
@@ -567,46 +627,33 @@ function AdminPanel({ user, onLogout }) {
             <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "20px", color: C.blueL, marginBottom: "16px", letterSpacing: "2px" }}>REGISTRAR NUEVO SOCIO</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
               {[
-                { name: "dni",      label: "DNI",       placeholder: "Número de documento" },
+                { name: "dni",      label: "DNI",        placeholder: "Número" },
                 { name: "password", label: "CONTRASEÑA", placeholder: "Contraseña inicial", type: "password" },
-                { name: "nombre",   label: "NOMBRE",    placeholder: "Nombre" },
-                { name: "apellido", label: "APELLIDO",  placeholder: "Apellido" },
+                { name: "nombre",   label: "NOMBRE",     placeholder: "Nombre" },
+                { name: "apellido", label: "APELLIDO",   placeholder: "Apellido" },
               ].map(f => (
                 <div key={f.name}>
                   <label style={labelSt}>{f.label}</label>
-                  <input type={f.type || "text"} value={newUser[f.name]}
-                    onChange={e => setNewUser(p => ({ ...p, [f.name]: e.target.value }))}
-                    placeholder={f.placeholder} style={inputSt} />
+                  <input type={f.type || "text"} value={newUser[f.name]} onChange={e => setNewUser(p => ({ ...p, [f.name]: e.target.value }))} placeholder={f.placeholder} style={inputSt} />
                 </div>
               ))}
               <div>
                 <label style={labelSt}>ROL</label>
-                <select value={newUser.role} onChange={e => setNewUser(p => ({ ...p, role: e.target.value }))} style={{ ...inputSt }}>
+                <select value={newUser.role} onChange={e => setNewUser(p => ({ ...p, role: e.target.value }))} style={inputSt}>
                   <option value="usuario">Usuario</option>
                   <option value="admin">Administrador</option>
                 </select>
               </div>
             </div>
-            <button onClick={crearUsuario} disabled={creating} style={{
-              marginTop: "16px", padding: "12px 28px",
-              background: `linear-gradient(135deg, ${C.red}, ${C.fire})`,
-              border: "none", borderRadius: "8px", color: C.white,
-              fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px",
-              cursor: creating ? "not-allowed" : "pointer",
-            }}>
+            <button onClick={crearUsuario} disabled={creating} style={{ marginTop: "16px", padding: "12px 28px", background: `linear-gradient(135deg,${C.red},${C.fire})`, border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: creating ? "not-allowed" : "pointer" }}>
               {creating ? "CREANDO..." : "CREAR SOCIO"}
             </button>
           </div>
         )}
 
-        {/* Lista usuarios */}
-        <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "18px", color: C.gray, letterSpacing: "2px", marginBottom: "12px" }}>
-          SOCIOS REGISTRADOS
-        </div>
+        <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "18px", color: C.gray, letterSpacing: "2px", marginBottom: "12px" }}>SOCIOS REGISTRADOS</div>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: C.gray }}>Cargando...</div>
-        ) : (
+        {loading ? <div style={{ textAlign: "center", padding: "40px", color: C.gray }}>Cargando...</div> : (
           usuarios.map(u => {
             const dias    = getDiasRestantes(u.fecha_expiracion);
             const vencido = dias !== null && dias < 0;
@@ -614,20 +661,11 @@ function AdminPanel({ user, onLogout }) {
             const isOpen  = selected === u.id;
 
             return (
-              <div key={u.id} style={{
-                background: "#0d0d0d",
-                border: `1px solid ${vencido ? C.red : urgente ? C.fire : "#222"}`,
-                borderRadius: "10px", marginBottom: "10px", overflow: "hidden",
-              }}>
-                <div onClick={() => setSelected(isOpen ? null : u.id)}
-                  style={{ padding: "14px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div key={u.id} style={{ background: "#0d0d0d", border: `1px solid ${vencido ? C.red : urgente ? C.fire : "#222"}`, borderRadius: "10px", marginBottom: "10px", overflow: "hidden" }}>
+                <div onClick={() => setSelected(isOpen ? null : u.id)} style={{ padding: "14px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "18px", color: C.white, letterSpacing: "1px" }}>
-                      {u.apellido?.toUpperCase()}, {u.nombre}
-                    </div>
-                    <div style={{ fontSize: "12px", color: C.gray, marginTop: "2px" }}>
-                      DNI: {u.dni} · {u.role === "admin" ? "👑 Admin" : "👤 Socio"}
-                    </div>
+                    <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "18px", color: C.white, letterSpacing: "1px" }}>{u.apellido?.toUpperCase()}, {u.nombre}</div>
+                    <div style={{ fontSize: "12px", color: C.gray, marginTop: "2px" }}>DNI: {u.dni} · {u.role === "admin" ? "👑 Admin" : "👤 Socio"}{u.device_locked ? " · 🔒 Bloqueado" : ""}</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <DiasRestantesBadge fechaExp={u.fecha_expiracion} />
@@ -645,60 +683,44 @@ function AdminPanel({ user, onLogout }) {
                         { l: "DÍAS REST.",  v: dias !== null ? (dias < 0 ? "VENCIDO" : `${dias}d`) : "—" },
                       ].map(s => (
                         <div key={s.l} style={{ background: "#111", borderRadius: "6px", padding: "10px" }}>
-                          <div style={{ fontSize: "9px", color: C.gray, letterSpacing: "0.1em", fontFamily: "Bebas Neue, sans-serif" }}>{s.l}</div>
+                          <div style={{ fontSize: "9px", color: C.gray, fontFamily: "Bebas Neue, sans-serif" }}>{s.l}</div>
                           <div style={{ fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", color: C.white, marginTop: "2px" }}>{s.v}</div>
                         </div>
                       ))}
                     </div>
 
-                    <button
-                      onClick={() => renovar(u.id)}
-                      disabled={renewLoading === u.id}
-                      style={{
-                        padding: "10px 20px",
-                        background: renewLoading === u.id ? "#222" : `linear-gradient(135deg, #16a34a, #15803d)`,
-                        border: "none", borderRadius: "6px", color: C.white,
-                        fontSize: "14px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px",
-                        cursor: renewLoading === u.id ? "not-allowed" : "pointer",
-                      }}>
-                      {renewLoading === u.id ? "RENOVANDO..." : "🔄 RENOVAR 30 DÍAS"}
-                    </button>
-
-                    {/* Reset dispositivo */}
-                    {u.device_token && (
-                      <button
-                        onClick={async () => {
-                          if (!window.confirm(`¿Resetear dispositivo de ${u.nombre} ${u.apellido}? El socio podrá ingresar desde cualquier dispositivo.`)) return;
-                          try {
-                            const res = await fetch(`${API}/api/admin/resetear-dispositivo`, {
-                              method: "POST", headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ userId: u.id }),
-                            });
-                            const data = await res.json();
-                            if (data.success) {
-                              setUsuarios(prev => prev.map(x => x.id === u.id ? { ...x, device_token: null, device_locked: false } : x));
-                              setMsg("✅ Dispositivo reseteado — el socio puede ingresar desde cualquier dispositivo");
-                              setTimeout(() => setMsg(null), 4000);
-                            }
-                          } catch {}
-                        }}
-                        style={{
-                          marginLeft: "10px", padding: "10px 20px",
-                          background: u.device_locked ? `linear-gradient(135deg,${C.red},#b91c1c)` : "#1a1a1a",
-                          border: `1px solid ${u.device_locked ? C.red : "#333"}`,
-                          borderRadius: "6px", color: u.device_locked ? C.white : C.gray,
-                          fontSize: "14px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px",
-                          cursor: "pointer",
-                        }}>
-                        {u.device_locked ? "🔒 DESBLOQUEAR DISPOSITIVO" : "📱 RESETEAR DISPOSITIVO"}
-                      </button>
-                    )}
-
                     {/* Info dispositivo */}
                     {u.device_token && (
-                      <div style={{ marginTop: "10px", fontSize: "11px", color: C.gray, fontFamily: "Barlow, sans-serif" }}>
+                      <div style={{ marginBottom: "14px", padding: "10px", background: "#111", borderRadius: "6px", fontSize: "11px", color: C.gray }}>
                         📱 Dispositivo registrado: {u.device_registered_at ? new Date(u.device_registered_at).toLocaleString("es-AR") : "—"}
                         {u.device_locked && <span style={{ color: C.red, marginLeft: "8px", fontWeight: "700" }}>⚠️ BLOQUEADO</span>}
+                      </div>
+                    )}
+
+                    {/* Botones acción */}
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                      <button onClick={() => renovar(u.id)} disabled={renewLoading === u.id} style={{ padding: "10px 18px", background: renewLoading === u.id ? "#222" : "linear-gradient(135deg,#16a34a,#15803d)", border: "none", borderRadius: "6px", color: C.white, fontSize: "13px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px", cursor: "pointer" }}>
+                        {renewLoading === u.id ? "..." : "🔄 RENOVAR 30 DÍAS"}
+                      </button>
+
+                      {u.device_token && (
+                        <button onClick={() => resetearDispositivo(u.id, u.nombre, u.apellido)} style={{ padding: "10px 18px", background: u.device_locked ? `linear-gradient(135deg,${C.red},#b91c1c)` : "#1a1a1a", border: `1px solid ${u.device_locked ? C.red : "#333"}`, borderRadius: "6px", color: u.device_locked ? C.white : C.gray, fontSize: "13px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px", cursor: "pointer" }}>
+                          {u.device_locked ? "🔒 DESBLOQUEAR" : "📱 RESET DISPOSITIVO"}
+                        </button>
+                      )}
+
+                      <button onClick={() => { setResetPwdId(resetPwdId === u.id ? null : u.id); setResetPwdVal(""); }} style={{ padding: "10px 18px", background: "#1a1a1a", border: "1px solid #333", borderRadius: "6px", color: C.gray, fontSize: "13px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px", cursor: "pointer" }}>
+                        🔑 RESET PASSWORD
+                      </button>
+                    </div>
+
+                    {/* Reset password inline */}
+                    {resetPwdId === u.id && (
+                      <div className="slide-up" style={{ marginTop: "12px", display: "flex", gap: "10px" }}>
+                        <input type="password" value={resetPwdVal} onChange={e => setResetPwdVal(e.target.value)} placeholder="Nueva contraseña" style={{ ...inputSt, flex: 1 }} />
+                        <button onClick={() => resetearPassword(u.id)} style={{ padding: "10px 16px", background: `linear-gradient(135deg,${C.red},${C.fire})`, border: "none", borderRadius: "6px", color: C.white, fontSize: "13px", fontFamily: "Bebas Neue, sans-serif", cursor: "pointer" }}>
+                          GUARDAR
+                        </button>
                       </div>
                     )}
                   </div>
@@ -722,6 +744,7 @@ function Coach({ user, onLogout }) {
   const [result, setResult]     = useState(null);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
+  const [showPwd, setShowPwd]   = useState(false);
   const [form, setForm] = useState({
     peso: "", descanso: "7h", energia: "7",
     entrenamiento: "", dolor: "", alimentacion: "NORMAL",
@@ -739,7 +762,6 @@ function Coach({ user, onLogout }) {
   const trainingWeek = getTrainingWeek(user.fecha_inicio);
   const deload       = isDeloadWeek(trainingWeek, sesiones);
   const streak       = computeStreak(sesiones);
-  const diasRestantes = getDiasRestantes(user.fecha_expiracion);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -748,9 +770,10 @@ function Coach({ user, onLogout }) {
 
   const buildHistoryCtx = () => {
     if (!sesiones.length) return "Sin historial previo.";
-    return sesiones.slice(0, 10).map(s =>
-      `• ${dayLabel(s.created_at)} — Sem ${s.training_week}${s.is_deload ? "[DESCARGA]" : ""} — ${s.entrenamiento} | E:${s.energia} D:${s.descanso} A:${s.alimentacion}`
-    ).join("\n");
+    return sesiones.slice(0, 10).map(s => {
+      const horario = s.hora_del_dia !== undefined ? ` | ${getHorarioLabel(s.hora_del_dia)}` : "";
+      return `• ${dayLabel(s.created_at)} — Sem ${s.training_week}${s.is_deload ? "[DESC]" : ""} — ${s.entrenamiento} | E:${s.energia} D:${s.descanso} A:${s.alimentacion}${horario}`;
+    }).join("\n");
   };
 
   const handleSubmit = async () => {
@@ -759,14 +782,14 @@ function Coach({ user, onLogout }) {
 
     const now = new Date();
     const sexoInfo = form.sexo === "mujer"
-      ? `Sexo: Mujer${form.etapaMenstrual ? " — EN ETAPA MENSTRUAL ACTIVA (considerar reducción de intensidad, evitar esfuerzo máximo, priorizar movilidad y ejercicios de bajo impacto si corresponde)" : ""}`
+      ? `Sexo: Mujer${form.etapaMenstrual ? " — EN ETAPA MENSTRUAL ACTIVA (reducir intensidad, evitar esfuerzo máximo, priorizar movilidad)" : ""}`
       : `Sexo: ${form.sexo === "hombre" ? "Hombre" : "No especificado"}`;
 
     const userMsg = `
 Fecha: ${formatDateTime(now.toISOString())}
 Semana de entrenamiento: ${trainingWeek}${deload ? " — SEMANA DE DESCARGA" : ""}
 Días consecutivos: ${streak}
-${deload ? "⚠️ SEMANA DE DESCARGA ACTIVA — reducir intensidad al 50-60%" : ""}
+${deload ? "⚠️ SEMANA DE DESCARGA — reducir intensidad al 50-60%" : ""}
 
 DATOS DE HOY:
 Peso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}
@@ -776,7 +799,7 @@ Dolor: ${form.dolor || "Ninguno"} | Alimentación: ${form.alimentacion}
 Tiempo: ${form.tiempo}
 Objetivo: Ganar masa muscular, bajo % de grasa.
 
-HISTORIAL:
+HISTORIAL (incluye horario habitual):
 ${buildHistoryCtx()}
 `.trim();
 
@@ -801,6 +824,7 @@ ${buildHistoryCtx()}
           training_week: trainingWeek, is_deload: deload, streak,
         }}),
       }).then(r => r.json()).then(d => { if (d.success) setSesiones(p => [d.sesion, ...p]); }).catch(()=>{});
+
     } catch (err) { setError(err.message || "Error al conectar."); }
     setLoading(false);
   };
@@ -814,11 +838,10 @@ ${buildHistoryCtx()}
   }, {});
 
   const tabSt = (active) => ({
-    flex: 1, padding: "11px", border: "none", borderRadius: "6px",
-    background: active ? `linear-gradient(135deg, ${C.red}, ${C.fire})` : "#111",
-    color: active ? C.white : C.gray, fontSize: "14px", fontWeight: "700",
+    flex: 1, padding: "10px", border: "none", borderRadius: "6px",
+    background: active ? `linear-gradient(135deg,${C.red},${C.fire})` : "#111",
+    color: active ? C.white : C.gray, fontSize: "13px", fontWeight: "700",
     letterSpacing: "2px", cursor: "pointer", fontFamily: "Bebas Neue, sans-serif",
-    transition: "all 0.2s",
   });
 
   return (
@@ -826,71 +849,61 @@ ${buildHistoryCtx()}
       <LogoWatermark />
       <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse at 50% 100%, #7c1d0a15 0%, transparent 60%)", pointerEvents: "none" }} />
 
+      {showPwd && <CambiarPassword user={user} onClose={() => setShowPwd(false)} />}
+
       {/* Header */}
-      <div style={{ background: "#0a0a0a", borderBottom: "2px solid #1a1a1a", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
+      <div style={{ background: "#0a0a0a", borderBottom: "2px solid #1a1a1a", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
         <div>
-          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "22px", letterSpacing: "2px", background: `linear-gradient(90deg, ${C.white}, ${C.fire})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            MG FITNESS CENTER
-          </div>
-          <div style={{ fontSize: "11px", color: C.gold, fontFamily: "Barlow Condensed, sans-serif", letterSpacing: "3px", fontWeight: "700" }}>
-            AI ASSISTANT · 100% ACTITUD
-          </div>
+          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "20px", letterSpacing: "2px", background: `linear-gradient(90deg,${C.white},${C.fire})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>MG FITNESS CENTER</div>
+          <div style={{ fontSize: "10px", color: C.gold, fontFamily: "Barlow Condensed, sans-serif", letterSpacing: "3px", fontWeight: "700" }}>AI ASSISTANT · 100% ACTITUD</div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <DiasRestantesBadge fechaExp={user.fecha_expiracion} />
-          <button onClick={onLogout} style={{ padding: "7px 14px", background: "transparent", border: "1px solid #333", borderRadius: "6px", color: C.gray, fontSize: "12px", cursor: "pointer", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px" }}>SALIR</button>
+          <button onClick={() => setShowPwd(true)} style={{ padding: "6px 10px", background: "transparent", border: "1px solid #333", borderRadius: "6px", color: C.gray, fontSize: "11px", cursor: "pointer", fontFamily: "Bebas Neue, sans-serif" }}>🔑</button>
+          <button onClick={onLogout} style={{ padding: "6px 12px", background: "transparent", border: "1px solid #333", borderRadius: "6px", color: C.gray, fontSize: "11px", cursor: "pointer", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px" }}>SALIR</button>
         </div>
       </div>
 
-      <div style={{ maxWidth: "640px", margin: "0 auto", padding: "20px 16px", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: "640px", margin: "0 auto", padding: "16px", position: "relative", zIndex: 1 }}>
 
         {/* Welcome */}
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "28px", color: C.white, letterSpacing: "2px" }}>
-            HOLA, {user.nombre?.toUpperCase()} 💪
-          </div>
-          <div style={{ fontSize: "13px", color: C.gray }}>
-            {user.apellido} · DNI {user.dni}
-          </div>
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "26px", color: C.white, letterSpacing: "2px" }}>HOLA, {user.nombre?.toUpperCase()} 💪</div>
+          <div style={{ fontSize: "12px", color: C.gray }}>{user.apellido} · DNI {user.dni}</div>
         </div>
 
-        {/* Deload banner */}
         {deload && (
-          <div className="slide-up" style={{ marginBottom: "16px", padding: "12px 16px", background: "#0a1628", border: `1px solid ${C.blueL}`, borderRadius: "8px" }}>
-            <span style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "16px", color: C.blueL, letterSpacing: "2px" }}>
-              🔄 SEMANA {trainingWeek} — DESCARGA ACTIVA · Bajá intensidad y priorizá recuperación
-            </span>
+          <div className="slide-up" style={{ marginBottom: "14px", padding: "12px 16px", background: "#0a1628", border: `1px solid ${C.blueL}`, borderRadius: "8px" }}>
+            <span style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "15px", color: C.blueL, letterSpacing: "2px" }}>🔄 SEMANA {trainingWeek} — DESCARGA ACTIVA</span>
           </div>
         )}
 
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "18px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px", marginBottom: "14px" }}>
           {[
             { l: "SESIONES", v: sesiones.length },
             { l: "RACHA",    v: `${streak}d` },
-            { l: "SEM.",     v: `#${trainingWeek}` },
+            { l: "SEMANA",   v: `#${trainingWeek}` },
           ].map(s => (
             <div key={s.l} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
-              <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "28px", color: C.fire }}>{s.v}</div>
-              <div style={{ fontSize: "9px", color: C.gray, letterSpacing: "0.1em" }}>{s.l}</div>
+              <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "26px", color: C.fire }}>{s.v}</div>
+              <div style={{ fontSize: "9px", color: C.gray }}>{s.l}</div>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+        <div style={{ display: "flex", gap: "6px", marginBottom: "14px" }}>
           <button style={tabSt(tab === "form")}    onClick={() => setTab("form")}>📋 HOY</button>
-          <button style={tabSt(tab === "history")} onClick={() => setTab("history")}>
-            📅 HISTORIAL {sesiones.length > 0 && `(${sesiones.length})`}
-          </button>
+          <button style={tabSt(tab === "stats")}   onClick={() => setTab("stats")}>📊 STATS</button>
+          <button style={tabSt(tab === "history")} onClick={() => setTab("history")}>📅 HISTORIAL</button>
         </div>
 
         {/* ══ FORM ══ */}
         {tab === "form" && (
           <>
-            <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "20px", marginBottom: "16px" }}>
+            <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "18px", marginBottom: "14px" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-
                 <div>
                   <label style={labelSt}>Peso (kg)</label>
                   <input name="peso" value={form.peso} onChange={handleChange} placeholder="76.5" style={inputSt} />
@@ -915,27 +928,20 @@ ${buildHistoryCtx()}
                 </div>
                 <div style={{ gridColumn: "1/-1" }}>
                   <label style={labelSt}>Entrenamiento del día</label>
-                  <input name="entrenamiento" value={form.entrenamiento} onChange={handleChange}
-                    placeholder="ej: musculación, glúteos y femorales" style={inputSt} />
+                  <input name="entrenamiento" value={form.entrenamiento} onChange={handleChange} placeholder="ej: musculación, glúteos y femorales" style={inputSt} />
                 </div>
                 <div style={{ gridColumn: "1/-1" }}>
                   <label style={labelSt}>Dolor (opcional)</label>
-                  <input name="dolor" value={form.dolor} onChange={handleChange}
-                    placeholder="ej: hombro derecho leve / ninguno" style={inputSt} />
+                  <input name="dolor" value={form.dolor} onChange={handleChange} placeholder="ej: hombro derecho leve / ninguno" style={inputSt} />
                 </div>
+
+                {/* Sexo */}
                 <div style={{ gridColumn: "1/-1" }}>
                   <label style={labelSt}>Sexo</label>
                   <div style={{ display: "flex", gap: "10px" }}>
-                    {["hombre", "mujer"].map(s => (
+                    {["hombre","mujer"].map(s => (
                       <button key={s} onClick={() => setForm(f => ({ ...f, sexo: s, etapaMenstrual: s === "hombre" ? false : f.etapaMenstrual }))}
-                        style={{
-                          flex: 1, padding: "12px",
-                          background: form.sexo === s ? (s === "hombre" ? `linear-gradient(135deg,${C.blue},${C.blueL})` : "linear-gradient(135deg,#be185d,#ec4899)") : "#111",
-                          border: `1px solid ${form.sexo === s ? (s === "hombre" ? C.blueL : "#ec4899") : "#333"}`,
-                          borderRadius: "8px", color: C.white,
-                          fontSize: "15px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px",
-                          cursor: "pointer", transition: "all 0.2s",
-                        }}>
+                        style={{ flex: 1, padding: "12px", background: form.sexo === s ? (s === "hombre" ? `linear-gradient(135deg,${C.blue},${C.blueL})` : "linear-gradient(135deg,#be185d,#ec4899)") : "#111", border: `1px solid ${form.sexo === s ? (s === "hombre" ? C.blueL : "#ec4899") : "#333"}`, borderRadius: "8px", color: C.white, fontSize: "15px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer", transition: "all 0.2s" }}>
                         {s === "hombre" ? "♂ HOMBRE" : "♀ MUJER"}
                       </button>
                     ))}
@@ -946,12 +952,8 @@ ${buildHistoryCtx()}
                   <div style={{ gridColumn: "1/-1", background: "#1a0a14", border: "1px solid #9d174d", borderRadius: "8px", padding: "14px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div>
-                        <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "15px", color: "#f9a8d4", letterSpacing: "1px" }}>
-                          🌸 ETAPA MENSTRUAL ACTIVA
-                        </div>
-                        <div style={{ fontSize: "12px", color: "#9d174d", marginTop: "2px" }}>
-                          La IA adaptará la rutina e intensidad
-                        </div>
+                        <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "15px", color: "#f9a8d4", letterSpacing: "1px" }}>🌸 ETAPA MENSTRUAL ACTIVA</div>
+                        <div style={{ fontSize: "12px", color: "#9d174d", marginTop: "2px" }}>La IA adaptará la rutina e intensidad</div>
                       </div>
                       <Toggle value={form.etapaMenstrual} onChange={() => setForm(f => ({ ...f, etapaMenstrual: !f.etapaMenstrual }))} />
                     </div>
@@ -968,14 +970,11 @@ ${buildHistoryCtx()}
                   <Toggle value={form.quiereRutina} onChange={() => setForm(f => ({ ...f, quiereRutina: !f.quiereRutina }))} />
                   <span style={{ fontSize: "12px", color: C.grayL, fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px" }}>INCLUIR RUTINA</span>
                 </div>
-
               </div>
 
               {sesiones.length > 0 && (
-                <div style={{ marginTop: "16px", padding: "12px", background: "#0a0a0a", borderRadius: "8px", border: "1px solid #1a1a1a" }}>
-                  <div style={{ fontSize: "10px", color: C.gray, letterSpacing: "0.15em", marginBottom: "8px", fontFamily: "Bebas Neue, sans-serif" }}>
-                    🕐 ÚLTIMAS SESIONES
-                  </div>
+                <div style={{ marginTop: "14px", padding: "12px", background: "#0a0a0a", borderRadius: "8px", border: "1px solid #1a1a1a" }}>
+                  <div style={{ fontSize: "10px", color: C.gray, letterSpacing: "0.15em", marginBottom: "8px", fontFamily: "Bebas Neue, sans-serif" }}>🕐 ÚLTIMAS SESIONES</div>
                   {sesiones.slice(0, 3).map(s => (
                     <div key={s.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid #111" }}>
                       <span style={{ fontSize: "12px", color: C.grayL }}>{s.entrenamiento}</span>
@@ -988,45 +987,23 @@ ${buildHistoryCtx()}
                 </div>
               )}
 
-              {error && (
-                <div style={{ marginTop: "14px", padding: "10px 14px", background: "#1a0505", border: `1px solid ${C.red}`, borderRadius: "6px", color: "#fca5a5", fontSize: "13px" }}>
-                  {error}
-                </div>
-              )}
+              {error && <div style={{ marginTop: "12px", padding: "10px 14px", background: "#1a0505", border: `1px solid ${C.red}`, borderRadius: "6px", color: "#fca5a5", fontSize: "13px" }}>{error}</div>}
 
-              <button onClick={handleSubmit} disabled={loading} style={{
-                marginTop: "18px", width: "100%", padding: "16px",
-                background: loading ? "#222" : `linear-gradient(135deg, ${C.red} 0%, ${C.fire} 100%)`,
-                border: "none", borderRadius: "8px", color: C.white,
-                fontSize: "20px", fontWeight: "900", letterSpacing: "3px",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontFamily: "Bebas Neue, sans-serif",
-                boxShadow: loading ? "none" : `0 4px 24px ${C.red}66`,
-              }}>
+              <button onClick={handleSubmit} disabled={loading} style={{ marginTop: "16px", width: "100%", padding: "16px", background: loading ? "#222" : `linear-gradient(135deg,${C.red},${C.fire})`, border: "none", borderRadius: "8px", color: C.white, fontSize: "20px", fontWeight: "900", letterSpacing: "3px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "Bebas Neue, sans-serif", boxShadow: loading ? "none" : `0 4px 24px ${C.red}66` }}>
                 {loading ? "ANALIZANDO..." : "→ OBTENER DECISIÓN"}
               </button>
             </div>
 
-            {/* Results */}
             {result && SECTIONS.map(s => {
               const content = parsed[s.key];
               if (!content) return null;
-              const isAlert    = s.key === "alerta" && content !== "Ninguna";
-              const isConsultar = s.key === "consultar";
-
               return (
-                <SectionCard key={s.key}
-                  icon={s.icon} label={s.label} content={content}
-                  isAlert={isAlert} isRutina={s.key === "rutina"}
-                  isIntensity={s.key === "intensidad"}
-                  extra={isConsultar && consultarCoach ? (
+                <SectionCard key={s.key} icon={s.icon} label={s.label} content={content}
+                  isAlert={s.key === "alerta" && content !== "Ninguna"}
+                  isRutina={s.key === "rutina"} isIntensity={s.key === "intensidad"}
+                  extra={s.key === "consultar" && consultarCoach ? (
                     <div style={{ marginTop: "14px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                      <button onClick={() => abrirWhatsApp(parsed.alerta, parsed.motivo, user.nombre, user.apellido)} style={{
-                        padding: "10px 18px", background: "linear-gradient(135deg,#16a34a,#15803d)",
-                        border: "none", borderRadius: "6px", color: C.white,
-                        fontSize: "14px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px",
-                        cursor: "pointer",
-                      }}>
+                      <button onClick={() => abrirWhatsApp(parsed.alerta, parsed.motivo, user.nombre, user.apellido)} style={{ padding: "10px 18px", background: "linear-gradient(135deg,#16a34a,#15803d)", border: "none", borderRadius: "6px", color: C.white, fontSize: "14px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer" }}>
                         💬 CONTACTAR COACH
                       </button>
                       <button style={{ padding: "10px 18px", background: "transparent", border: "1px solid #333", borderRadius: "6px", color: C.gray, fontSize: "14px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "1px", cursor: "pointer" }}>
@@ -1040,6 +1017,9 @@ ${buildHistoryCtx()}
           </>
         )}
 
+        {/* ══ STATS ══ */}
+        {tab === "stats" && <Estadisticas sesiones={sesiones} />}
+
         {/* ══ HISTORIAL ══ */}
         {tab === "history" && (
           <div>
@@ -1048,27 +1028,26 @@ ${buildHistoryCtx()}
             ) : (
               Object.entries(byWeek).reverse().map(([weekLabel, entries]) => (
                 <div key={weekLabel} style={{ marginBottom: "24px" }}>
-                  <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "14px", letterSpacing: "2px", color: weekLabel.includes("DESCARGA") ? C.blueL : C.fire, marginBottom: "10px" }}>
+                  <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "13px", letterSpacing: "2px", color: weekLabel.includes("DESCARGA") ? C.blueL : C.fire, marginBottom: "10px" }}>
                     📅 {weekLabel} · {entries.length} sesión{entries.length !== 1 ? "es" : ""}
                   </div>
-
                   {entries.map(s => {
                     const hp      = parseResponse(s.response_text || "");
                     const isOpen  = expandedId === s.id;
                     const hasAlert = hp.alerta && hp.alerta !== "Ninguna";
-                    const intColor = hp.intensidad?.includes("ALTA") ? C.fire : hp.intensidad?.includes("MEDIA") ? C.gold : "#22c55e";
+                    const intColor = hp.intensidad?.includes("ALTA") ? C.fire : hp.intensidad?.includes("MEDIA") ? C.gold : C.green;
 
                     return (
                       <div key={s.id} style={{ background: "#0d0d0d", border: `1px solid ${hasAlert ? C.red : "#1a1a1a"}`, borderRadius: "10px", marginBottom: "10px", overflow: "hidden" }}>
                         <div onClick={() => setExp(isOpen ? null : s.id)} style={{ padding: "14px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
-                            <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "16px", color: C.white, letterSpacing: "1px" }}>{s.entrenamiento}</div>
+                            <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "15px", color: C.white, letterSpacing: "1px" }}>{s.entrenamiento}</div>
                             <div style={{ fontSize: "11px", color: C.gray, marginTop: "2px" }}>
-                              {formatDateTime(s.created_at)} · Sem {s.training_week}{s.is_deload ? " [DESC]" : ""} · Racha {s.streak}d
+                              {formatDateTime(s.created_at)}{s.hora_del_dia !== undefined ? ` · ${getHorarioLabel(s.hora_del_dia)}` : ""} · Racha {s.streak}d
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            {hp.intensidad && <span style={{ fontSize: "12px", fontFamily: "Bebas Neue, sans-serif", color: intColor, border: `1px solid ${intColor}`, borderRadius: "4px", padding: "2px 8px" }}>{hp.intensidad}</span>}
+                            {hp.intensidad && <span style={{ fontSize: "11px", fontFamily: "Bebas Neue, sans-serif", color: intColor, border: `1px solid ${intColor}`, borderRadius: "4px", padding: "2px 7px" }}>{hp.intensidad}</span>}
                             {hasAlert && <span>⚠️</span>}
                             <span style={{ color: C.gray, fontSize: "11px" }}>{isOpen ? "▲" : "▼"}</span>
                           </div>
@@ -1120,60 +1099,99 @@ export default function App() {
   const [alertaVenc, setAlertaVenc]       = useState(null);
   const [alertaVisible, setAlertaVisible] = useState(false);
   const [sesionCerrada, setSesionCerrada] = useState(false);
+  const [verificando, setVerificando]     = useState(true);
+
+  // Restaurar sesión al abrir la app
+  useEffect(() => {
+    const saved = loadSession();
+    if (saved) {
+      // Verificar que la sesión sigue válida
+      const deviceId = getDeviceId();
+      fetch(`${API}/api/verify-session`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: saved.user.id, sessionToken: saved.token, deviceId }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.valid) {
+            setUser(saved.user);
+            setSessionToken(saved.token);
+          } else {
+            clearSession();
+            if (d.error === "SESION_CERRADA") setSesionCerrada(true);
+          }
+          setVerificando(false);
+        })
+        .catch(() => { setVerificando(false); });
+    } else {
+      setVerificando(false);
+    }
+  }, []);
+
+  // Verificar sesión cuando la app vuelve al foco (visibilitychange)
+  const verificarSesion = useCallback(async () => {
+    if (!user || !sessionToken || document.hidden) return;
+    try {
+      const deviceId = getDeviceId();
+      const res  = await fetch(`${API}/api/verify-session`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, sessionToken, deviceId }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        clearSession();
+        setSesionCerrada(true);
+        setUser(null);
+        setSessionToken(null);
+      }
+    } catch {}
+  }, [user, sessionToken]);
+
+  useEffect(() => {
+    document.addEventListener("visibilitychange", verificarSesion);
+    return () => document.removeEventListener("visibilitychange", verificarSesion);
+  }, [verificarSesion]);
 
   const handleLogin = (userData, alerta, token, dispositivoNuevo) => {
     setUser(userData);
     setSessionToken(token);
+    setSesionCerrada(false);
     if (alerta) { setAlertaVenc(alerta); setAlertaVisible(true); }
-    if (dispositivoNuevo) {
-      setTimeout(() => alert("⚠️ Sesión anterior cerrada. Este es ahora tu dispositivo autorizado."), 500);
-    }
+    if (dispositivoNuevo) setTimeout(() => alert("⚠️ Sesión anterior cerrada. Este es ahora tu dispositivo autorizado."), 500);
   };
 
   const handleLogout = () => {
+    clearSession();
     setUser(null); setSessionToken(null);
     setAlertaVenc(null); setAlertaVisible(false);
     setSesionCerrada(false);
-    localStorage.removeItem("mgfc_session_token");
   };
 
-  // Verificación periódica de sesión cada 60 segundos
-  useEffect(() => {
-    if (!user || !sessionToken) return;
-    const interval = setInterval(async () => {
-      try {
-        const deviceId = getDeviceId();
-        const res  = await fetch(`${API}/api/verify-session`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id, sessionToken, deviceId }),
-        });
-        const data = await res.json();
-        if (!data.valid) {
-          setSesionCerrada(true);
-          setUser(null);
-          setSessionToken(null);
-        }
-      } catch {}
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [user, sessionToken]);
+  // Pantalla de carga mientras verifica sesión guardada
+  if (verificando) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <LogoSVG size={80} />
+          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "16px", color: C.gray, letterSpacing: "3px", marginTop: "16px" }}>CARGANDO...</div>
+        </div>
+      </div>
+    );
+  }
 
-  // Pantalla sesión cerrada remotamente
+  // Sesión cerrada remotamente
   if (sesionCerrada) {
     return (
-      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "'Courier New', monospace" }}>
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "Bebas Neue, sans-serif" }}>
         <div style={{ maxWidth: "380px", width: "100%", textAlign: "center" }}>
           <div style={{ fontSize: "50px", marginBottom: "16px" }}>📵</div>
-          <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "26px", color: C.fire, letterSpacing: "2px", marginBottom: "12px" }}>
-            SESIÓN CERRADA
-          </div>
+          <div style={{ fontSize: "26px", color: C.fire, letterSpacing: "2px", marginBottom: "12px" }}>SESIÓN CERRADA</div>
           <div style={{ background: "#1a0a05", border: `1px solid ${C.fire}`, borderRadius: "10px", padding: "20px", marginBottom: "20px" }}>
             <p style={{ color: C.grayL, fontSize: "14px", lineHeight: "1.7", fontFamily: "Barlow, sans-serif" }}>
               Tu sesión fue cerrada porque iniciaste sesión desde otro dispositivo.
             </p>
           </div>
-          <button onClick={() => { setSesionCerrada(false); }} style={{ padding: "14px 28px", background: `linear-gradient(135deg,${C.red},${C.fire})`, border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer" }}>
+          <button onClick={() => setSesionCerrada(false)} style={{ padding: "14px 28px", background: `linear-gradient(135deg,${C.red},${C.fire})`, border: "none", borderRadius: "8px", color: C.white, fontSize: "16px", fontFamily: "Bebas Neue, sans-serif", letterSpacing: "2px", cursor: "pointer" }}>
             → VOLVER A INGRESAR
           </button>
         </div>
@@ -1186,12 +1204,7 @@ export default function App() {
   return (
     <>
       {alertaVisible && alertaVenc && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999,
-          background: `linear-gradient(90deg, #7c1d0a, #92400e)`,
-          padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
-          fontFamily: "Bebas Neue, sans-serif", borderBottom: `2px solid ${C.fire}`,
-        }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "linear-gradient(90deg,#7c1d0a,#92400e)", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "Bebas Neue, sans-serif", borderBottom: `2px solid ${C.fire}` }}>
           <span style={{ fontSize: "16px", color: C.gold, letterSpacing: "2px" }}>⚠️ {alertaVenc}</span>
           <button onClick={() => setAlertaVisible(false)} style={{ background: "transparent", border: "none", color: C.gold, fontSize: "18px", cursor: "pointer" }}>✕</button>
         </div>
