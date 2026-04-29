@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MG+IA Personal Trainer 24/7</title>
+  <link rel="manifest" href="/app/manifest.json" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000; color: #fff; font-family: 'Barlow Condensed', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow-y: auto; position: relative; }
+    .bg-glow { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 100%, #7c1d0a33 0%, transparent 70%); pointer-events: none; }
+    .container { text-align: center; padding: 40px 24px; position: relative; z-index: 1; max-width: 520px; width: 100%; }
+    .logo { width: 200px; height: auto; margin: 0 auto 28px; display: block; filter: drop-shadow(0 0 20px #f97316) drop-shadow(0 0 40px #dc262666); animation: pulse 2.5s ease infinite; }
+    @keyframes pulse { 0%,100%{filter:drop-shadow(0 0 16px #f97316) drop-shadow(0 0 32px #dc262666)} 50%{filter:drop-shadow(0 0 32px #fbbf24) drop-shadow(0 0 64px #f9731644)} }
+    @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.7} }
+    h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(28px, 8vw, 52px); letter-spacing: 3px; background: linear-gradient(180deg, #ffffff 0%, #f97316 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; line-height: 1.1; }
+    .sub { font-family: 'Bebas Neue', sans-serif; font-size: clamp(14px, 4vw, 22px); color: #fbbf24; letter-spacing: 3px; margin-bottom: 32px; }
+    .badge { display: inline-block; padding: 14px 32px; border: 2px solid #f97316; border-radius: 8px; background: #f9731618; margin-bottom: 32px; }
+    .badge-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(20px, 6vw, 34px); letter-spacing: 3px; color: #f97316; display: block; animation: flicker 2s ease infinite; }
+    .badge-sub { font-size: 13px; color: #94a3b8; letter-spacing: 2px; display: block; margin-top: 4px; }
+    .divider { width: 60px; height: 2px; background: linear-gradient(90deg, transparent, #f97316, transparent); margin: 0 auto 28px; }
+    .info { font-size: 15px; color: #64748b; line-height: 1.8; margin-bottom: 28px; }
+    .info strong { color: #94a3b8; }
+    .btns { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .app-btn { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #dc2626, #f97316); border: none; border-radius: 8px; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; text-decoration: none; cursor: pointer; width: 100%; max-width: 280px; }
+    .wp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; background: linear-gradient(135deg, #16a34a, #15803d); border: none; border-radius: 8px; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; text-decoration: none; width: 100%; max-width: 280px; }
+    .footer { margin-top: 40px; font-size: 11px; color: #1e293b; letter-spacing: 1px; line-height: 1.8; }
+    .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+    .particle { position: absolute; width: 2px; height: 2px; background: #f97316; border-radius: 50%; animation: float linear infinite; opacity: 0; }
+    @keyframes float { 0%{transform:translateY(100vh);opacity:0} 10%{opacity:0.6} 90%{opacity:0.3} 100%{transform:translateY(-100px);opacity:0} }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="particles" id="particles"></div>
+  <div class="container">
+    <img src="/app/logo.png" alt="MG+IA Personal Trainer 24/7" class="logo" onerror="this.style.display='none'" />
+    <h1>MG+IA PERSONAL TRAINER 24/7</h1>
+    <div class="sub">DECISIONES CON 100% ACTITUD!</div>
+    <div class="badge">
+      <span class="badge-title">🚧 SITIO EN CONSTRUCCIÓN 🚧</span>
+      <span class="badge-sub">UNDER CONSTRUCTION · PRÓXIMAMENTE</span>
+    </div>
+    <div class="divider"></div>
+    <p class="info">
+      <strong>Tu personal trainer con IA ya está disponible.</strong><br/>
+      Entrenamiento personalizado online · Sin importar dónde estés<br/>
+      <strong>24 horas · 365 días · Desde cualquier lugar del mundo</strong>
+    </p>
+    <div class="btns">
+      <a href="/app/" class="app-btn">🔥 INGRESAR A LA APP</a>
+      <a href="https://wa.me/543571587003" target="_blank" class="wp-btn">💬 CONTACTAR AL COACH</a>
+    </div>
+    <div class="footer">
+      MG Fitness Center · Corrientes 565 · Almafuerte · Córdoba · Argentina<br/>
+      © 2026 Marcos Giménez — MG+IA Personal Trainer 24/7. Todos los derechos reservados.
+    </div>
+  </div>
+  <script>
+    const c = document.getElementById('particles');
+    for(let i=0;i<20;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'vw';p.style.animationDuration=(Math.random()*8+6)+'s';p.style.animationDelay=(Math.random()*8)+'s';p.style.width=p.style.height=(Math.random()*3+1)+'px';c.appendChild(p);}
+  </script>
+</body>
+</html>
