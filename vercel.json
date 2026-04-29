@@ -1,6 +1,13 @@
 {
+  "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/app/:path*", "destination": "/app/index.html" },
-    { "source": "/((?!app).*)", "destination": "/index.html" }
+    {
+      "source": "/app/(.*)",
+      "destination": "/app/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
