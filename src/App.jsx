@@ -564,7 +564,13 @@ function AdminPanel({user,onLogout}){
   const resetPwd=async userId=>{if(!resetPwdVal||resetPwdVal.length<4){showMsg("❌ Mínimo 4 caracteres");return;}const res=await fetch(`${API}/api/admin/resetear-password`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,nuevaPassword:resetPwdVal})});const data=await res.json();if(data.success){showMsg("✅ Contraseña reseteada");setResetPwdId(null);setResetPwdVal("");}else showMsg(`❌ ${data.error}`);};
   const suspender=async(userId,suspendido,nombre)=>{if(!window.confirm(`¿${suspendido?"SUSPENDER":"REACTIVAR"} a ${nombre}?`))return;const res=await fetch(`${API}/api/admin/suspender-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,suspendido})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,suspendido}:u));showMsg(`✅ Usuario ${suspendido?"suspendido":"reactivado"}`);}};
   const guardarCondicion=async userId=>{const res=await fetch(`${API}/api/admin/actualizar-condicion`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,condicion_medica:editCondVal})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,condicion_medica:editCondVal}:u));showMsg("✅ Condición médica actualizada");setEditCondId(null);setEditCondVal("");}};
-  const eliminar=async(userId,nombre)=>{if(!window.confirm(`¿ELIMINAR a ${nombre}? No se puede deshacer.`))return;const res=await fetch(`${API}/api/admin/eliminar-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.filter(u=>u.id!==userId));showMsg("✅ Usuario eliminado");}};
+  const eliminar=async(userId,nombre)=>{
+    if(!window.confirm(`¿ELIMINAR a ${nombre}? No se puede deshacer.`))return;
+    const res=await fetch(`${API}/api/admin/eliminar-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});
+    const data=await res.json();
+    if(data.success){setUsuarios(prev=>prev.filter(u=>u.id!==userId));setSelected(null);showMsg("✅ Usuario eliminado");}
+    else showMsg(`❌ Error al eliminar: ${data.error}`);
+  };
   const enviarWP=(nombre,telefono)=>{
     const num=telefono?`54${telefono.replace(/\D/g,"")}`:`${WP_NUMBER}`;
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(`Hola ${nombre}, te escribo desde MG+IA Personal Trainer 24/7.`)}`,"_blank");
@@ -776,6 +782,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const[consultasHoy,setConsultasHoy]=useState(0);
   const[primerRegistroHecho,setPrimerRegistroHecho]=useState(false);
   const[showTerminos,setShowTerminos]=useState(false);
+  const[coachDecision,setCoachDecision]=useState(null); // null | "si" | "no"
   const[form,setForm]=useState({
     peso:"",descanso:"7h",energia:"7",entrenamiento:"",dolor:"",
     alimentacion:"NORMAL",tiempo:"60min",quiereRutina:false,
@@ -807,7 +814,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const handleSubmit=async()=>{
     if(!form.peso||!form.entrenamiento){setError("Completá peso y entrenamiento.");return;}
     if(!isDemo&&consultasHoy>=limiteConsultas){setError(`⚠️ Límite de ${limiteConsultas} consultas diarias alcanzado.${!isPro?" Pasate al plan PRO para 5 consultas/día.":""}`);return;}
-    setError(null);setLoading(true);setResult(null);
+    setError(null);setLoading(true);setResult(null);setCoachDecision(null);
     const now=new Date();
     const sexoInfo=form.sexo==="mujer"?`Sexo: Mujer${form.etapaMenstrual?" — EN ETAPA MENSTRUAL ACTIVA":""}`:`Sexo: ${form.sexo==="hombre"?"Hombre":"No especificado"}`;
     const disciplinaInfo=form.disciplina!=="Ninguna / Solo gym"?`Disciplina: ${form.disciplina} — orientar para complementar`:"Sin disciplina adicional";
@@ -935,7 +942,16 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
                   </div>
                 )}
                 <div><label style={labelSt}>Tiempo disponible</label><select name="tiempo" value={form.tiempo} onChange={handleChange} style={inputSt}>{["30min","45min","60min","75min","90min","120min+"].map(v=><option key={v}>{v}</option>)}</select></div>
-                {!isDemo&&<div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"22px"}}><Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/><span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span></div>}
+                <div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"22px"}}>
+                  <Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/>
+                  <span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span>
+                  {isDemo&&<span style={{fontSize:"10px",color:"#b45309",fontFamily:"Barlow, sans-serif"}}>Solo Standard/PRO</span>}
+                </div>
+                {isDemo&&form.quiereRutina&&(
+                  <div style={{marginTop:"8px",padding:"8px 12px",background:"#0a0800",border:"1px solid #92400e",borderRadius:"6px",fontSize:"12px",color:C.gold,fontFamily:"Barlow, sans-serif"}}>
+                    🔒 La rutina no se muestra en modo DEMO. Disponible en versión Standard o PRO.
+                  </div>
+                )}
               </div>
 
               {!isDemo&&form.quiereRutina&&(
@@ -996,9 +1012,25 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
                   isDemo={isDemo} isDemoBlocked={isDemoBlocked}
                   extra={s.key==="consultar"?(
                     consultarCoach&&!isDemo?(
-                      <div style={{marginTop:"14px",display:"flex",gap:"10px",flexWrap:"wrap"}}>
-                        <button onClick={()=>abrirWhatsApp(parsed.alerta,parsed.motivo,user.nombre,user.apellido)} style={{padding:"10px 18px",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>💬 CONTACTAR COACH</button>
-                        <button style={{padding:"10px 18px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"14px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>NO POR AHORA</button>
+                      <div style={{marginTop:"14px"}}>
+                        {coachDecision===null&&(
+                          <div style={{display:"flex",gap:"10px",justifyContent:"center",flexWrap:"wrap"}}>
+                            <button onClick={()=>{setCoachDecision("si");abrirWhatsApp(parsed.alerta,parsed.motivo,user.nombre,user.apellido);}} style={{padding:"10px 18px",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>💬 CONTACTAR COACH</button>
+                            <button onClick={()=>setCoachDecision("no")} style={{padding:"10px 18px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"14px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>NO POR AHORA</button>
+                          </div>
+                        )}
+                        {coachDecision==="no"&&(
+                          <div style={{padding:"12px 16px",background:"#0d1a0d",border:`1px solid ${C.green}44`,borderRadius:"8px",textAlign:"center"}} className="slide-up">
+                            <div style={{fontSize:"16px",marginBottom:"4px"}}>✅</div>
+                            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.green,letterSpacing:"1px"}}>DE ACUERDO</div>
+                            <div style={{fontSize:"12px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>Esta consulta no será notificada al coach, pero tu historial se mantiene actualizado.</div>
+                          </div>
+                        )}
+                        {coachDecision==="si"&&(
+                          <div style={{padding:"12px 16px",background:"#0d1a0d",border:`1px solid ${C.green}44`,borderRadius:"8px",textAlign:"center"}} className="slide-up">
+                            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.green,letterSpacing:"1px"}}>✅ MENSAJE ENVIADO AL COACH</div>
+                          </div>
+                        )}
                       </div>
                     ):isDemo&&consultarCoach?(
                       <div style={{marginTop:"14px",padding:"10px 14px",background:"#0a0800",border:"1px solid #92400e",borderRadius:"6px",display:"flex",alignItems:"center",gap:"8px"}}>
