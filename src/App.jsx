@@ -551,6 +551,8 @@ function AdminPanel({user,onLogout}){
   const[showCreate,setShowCreate]=useState(false);const[creating,setCreating]=useState(false);
   const[msg,setMsg]=useState(null);const[resetPwdId,setResetPwdId]=useState(null);const[resetPwdVal,setResetPwdVal]=useState("");
   const[editCondId,setEditCondId]=useState(null);const[editCondVal,setEditCondVal]=useState("");
+  const[editPerfilId,setEditPerfilId]=useState(null);
+  const[editPerfil,setEditPerfil]=useState({});
   const[verHistorial,setVerHistorial]=useState(null);const[historialData,setHistorialData]=useState([]);
   const[newUser,setNewUser]=useState({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});
 
@@ -563,7 +565,20 @@ function AdminPanel({user,onLogout}){
   const suspender=async(userId,suspendido,nombre)=>{if(!window.confirm(`¿${suspendido?"SUSPENDER":"REACTIVAR"} a ${nombre}?`))return;const res=await fetch(`${API}/api/admin/suspender-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,suspendido})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,suspendido}:u));showMsg(`✅ Usuario ${suspendido?"suspendido":"reactivado"}`);}};
   const guardarCondicion=async userId=>{const res=await fetch(`${API}/api/admin/actualizar-condicion`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,condicion_medica:editCondVal})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,condicion_medica:editCondVal}:u));showMsg("✅ Condición médica actualizada");setEditCondId(null);setEditCondVal("");}};
   const eliminar=async(userId,nombre)=>{if(!window.confirm(`¿ELIMINAR a ${nombre}? No se puede deshacer.`))return;const res=await fetch(`${API}/api/admin/eliminar-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.filter(u=>u.id!==userId));showMsg("✅ Usuario eliminado");}};
-  const enviarWP=nombre=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent(`Hola ${nombre}, te escribo desde MG+IA Personal Trainer 24/7.`)}`,"_blank");
+  const enviarWP=(nombre,telefono)=>{
+    const num=telefono?`54${telefono.replace(/\D/g,"")}`:`${WP_NUMBER}`;
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(`Hola ${nombre}, te escribo desde MG+IA Personal Trainer 24/7.`)}`,"_blank");
+  };
+  const abrirEditPerfil=(u)=>{
+    setEditPerfilId(u.id);
+    setEditPerfil({nombre:u.nombre||"",apellido:u.apellido||"",dni:u.dni||"",telefono:u.telefono||"",condicion_medica:u.condicion_medica||"",fecha_nac:u.fecha_nac||"",objetivo:u.objetivo||"",nivel_base:u.nivel_base||"",role:u.role||"usuario"});
+  };
+  const guardarPerfil=async userId=>{
+    const res=await fetch(`${API}/api/admin/actualizar-perfil`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,...editPerfil})});
+    const data=await res.json();
+    if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,...editPerfil}:u));showMsg("✅ Perfil actualizado");setEditPerfilId(null);}
+    else showMsg(`❌ ${data.error}`);
+  };
   const verHistorialUsuario=async userId=>{setVerHistorial(userId);const res=await fetch(`${API}/api/admin/sesiones/${userId}`);const data=await res.json();if(data.success)setHistorialData(data.sesiones);};
   const crearUsuario=async()=>{
     if(!newUser.dni||!newUser.nombre||!newUser.apellido||!newUser.password){showMsg("⚠️ Completá todos los campos");return;}
@@ -674,7 +689,8 @@ function AdminPanel({user,onLogout}){
                     {u.device_token&&<div style={{marginBottom:"12px",padding:"10px",background:"#111",borderRadius:"6px",fontSize:"11px",color:C.gray}}>📱 Dispositivo: {u.device_registered_at?new Date(u.device_registered_at).toLocaleString("es-AR"):"—"}{u.device_locked&&<span style={{color:C.red,marginLeft:"8px"}}>⚠️ BLOQUEADO</span>}</div>}
                     <div style={{display:"flex",gap:"8px",flexWrap:"wrap",marginBottom:"10px"}}>
                       {isDemo?<button onClick={()=>renovarDemo(u.id)} style={{padding:"9px 14px",background:"linear-gradient(135deg,#92400e,#b45309)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>⏱ +24HS</button>:<button onClick={()=>renovar(u.id)} disabled={renewLoading===u.id} style={{padding:"9px 14px",background:renewLoading===u.id?"#222":"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{renewLoading===u.id?"...":"🔄 +30 DÍAS"}</button>}
-                      <button onClick={()=>enviarWP(u.nombre)} style={{padding:"9px 14px",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>💬 WP</button>
+                      <button onClick={()=>enviarWP(u.nombre,u.telefono)} style={{padding:"9px 14px",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>💬 WP</button>
+                      <button onClick={()=>editPerfilId===u.id?setEditPerfilId(null):abrirEditPerfil(u)} style={{padding:"9px 14px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>✏️ EDITAR</button>
                       <button onClick={()=>verHistorialUsuario(u.id)} style={{padding:"9px 14px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📋 HISTORIAL</button>
                       {u.device_token&&<button onClick={()=>resetDisp(u.id,u.nombre,u.apellido)} style={{padding:"9px 14px",background:u.device_locked?`linear-gradient(135deg,${C.red},#b91c1c)`:"#1a1a1a",border:`1px solid ${u.device_locked?C.red:"#333"}`,borderRadius:"6px",color:u.device_locked?C.white:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{u.device_locked?"🔒 DESBLOQ.":"📱 RESET"}</button>}
                       <button onClick={()=>{setResetPwdId(resetPwdId===u.id?null:u.id);setResetPwdVal("");}} style={{padding:"9px 14px",background:"#1a1a1a",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🔑 PWD</button>
@@ -683,6 +699,56 @@ function AdminPanel({user,onLogout}){
                       <button onClick={()=>eliminar(u.id,`${u.nombre} ${u.apellido}`)} style={{padding:"9px 14px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:C.red,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🗑 ELIMINAR</button>
                     </div>
                     {resetPwdId===u.id&&<div className="slide-up" style={{marginBottom:"10px",display:"flex",gap:"10px"}}><input type="password" value={resetPwdVal} onChange={e=>setResetPwdVal(e.target.value)} placeholder="Nueva contraseña" style={{...inputSt,flex:1}}/><button onClick={()=>resetPwd(u.id)} style={{padding:"10px 16px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>GUARDAR</button></div>}
+
+                    {editPerfilId===u.id&&(
+                      <div className="slide-up" style={{marginTop:"12px",background:"#0a0a0a",border:`1px solid ${C.blueL}`,borderRadius:"10px",padding:"16px"}}>
+                        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",color:C.blueL,letterSpacing:"2px",marginBottom:"14px"}}>✏️ EDITAR PERFIL</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                          {[
+                            {k:"nombre",      l:"NOMBRE",           pl:"Nombre"},
+                            {k:"apellido",    l:"APELLIDO",         pl:"Apellido"},
+                            {k:"dni",         l:"DNI",              pl:"Número"},
+                            {k:"telefono",    l:"TELÉFONO",         pl:"ej: 3571587003"},
+                            {k:"fecha_nac",   l:"FECHA NACIMIENTO", pl:"",type:"date"},
+                          ].map(f=>(
+                            <div key={f.k}>
+                              <label style={labelSt}>{f.l}</label>
+                              <input type={f.type||"text"} value={editPerfil[f.k]||""} onChange={e=>setEditPerfil(p=>({...p,[f.k]:e.target.value}))} placeholder={f.pl} style={inputSt}/>
+                            </div>
+                          ))}
+                          <div>
+                            <label style={labelSt}>OBJETIVO</label>
+                            <select value={editPerfil.objetivo||""} onChange={e=>setEditPerfil(p=>({...p,objetivo:e.target.value}))} style={inputSt}>
+                              <option value="">Sin definir</option>
+                              {["Masa muscular","Pérdida de grasa","Rendimiento deportivo","Salud general","Rehabilitación","Tonificación"].map(o=><option key={o}>{o}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={labelSt}>NIVEL BASE</label>
+                            <select value={editPerfil.nivel_base||""} onChange={e=>setEditPerfil(p=>({...p,nivel_base:e.target.value}))} style={inputSt}>
+                              <option value="">Sin definir</option>
+                              {["PRINCIPIANTE","BÁSICO","INTERMEDIO","AVANZADO"].map(n=><option key={n}>{n}</option>)}
+                            </select>
+                          </div>
+                          <div style={{gridColumn:"1/-1"}}>
+                            <label style={labelSt}>CONDICIÓN MÉDICA</label>
+                            <input type="text" value={editPerfil.condicion_medica||""} onChange={e=>setEditPerfil(p=>({...p,condicion_medica:e.target.value}))} placeholder="ej: hipertensión, lesión rodilla, diabetes..." style={inputSt}/>
+                          </div>
+                          <div>
+                            <label style={labelSt}>ROL</label>
+                            <select value={editPerfil.role||"usuario"} onChange={e=>setEditPerfil(p=>({...p,role:e.target.value}))} style={inputSt}>
+                              <option value="usuario">Usuario</option>
+                              <option value="pro">PRO</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:"10px",marginTop:"14px"}}>
+                          <button onClick={()=>guardarPerfil(u.id)} style={{flex:1,padding:"12px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>GUARDAR CAMBIOS</button>
+                          <button onClick={()=>setEditPerfilId(null)} style={{padding:"12px 20px",background:"transparent",border:"1px solid #333",borderRadius:"8px",color:C.gray,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>CANCELAR</button>
+                        </div>
+                      </div>
+                    )}
                     {editCondId===u.id&&<div className="slide-up" style={{marginBottom:"10px"}}><label style={labelSt}>CONDICIÓN MÉDICA</label><div style={{display:"flex",gap:"10px"}}><input type="text" value={editCondVal} onChange={e=>setEditCondVal(e.target.value)} placeholder="ej: hipertensión, lesión rodilla..." style={{...inputSt,flex:1}}/><button onClick={()=>guardarCondicion(u.id)} style={{padding:"10px 16px",background:"linear-gradient(135deg,#be185d,#9d174d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>GUARDAR</button></div></div>}
                   </div>
                 )}
@@ -728,6 +794,8 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const deload=isDeloadWeek(trainingWeek,sesiones);
   const streak=computeStreak(sesiones);
   const condicionMedica=user.condicion_medica;
+  const objetivoUsuario=user.objetivo;
+  const nivelBaseUsuario=user.nivel_base;
   const edadUsuario=user.fecha_nacimiento?Math.floor((new Date()-new Date(user.fecha_nacimiento))/31557600000):null;
   const handleChange=e=>{const{name,value,type,checked}=e.target;setForm(f=>({...f,[name]:type==="checkbox"?checked:value}));};
 
@@ -744,8 +812,9 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
     const sexoInfo=form.sexo==="mujer"?`Sexo: Mujer${form.etapaMenstrual?" — EN ETAPA MENSTRUAL ACTIVA":""}`:`Sexo: ${form.sexo==="hombre"?"Hombre":"No especificado"}`;
     const disciplinaInfo=form.disciplina!=="Ninguna / Solo gym"?`Disciplina: ${form.disciplina} — orientar para complementar`:"Sin disciplina adicional";
     const condInfo=condicionMedica?`⚠️ CONDICIÓN MÉDICA (PRIORIDAD): ${condicionMedica}`:"";
+    const perfilInfo=`Objetivo del usuario: ${objetivoUsuario||"Masa muscular"}\nNivel base del usuario: ${nivelBaseUsuario||"no definido"}${nivelBaseUsuario?` — considerar como nivel mínimo de referencia al generar la rutina`:""}`;
     const edadInfo=edadUsuario?`Edad: ${edadUsuario} años`:"Edad: no especificada";
-    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n\nDatos:\nPeso: ${form.peso}kg | ${edadInfo} | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\nObjetivo: Masa muscular, bajo % grasa.\n\nHistorial:\n${buildHistoryCtx()}`;
+    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n${perfilInfo}\n\nDatos:\nPeso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\n\nHistorial:\n${buildHistoryCtx()}`;
     const system=buildSystemPrompt(isDemo,form.quiereRutina,form.quiereRutina?form.nivelRutina:null);
     try{
       const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg})});
@@ -802,6 +871,12 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
         <div style={{marginBottom:"14px"}}>
           <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.white,letterSpacing:"2px"}}>HOLA, {user.nombre?.toUpperCase()} 💪</div>
           <div style={{fontSize:"12px",color:C.gray}}>{user.apellido} · DNI {user.dni} · {isPro?"⭐ PRO":"Plan Standard"}</div>
+          {(objetivoUsuario||nivelBaseUsuario)&&(
+            <div style={{marginTop:"6px",display:"flex",gap:"8px",flexWrap:"wrap"}}>
+              {objetivoUsuario&&<span style={{fontSize:"11px",color:C.gold,border:`1px solid ${C.gold}55`,borderRadius:"4px",padding:"2px 8px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>🎯 {objetivoUsuario}</span>}
+              {nivelBaseUsuario&&<span style={{fontSize:"11px",color:C.blueL,border:`1px solid ${C.blueL}55`,borderRadius:"4px",padding:"2px 8px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>💪 {nivelBaseUsuario}</span>}
+            </div>
+          )}
         </div>
 
         {!isDemo&&<div style={{marginBottom:"12px",padding:"10px 14px",background:"#0d0d0d",border:`1px solid ${consultasHoy>=limiteConsultas?C.red:C.fire}`,borderRadius:"8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
