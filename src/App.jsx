@@ -260,6 +260,7 @@ function abrirWhatsApp(alerta,motivo,nombre,apellido){
 // ═══════════════════════════════════════════════════════════════════════════════
 function PerfilInicial({user, onCompletar}){
   const[telefono,setTelefono]=useState(user.telefono||"");
+  const[fechaNac,setFechaNac]=useState(user.fecha_nacimiento||"");
   const[tieneCond,setTieneCond]=useState(!!user.condicion_medica);
   const[condicion,setCondicion]=useState(user.condicion_medica||"");
   const[esSocio,setEsSocio]=useState(null); // null = no eligió aún
@@ -268,12 +269,13 @@ function PerfilInicial({user, onCompletar}){
 
   const handleGuardar=async()=>{
     if(esSocio===null){setError("Seleccioná si sos socio de MG Fitness Center.");return;}
+    if(!fechaNac){setError("Ingresá tu fecha de nacimiento.");return;}
     if(tieneCond&&!condicion.trim()){setError("Describí tu condición médica o seleccioná NO.");return;}
     setSaving(true);
     try{
       const res=await fetch(`${API}/api/completar-perfil`,{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({userId:user.id,telefono,condicion_medica:tieneCond?condicion:"",es_socio_mg:esSocio})
+        body:JSON.stringify({userId:user.id,telefono,fecha_nacimiento:fechaNac,condicion_medica:tieneCond?condicion:"",es_socio_mg:esSocio})
       });
       const data=await res.json();
       if(data.success){
@@ -323,6 +325,19 @@ function PerfilInicial({user, onCompletar}){
             <label style={labelSt}>Teléfono de contacto (opcional)</label>
             <input type="tel" value={telefono} onChange={e=>setTelefono(e.target.value)} placeholder="ej: 3571-587003" style={inputSt}/>
             <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>Para que tu coach pueda contactarte si es necesario</div>
+          </div>
+
+          {/* FECHA DE NACIMIENTO */}
+          <div style={{marginBottom:"20px"}}>
+            <label style={labelSt}>Fecha de nacimiento <span style={{color:C.red}}>*</span></label>
+            <input type="date" value={fechaNac} onChange={e=>setFechaNac(e.target.value)}
+              max={new Date().toISOString().slice(0,10)}
+              style={inputSt}/>
+            {fechaNac&&(
+              <div style={{fontSize:"11px",color:C.fire,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>
+                Edad: {Math.floor((new Date()-new Date(fechaNac))/31557600000)} años
+              </div>
+            )}
           </div>
 
           {/* CONDICIÓN MÉDICA */}
@@ -713,6 +728,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const deload=isDeloadWeek(trainingWeek,sesiones);
   const streak=computeStreak(sesiones);
   const condicionMedica=user.condicion_medica;
+  const edadUsuario=user.fecha_nacimiento?Math.floor((new Date()-new Date(user.fecha_nacimiento))/31557600000):null;
   const handleChange=e=>{const{name,value,type,checked}=e.target;setForm(f=>({...f,[name]:type==="checkbox"?checked:value}));};
 
   const buildHistoryCtx=()=>{
@@ -728,7 +744,8 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
     const sexoInfo=form.sexo==="mujer"?`Sexo: Mujer${form.etapaMenstrual?" — EN ETAPA MENSTRUAL ACTIVA":""}`:`Sexo: ${form.sexo==="hombre"?"Hombre":"No especificado"}`;
     const disciplinaInfo=form.disciplina!=="Ninguna / Solo gym"?`Disciplina: ${form.disciplina} — orientar para complementar`:"Sin disciplina adicional";
     const condInfo=condicionMedica?`⚠️ CONDICIÓN MÉDICA (PRIORIDAD): ${condicionMedica}`:"";
-    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n\nDatos:\nPeso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\nObjetivo: Masa muscular, bajo % grasa.\n\nHistorial:\n${buildHistoryCtx()}`;
+    const edadInfo=edadUsuario?`Edad: ${edadUsuario} años`:"Edad: no especificada";
+    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n\nDatos:\nPeso: ${form.peso}kg | ${edadInfo} | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\nObjetivo: Masa muscular, bajo % grasa.\n\nHistorial:\n${buildHistoryCtx()}`;
     const system=buildSystemPrompt(isDemo,form.quiereRutina,form.quiereRutina?form.nivelRutina:null);
     try{
       const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg})});
