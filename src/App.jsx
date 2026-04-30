@@ -255,6 +255,111 @@ function abrirWhatsApp(alerta,motivo,nombre,apellido){
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOGIN
 // ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERFIL INICIAL — aparece una sola vez después de T&C
+// ═══════════════════════════════════════════════════════════════════════════════
+function PerfilInicial({user, onCompletar}){
+  const[telefono,setTelefono]=useState(user.telefono||"");
+  const[tieneCond,setTieneCond]=useState(!!user.condicion_medica);
+  const[condicion,setCondicion]=useState(user.condicion_medica||"");
+  const[esSocio,setEsSocio]=useState(null); // null = no eligió aún
+  const[saving,setSaving]=useState(false);
+  const[error,setError]=useState(null);
+
+  const handleGuardar=async()=>{
+    if(esSocio===null){setError("Seleccioná si sos socio de MG Fitness Center.");return;}
+    if(tieneCond&&!condicion.trim()){setError("Describí tu condición médica o seleccioná NO.");return;}
+    setSaving(true);
+    try{
+      const res=await fetch(`${API}/api/completar-perfil`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({userId:user.id,telefono,condicion_medica:tieneCond?condicion:"",es_socio_mg:esSocio})
+      });
+      const data=await res.json();
+      if(data.success){
+        const saved=loadSession();
+        if(saved){
+          saved.user.perfil_completado=true;
+          saved.user.es_socio_mg=esSocio;
+          saved.user.telefono=telefono;
+          if(tieneCond) saved.user.condicion_medica=condicion;
+          saveSession(saved.user,saved.token);
+        }
+        onCompletar();
+      } else setError(data.error||"Error al guardar");
+    }catch{setError("Error de conexión");}
+    setSaving(false);
+  };
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",position:"relative"}}>
+      <LogoWatermark/>
+      <div style={{width:"100%",maxWidth:"480px",position:"relative",zIndex:1}} className="slide-up">
+
+        <div style={{textAlign:"center",marginBottom:"24px"}}>
+          <Logo size={80} pulse={true}/>
+          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.fire,letterSpacing:"2px",marginTop:"12px"}}>COMPLETÁ TU PERFIL</div>
+          <div style={{fontSize:"13px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>Esta información se guarda una sola vez y ayuda a personalizar tu entrenamiento</div>
+        </div>
+
+        <div style={cardSt}>
+
+          {/* SOY SOCIO MG */}
+          <div style={{marginBottom:"20px"}}>
+            <label style={{...labelSt,color:C.fire,fontSize:"14px"}}>¿SOS SOCIO DE MG FITNESS CENTER?</label>
+            <div style={{fontSize:"12px",color:C.gray,fontFamily:"Barlow, sans-serif",marginBottom:"10px"}}>Almafuerte, Córdoba — Corrientes 565</div>
+            <div style={{display:"flex",gap:"10px"}}>
+              {[{v:true,l:"🏅 SÍ, SOY SOCIO MG"},{v:false,l:"🌍 NO, ENTRENO EN OTRO LUGAR"}].map(op=>(
+                <button key={String(op.v)} onClick={()=>setEsSocio(op.v)}
+                  style={{flex:1,padding:"14px 8px",background:esSocio===op.v?(op.v?`linear-gradient(135deg,${C.blue},${C.blueL})`:`linear-gradient(135deg,${C.red},${C.fire})`):"#111",border:`2px solid ${esSocio===op.v?(op.v?C.blueL:C.fire):"#333"}`,borderRadius:"8px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer",transition:"all 0.2s",lineHeight:"1.4"}}>
+                  {op.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* TELÉFONO */}
+          <div style={{marginBottom:"20px"}}>
+            <label style={labelSt}>Teléfono de contacto (opcional)</label>
+            <input type="tel" value={telefono} onChange={e=>setTelefono(e.target.value)} placeholder="ej: 3571-587003" style={inputSt}/>
+            <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>Para que tu coach pueda contactarte si es necesario</div>
+          </div>
+
+          {/* CONDICIÓN MÉDICA */}
+          <div style={{marginBottom:"20px"}}>
+            <label style={labelSt}>¿Tenés alguna condición médica a tener en cuenta?</label>
+            <div style={{display:"flex",gap:"10px",marginBottom:"10px"}}>
+              {[{v:false,l:"NO"},{v:true,l:"SÍ"}].map(op=>(
+                <button key={String(op.v)} onClick={()=>setTieneCond(op.v)}
+                  style={{flex:1,padding:"10px",background:tieneCond===op.v?(op.v?`linear-gradient(135deg,#9d174d,#be185d)`:`linear-gradient(135deg,#16a34a,#15803d)`):"#111",border:`1px solid ${tieneCond===op.v?(op.v?"#ec4899":C.green):"#333"}`,borderRadius:"6px",color:C.white,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer",transition:"all 0.2s"}}>
+                  {op.l}
+                </button>
+              ))}
+            </div>
+            {tieneCond&&(
+              <div className="slide-up">
+                <textarea value={condicion} onChange={e=>setCondicion(e.target.value)}
+                  placeholder="ej: hipertensión controlada, lesión de rodilla izquierda, diabetes tipo 2..."
+                  style={{...inputSt,minHeight:"80px",resize:"vertical",lineHeight:"1.5"}}/>
+                <div style={{fontSize:"11px",color:"#9d174d",fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>
+                  La IA priorizará siempre esta información en cada análisis.
+                </div>
+              </div>
+            )}
+          </div>
+
+          {error&&<div style={{marginBottom:"14px",padding:"10px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:"#fca5a5",fontSize:"13px",fontFamily:"Barlow, sans-serif"}}>{error}</div>}
+
+          <button onClick={handleGuardar} disabled={saving}
+            style={{width:"100%",padding:"16px",background:saving?"#222":`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"18px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",cursor:saving?"not-allowed":"pointer",boxShadow:saving?"none":`0 4px 24px ${C.red}66`}}>
+            {saving?"GUARDANDO...":"→ GUARDAR Y CONTINUAR"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Login({onLogin}){
   const[dni,setDni]=useState("");const[password,setPassword]=useState("");
   const[loading,setLoading]=useState(false);const[error,setError]=useState(null);
@@ -535,6 +640,7 @@ function AdminPanel({user,onLogout}){
                     <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:u.suspendido?"#64748b":C.white,letterSpacing:"1px"}}>
                       {u.apellido?.toUpperCase()}, {u.nombre}
                       {isDemo&&<span style={{marginLeft:"8px",fontSize:"11px",color:C.gold,border:`1px solid ${C.gold}`,borderRadius:"4px",padding:"1px 5px"}}>DEMO</span>}
+                      {u.es_socio_mg&&<span style={{marginLeft:"8px",fontSize:"11px",color:C.blueL,border:`1px solid ${C.blueL}`,borderRadius:"4px",padding:"1px 5px"}}>🏅 SOCIO MG</span>}
                       {u.suspendido&&<span style={{marginLeft:"8px",fontSize:"11px",color:C.red,border:`1px solid ${C.red}`,borderRadius:"4px",padding:"1px 5px"}}>SUSPENDIDO</span>}
                       {u.condicion_medica&&<span style={{marginLeft:"8px",fontSize:"11px",color:"#f9a8d4",border:"1px solid #9d174d",borderRadius:"4px",padding:"1px 5px"}}>🩺</span>}
                     </div>
@@ -778,6 +884,15 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
               )}
             </div>
 
+            {result&&(
+              <div className="slide-up" style={{marginBottom:"12px",padding:"12px 16px",background:"#0a1628",border:`1px solid ${C.blueL}`,borderRadius:"8px",display:"flex",alignItems:"center",gap:"10px"}}>
+                <span style={{fontSize:"20px"}}>✅</span>
+                <div>
+                  <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.blueL,letterSpacing:"1px"}}>ANÁLISIS ENVIADO AL COACH</div>
+                  <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>Tu coach revisará este análisis para darte seguimiento personalizado</div>
+                </div>
+              </div>
+            )}
             {result&&SECTIONS.map(s=>{
               const content=parsed[s.key];
               if(!content)return null;
@@ -851,12 +966,22 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
           </div>
         )}
       </div>
+      {/* Barra sticky demo en la parte inferior */}
+      {isDemo&&(
+        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,background:"linear-gradient(90deg,#1a0a00,#0a0500)",borderTop:`2px solid ${C.gold}`,padding:"8px 16px",display:"flex",justifyContent:"center",alignItems:"center",gap:"12px"}}>
+          <span style={{fontSize:"16px"}}>🔒</span>
+          <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.gold,letterSpacing:"2px"}} className="blink">
+            VERSIÓN DEMO · OPCIONES LIMITADAS Y BLOQUEADAS
+          </span>
+          <button onClick={()=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero contratar MG+IA Personal Trainer 24/7.")}`,"_blank")}
+            style={{padding:"4px 12px",background:C.gold,border:"none",borderRadius:"4px",color:"#000",fontSize:"11px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer",flexShrink:0}}>
+            CONTRATAR
+          </button>
+        </div>
+      )}
     </div>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ROOT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App(){
   const[user,setUser]=useState(null);const[sessionToken,setSessionToken]=useState(null);
@@ -865,6 +990,7 @@ export default function App(){
   const[isDemo,setIsDemo]=useState(false);const[horasDemo,setHorasDemo]=useState(null);
   const[limiteConsultas,setLimiteConsultas]=useState(2);const[isPro,setIsPro]=useState(false);
   const[necesitaTerminos,setNecesitaTerminos]=useState(false);
+  const[necesitaPerfil,setNecesitaPerfil]=useState(false);
 
   useEffect(()=>{
     const saved=loadSession();
@@ -893,20 +1019,34 @@ export default function App(){
     setUser(userData);setSessionToken(token);setSesionCerrada(false);
     setIsDemo(demo||userData.is_demo||userData.role==="demo");
     setHorasDemo(horas||24);setLimiteConsultas(limite||2);setIsPro(!!pro);
-    setNecesitaTerminos(!!terminos&&userData.role!=="admin");
+    const needTerminos=!!terminos&&userData.role!=="admin";
+    setNecesitaTerminos(needTerminos);
+    setNecesitaPerfil(!needTerminos&&!userData.perfil_completado&&userData.role!=="admin"&&userData.role!=="demo");
     if(alerta){setAlertaVenc(alerta);setAlertaVisible(true);}
     if(dispositivoNuevo)setTimeout(()=>alert("⚠️ Sesión anterior cerrada. Este es tu dispositivo autorizado."),500);
   };
 
-  const handleLogout=()=>{clearSession();setUser(null);setSessionToken(null);setAlertaVenc(null);setAlertaVisible(false);setSesionCerrada(false);setIsDemo(false);setNecesitaTerminos(false);};
-  const handleAceptarTerminos=()=>{setNecesitaTerminos(false);const saved=loadSession();if(saved){saved.user.terminos_aceptados=true;saveSession(saved.user,saved.token);}};
+  const handleLogout=()=>{clearSession();setUser(null);setSessionToken(null);setAlertaVenc(null);setAlertaVisible(false);setSesionCerrada(false);setIsDemo(false);setNecesitaTerminos(false);setNecesitaPerfil(false);};
+  const handleAceptarTerminos=()=>{
+    setNecesitaTerminos(false);
+    const saved=loadSession();
+    if(saved){saved.user.terminos_aceptados=true;saveSession(saved.user,saved.token);}
+    // Después de T&C verificar si necesita completar perfil
+    if(user&&!user.perfil_completado&&user.role!=="admin"&&user.role!=="demo") setNecesitaPerfil(true);
+  };
+  const handleCompletarPerfil=()=>{
+    setNecesitaPerfil(false);
+    const saved=loadSession();
+    if(saved){saved.user.perfil_completado=true;saveSession(saved.user,saved.token);}
+  };
 
   if(verificando)return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><Logo size={100} pulse={true}/><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",color:C.gray,letterSpacing:"3px",marginTop:"16px"}}>CARGANDO...</div></div></div>);
 
   if(sesionCerrada)return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}><div style={{maxWidth:"380px",width:"100%",textAlign:"center"}}><div style={{fontSize:"50px",marginBottom:"16px"}}>📵</div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.fire,letterSpacing:"2px",marginBottom:"12px"}}>SESIÓN CERRADA</div><div style={{background:"#1a0a05",border:`1px solid ${C.fire}`,borderRadius:"10px",padding:"20px",marginBottom:"20px"}}><p style={{color:C.grayL,fontSize:"14px",lineHeight:"1.7",fontFamily:"Barlow, sans-serif"}}>Tu sesión fue cerrada porque iniciaste sesión desde otro dispositivo.</p></div><button onClick={()=>setSesionCerrada(false)} style={{padding:"14px 28px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>→ VOLVER A INGRESAR</button></div></div>);
 
-  if(!user)return <Login onLogin={handleLogin}/>;
-  if(necesitaTerminos)return <TerminosModal user={user} onAceptar={handleAceptarTerminos}/>;
+  if(!user) return <Login onLogin={handleLogin}/>;
+  if(necesitaTerminos) return <TerminosModal user={user} onAceptar={handleAceptarTerminos}/>;
+  if(necesitaPerfil) return <PerfilInicial user={user} onCompletar={handleCompletarPerfil}/>;
 
   return(
     <>
