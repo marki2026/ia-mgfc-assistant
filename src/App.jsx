@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const WP_NUMBER = "543571587003";
 const APP_VERSION = "2.0";
-const TERMS_URL = "https://mgfitnesscenter.com.ar/terminos";
+const LOGO_URL = "/logo.png";
 
 const FONT_LINK = document.createElement("link");
 FONT_LINK.rel = "stylesheet";
@@ -22,6 +22,8 @@ GLOBAL_STYLE.textContent = `
   @keyframes slide-up { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes progress-bar { 0%{width:0%} 20%{width:35%} 60%{width:70%} 85%{width:88%} 100%{width:95%} }
+  @keyframes progress-done { from{width:95%} to{width:100%} }
   .slide-up { animation: slide-up 0.4s ease forwards; }
   .pulse-fire { animation: pulse-fire 2.5s ease infinite; }
   .pulse-btn { animation: pulse-btn 2s ease infinite; }
@@ -60,18 +62,18 @@ function isHoy(iso){const d=new Date(iso),h=new Date();return d.getDate()===h.ge
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const DISCIPLINAS=["Ninguna / Solo gym","Fútbol","Básquet","Tenis","Pádel","Natación","Ciclismo","Running","Crossfit","Artes marciales / MMA","Vóley","Rugby","Hockey","Atletismo","Otra"];
 const NIVELES=[
-  {v:"PRINCIPIANTE",d:"Ejercicios mecánicos simples · Series únicas · Descansos largos · Sin técnicas avanzadas"},
-  {v:"BÁSICO",d:"Biseries simples · Ejercicios aislados y compuestos · Musculación + aeróbico básico"},
-  {v:"INTERMEDIO",d:"Triseries · Antagonistas · Superseries · Abdominales · Propioceptivos"},
-  {v:"AVANZADO",d:"Escalonadas · Superseries complejas · Potencia · Fuerza · Técnicas de intensidad"},
+  {v:"PRINCIPIANTE",d:"Series únicas · ejercicios simples · descansos largos"},
+  {v:"BÁSICO",d:"Biseries · aislados + compuestos · musculación básica"},
+  {v:"INTERMEDIO",d:"Triseries · antagonistas · superseries · variedad"},
+  {v:"AVANZADO",d:"Escalonadas · técnicas de intensidad · potencia · fuerza"},
 ];
 
 const REFERENCIAS=[
-  {titulo:"⚡ ENERGÍA (1-10)",items:[{v:"1-2",d:"Agotado/a. Sin fuerzas. Lo mejor es descansar."},{v:"3-4",d:"Muy cansado/a. Entrenamiento muy liviano si decidís hacerlo."},{v:"5-6",d:"Regular. Podés entrenar con intensidad moderada."},{v:"7-8",d:"Bien. Buen día para entrenar con buena intensidad."},{v:"9-10",d:"Excelente. Condiciones óptimas para máxima exigencia."}]},
-  {titulo:"🥗 ALIMENTACIÓN",items:[{v:"MUY MALA",d:"Casi no comiste o comida muy poco nutritiva."},{v:"MALA",d:"Alimentación insuficiente o de baja calidad."},{v:"NORMAL",d:"Comida adecuada, sin excesos ni grandes deficiencias."},{v:"BIEN",d:"Buena alimentación, comidas completas y equilibradas."},{v:"MUY BIEN",d:"Alimentación óptima con proteínas e hidratación correctas."}]},
-  {titulo:"😴 DESCANSO",items:[{v:"1-3h",d:"Muy insuficiente. Alto riesgo de lesión y bajo rendimiento."},{v:"4-5h",d:"Poco descanso. Rendimiento y recuperación reducidos."},{v:"6-7h",d:"Descanso aceptable a bueno para la mayoría."},{v:"8h+",d:"Descanso óptimo. Recuperación completa."}]},
-  {titulo:"🔥 INTENSIDAD",items:[{v:"BAJA",d:"Ejercicio suave: movilidad, elongación, caminata regenerativa."},{v:"MEDIA",d:"Esfuerzo moderado. Podés completar la sesión con control."},{v:"ALTA",d:"Máxima exigencia. Condiciones ideales para rendir al tope."}]},
-  {titulo:"🏋️ NIVEL DE RUTINA",items:[{v:"PRINCIPIANTE",d:"Series únicas, ejercicios simples, mucho descanso entre series."},{v:"BÁSICO",d:"Biseries, mezcla de ejercicios aislados y compuestos."},{v:"INTERMEDIO",d:"Triseries, antagonistas, superseries, variedad de métodos."},{v:"AVANZADO",d:"Técnicas avanzadas de intensidad, potencia, fuerza máxima."}]},
+  {titulo:"⚡ ENERGÍA (1-10)",items:[{v:"1-2",d:"Agotado/a. Lo mejor es descansar."},{v:"3-4",d:"Muy cansado/a. Entrenamiento muy liviano."},{v:"5-6",d:"Regular. Intensidad moderada."},{v:"7-8",d:"Bien. Buen día para entrenar."},{v:"9-10",d:"Excelente. Condiciones óptimas."}]},
+  {titulo:"🥗 ALIMENTACIÓN",items:[{v:"MUY MALA",d:"Casi no comiste o comida muy poco nutritiva."},{v:"MALA",d:"Insuficiente o de baja calidad."},{v:"NORMAL",d:"Adecuada, sin excesos ni deficiencias."},{v:"BIEN",d:"Buena, comidas completas y equilibradas."},{v:"MUY BIEN",d:"Óptima con proteínas e hidratación correctas."}]},
+  {titulo:"😴 DESCANSO",items:[{v:"1-3h",d:"Muy insuficiente. Alto riesgo de lesión."},{v:"4-5h",d:"Poco descanso. Rendimiento reducido."},{v:"6-7h",d:"Descanso aceptable a bueno."},{v:"8h+",d:"Óptimo. Recuperación completa."}]},
+  {titulo:"🔥 INTENSIDAD",items:[{v:"BAJA",d:"Movilidad, elongación, caminata regenerativa."},{v:"MEDIA",d:"Esfuerzo moderado con control."},{v:"ALTA",d:"Máxima exigencia. Condiciones ideales."}]},
+  {titulo:"🏋️ NIVEL DE RUTINA",items:[{v:"PRINCIPIANTE",d:"Series únicas, ejercicios simples, mucho descanso."},{v:"BÁSICO",d:"Biseries, mezcla de aislados y compuestos."},{v:"INTERMEDIO",d:"Triseries, antagonistas, superseries."},{v:"AVANZADO",d:"Técnicas avanzadas, potencia, fuerza máxima."}]},
 ];
 
 // ─── PROMPTS ──────────────────────────────────────────────────────────────────
@@ -87,63 +89,9 @@ const SECTIONS=[
 ];
 
 function buildSystemPrompt(isDemo,incluirRutina,nivelRutina){
-  const nivelInfo=incluirRutina&&nivelRutina?`
-NIVEL DE RUTINA SOLICITADO: ${nivelRutina}
-- PRINCIPIANTE: series únicas, ejercicios mecánicos simples (sentadilla, press, remo), descansos 90-120s, sin técnicas avanzadas
-- BÁSICO: biseries simples, ejercicios aislados + compuestos, descansos 60-90s, musculación básica + aeróbico
-- INTERMEDIO: triseries, antagonistas, superseries simples, ejercicios compuestos + aislados + propioceptivos, descansos 45-60s
-- AVANZADO: series escalonadas, superseries complejas, ejercicios de potencia y fuerza, técnicas de intensidad (rest-pause, drop-set, etc.), descansos 30-45s`:"";
-
-  if(isDemo) return `Actúa como coach de entrenamiento. Versión DEMO simplificada.
-Dá una respuesta básica y breve. Al final de MOTIVO agregá: "Versión demo — la versión completa incluye análisis profundo con tu coach personal."
-FORMATO (etiquetas exactas):
-DECISIÓN PRINCIPAL:
-INTENSIDAD RECOMENDADA:
-BAJA / MEDIA / ALTA
-AJUSTE DE DESCANSO:
-AJUSTE DE ALIMENTACIÓN:
-ALERTA:
-(si aplica, sino: Ninguna)
-CONSULTAR A COACH:
-SÍ / NO
-MOTIVO:
-Sin texto extra.`;
-
-  return `Actúa como sistema experto en entrenamiento físico y toma de decisiones.
-Rol: "Coach de decisiones" — directo, sin motivación vacía.
-Trabaja SOLO con valores predefinidos.
-
-VALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+
-
-REGLAS:
-- Una decisión clara y directa
-- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso
-- Mismo grupo <48h: ALERTA
-- >6 días consecutivos: recuperación
-- Semana DESCARGA: intensidad 50-60%, volumen reducido
-- Si tiene condición médica: considerarla siempre y priorizarla
-- Si practica disciplina deportiva: orientar para complementarla
-- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo
-- Dolor: considerarlo siempre${nivelInfo}
-${incluirRutina?`
-AL GENERAR RUTINA:
-- Adaptá al nivel indicado, tiempo disponible, dolor y energía
-- Formato por ejercicio: Nombre · Series x Reps (o tiempo) · Técnica si aplica · Nota si hay dolor/precaución`:""}
-
-FORMATO (etiquetas exactas):
-DECISIÓN PRINCIPAL:
-INTENSIDAD RECOMENDADA:
-BAJA / MEDIA / ALTA
-AJUSTE DE DESCANSO:
-AJUSTE DE ALIMENTACIÓN:
-ALERTA:
-(si aplica, sino: Ninguna)
-CONSULTAR A COACH:
-SÍ / NO
-MOTIVO:
-(máx 2 líneas)
-${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel seleccionado)":""}
-Sin texto extra.`;
+  const nivelInfo=incluirRutina&&nivelRutina?`\nNIVEL DE RUTINA: ${nivelRutina}\n- PRINCIPIANTE: series únicas, ejercicios mecánicos simples, descansos 90-120s\n- BÁSICO: biseries, aislados+compuestos, descansos 60-90s\n- INTERMEDIO: triseries, antagonistas, superseries, descansos 45-60s\n- AVANZADO: escalonadas, superseries complejas, técnicas avanzadas, descansos 30-45s`:"";
+  if(isDemo)return`Actúa como coach de entrenamiento. Versión DEMO simplificada. Respuesta básica y breve. Al final de MOTIVO agregá: "Versión demo — análisis completo disponible en versión oficial."\nFORMATO:\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\nSin texto extra.`;
+  return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\nSin texto extra.`;
 }
 
 function parseResponse(text){
@@ -160,8 +108,8 @@ function parseResponse(text){
 }
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────────
-function Logo({size=140,pulse=true}){return <img src="/app/logo.png" alt="MG+IA" className={pulse?"pulse-fire":""} style={{width:size,height:"auto",objectFit:"contain",display:"block"}}/>;}
-function LogoWatermark(){return <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",pointerEvents:"none",zIndex:0,opacity:0.06}}><img src="/app/logo.png" alt="" style={{width:"500px",height:"auto"}}/></div>;}
+function Logo({size=140,pulse=true}){return <img src="/logo.png" alt="MG+IA" className={pulse?"pulse-fire":""} style={{width:size,height:"auto",objectFit:"contain",display:"block"}} onError={e=>e.target.style.display="none"}/>;}
+function LogoWatermark(){return <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",pointerEvents:"none",zIndex:0,opacity:0.06}}><img src="/logo.png" alt="" style={{width:"500px",height:"auto"}} onError={e=>e.target.style.display="none"}/></div>;}
 
 function DiasRestantesBadge({fechaExp}){
   const dias=getDiasRestantes(fechaExp);
@@ -177,20 +125,48 @@ const inputSt={width:"100%",background:"#111",border:"1px solid #2a2a2a",borderR
 const labelSt={display:"block",fontSize:"13px",fontWeight:"700",letterSpacing:"0.15em",color:"#94a3b8",marginBottom:"6px",fontFamily:"Bebas Neue",textTransform:"uppercase"};
 const cardSt={background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:"12px",padding:"18px",marginBottom:"14px"};
 
-function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDemo,isDemoBlocked}){
+// ─── LOADING BUTTON ───────────────────────────────────────────────────────────
+function LoadingButton({loading,done,onClick,children}){
+  return(
+    <div style={{position:"relative",overflow:"hidden",borderRadius:"8px",marginTop:"16px"}}>
+      <button onClick={onClick} disabled={loading} style={{width:"100%",padding:"16px",background:loading?"#1a1a1a":`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"20px",fontWeight:"900",letterSpacing:"3px",cursor:loading?"not-allowed":"pointer",fontFamily:"Bebas Neue, sans-serif",position:"relative",zIndex:1,boxShadow:loading?"none":`0 4px 24px ${C.red}66`}}>
+        {loading?"ANALIZANDO...":children}
+      </button>
+      {loading&&(
+        <div style={{position:"absolute",bottom:0,left:0,height:"4px",background:`linear-gradient(90deg,${C.green},#86efac)`,animation:"progress-bar 12s ease forwards",borderRadius:"0 0 8px 8px",zIndex:2}}/>
+      )}
+    </div>
+  );
+}
+
+// ─── SECTION CARD ─────────────────────────────────────────────────────────────
+function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDemo,isDemoBlocked,onCopyRutina}){
   const intColor=content?.includes("ALTA")?C.fire:content?.includes("MEDIA")?C.gold:C.green;
+  const[copied,setCopied]=useState(false);
+
+  const handleCopy=()=>{
+    if(content){navigator.clipboard.writeText(content).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});}
+  };
+
   if(isDemoBlocked)return(
     <div className="slide-up" style={{background:"#0a0800",border:"1px solid #92400e",borderRadius:"10px",padding:"16px",marginBottom:"10px"}}>
       <div style={{fontSize:"18px",fontWeight:"900",letterSpacing:"0.2em",color:"#b45309",marginBottom:"8px",fontFamily:"Bebas Neue",borderBottom:"1px solid #92400e",paddingBottom:"8px"}}>{icon} {label}</div>
       <div style={{display:"flex",alignItems:"center",gap:"8px",padding:"10px 12px",background:"#1a0f00",borderRadius:"6px",border:"1px solid #92400e"}}>
-        <span style={{fontSize:"18px"}}>🔒</span>
-        <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.gold,letterSpacing:"1px"}}>FUNCIÓN BLOQUEADA EN VERSIÓN DEMO</span>
+        <span>🔒</span><span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.gold,letterSpacing:"1px"}}>FUNCIÓN BLOQUEADA EN VERSIÓN DEMO</span>
       </div>
     </div>
   );
+
   return(
     <div className="slide-up" style={{background:isAlert?"#1a0505":"#0d0d0d",border:`1px solid ${isAlert?C.red:isRutina?C.blue:"#333"}`,borderRadius:"10px",padding:"16px",marginBottom:"10px"}}>
-      <div style={{fontSize:"18px",fontWeight:"900",letterSpacing:"0.2em",color:isAlert?C.red:C.fire,marginBottom:"12px",fontFamily:"Bebas Neue",borderBottom:`2px solid ${isAlert?C.red:C.fire}88`,paddingBottom:"10px"}}>{icon} {label}</div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",borderBottom:`2px solid ${isAlert?C.red:C.fire}88`,paddingBottom:"10px"}}>
+        <div style={{fontSize:"18px",fontWeight:"900",letterSpacing:"0.2em",color:isAlert?C.red:C.fire,fontFamily:"Bebas Neue"}}>{icon} {label}</div>
+        {isRutina&&content&&!isDemoBlocked&&(
+          <button onClick={handleCopy} style={{padding:"5px 12px",background:copied?"#0d2010":"#111",border:`1px solid ${copied?C.green:"#333"}`,borderRadius:"6px",color:copied?C.green:C.gray,fontSize:"11px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer",flexShrink:0}}>
+            {copied?"✅ COPIADO":"📋 COPIAR"}
+          </button>
+        )}
+      </div>
       {isDemo&&!isAlert&&<div style={{marginBottom:"10px",padding:"6px 10px",background:"#0a0800",border:"1px solid #92400e55",borderRadius:"6px",fontSize:"11px",color:"#b45309",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>⚠️ RESPUESTA SIMPLIFICADA · VERSIÓN DEMO</div>}
       <div style={{fontSize:isIntensity?"40px":"15px",fontWeight:isIntensity?"900":"400",fontFamily:isIntensity?"Bebas Neue":"Barlow, sans-serif",color:isIntensity?intColor:isAlert?"#fca5a5":C.white,lineHeight:"1.6",whiteSpace:"pre-wrap",textShadow:isIntensity?`0 0 30px ${intColor}`:"none"}}>{content}</div>
       {extra}
@@ -207,7 +183,6 @@ function Referencias({onClose}){
           <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"22px",color:C.fire,letterSpacing:"2px"}}>📖 GUÍA DE VALORES</div>
           <button onClick={onClose} style={{background:"transparent",border:"none",color:C.gray,fontSize:"22px",cursor:"pointer"}}>✕</button>
         </div>
-        <p style={{fontSize:"13px",color:C.gray,fontFamily:"Barlow, sans-serif",marginBottom:"16px",lineHeight:"1.6"}}>Cuanto más precisos sean tus datos, mejor será la decisión de la IA.</p>
         {REFERENCIAS.map(r=>(
           <div key={r.titulo} style={{marginBottom:"20px"}}>
             <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:C.gold,letterSpacing:"2px",marginBottom:"8px",borderBottom:`1px solid #333`,paddingBottom:"6px"}}>{r.titulo}</div>
@@ -227,23 +202,15 @@ function Referencias({onClose}){
 
 // ─── TÉRMINOS Y CONDICIONES MODAL ─────────────────────────────────────────────
 function TerminosModal({user,onAceptar}){
-  const [scrolled,setScrolled]=useState(false);
-  const [accepting,setAccepting]=useState(false);
-
-  const handleScroll=e=>{
-    const el=e.target;
-    if(el.scrollHeight-el.scrollTop<=el.clientHeight+50) setScrolled(true);
-  };
-
+  const[scrolled,setScrolled]=useState(false);
+  const[accepting,setAccepting]=useState(false);
+  const handleScroll=e=>{const el=e.target;if(el.scrollHeight-el.scrollTop<=el.clientHeight+50)setScrolled(true);};
   const handleAceptar=async()=>{
     setAccepting(true);
-    try{
-      await fetch(`${API}/api/aceptar-terminos`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id})});
-      onAceptar();
-    }catch{onAceptar();}
+    try{await fetch(`${API}/api/aceptar-terminos`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id})});}catch{}
+    onAceptar();
     setAccepting(false);
   };
-
   return(
     <div style={{position:"fixed",inset:0,background:"#000000f5",zIndex:3000,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}>
       <div style={{background:"#0d0d0d",border:`2px solid ${C.fire}`,borderRadius:"16px",width:"100%",maxWidth:"600px",maxHeight:"90vh",display:"flex",flexDirection:"column"}} className="slide-up">
@@ -252,41 +219,23 @@ function TerminosModal({user,onAceptar}){
           <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"20px",color:C.fire,letterSpacing:"2px",textAlign:"center"}}>TÉRMINOS Y CONDICIONES</div>
           <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.gold,letterSpacing:"2px",textAlign:"center"}}>MG+IA PERSONAL TRAINER 24/7 · v{APP_VERSION}</div>
         </div>
-
         <div onScroll={handleScroll} style={{flex:1,overflowY:"auto",padding:"20px",fontFamily:"Barlow, sans-serif",fontSize:"13px",color:C.grayL,lineHeight:"1.8"}}>
           <p style={{marginBottom:"16px",color:C.white,fontFamily:"Bebas Neue, sans-serif",fontSize:"15px"}}>LEÉ ATENTAMENTE ANTES DE CONTINUAR</p>
-
           <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>1. SERVICIO:</strong> MG+IA Personal Trainer 24/7 es una herramienta de asistencia para planificación del entrenamiento físico mediante inteligencia artificial. Titular: Marcos Giménez — CUIL 20-31996621-9 — Almafuerte, Córdoba, Argentina.</p>
-
-          <p style={{marginBottom:"12px"}}><strong style={{color:C.red}}>2. LIMITACIÓN MÉDICA (IMPORTANTE):</strong> La app NO es un servicio médico ni de salud. Las recomendaciones son orientativas y NO reemplazan la consulta con médicos, kinesiólogos ni profesionales de la salud habilitados. Ante cualquier dolor o síntoma inusual, detenés el entrenamiento inmediatamente y consultás un profesional.</p>
-
-          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>3. RESPONSABILIDAD:</strong> El titular no asume responsabilidad por lesiones, daños físicos o consecuencias negativas derivadas del uso de las recomendaciones de la app. El usuario asume responsabilidad por la veracidad de los datos ingresados.</p>
-
+          <p style={{marginBottom:"12px"}}><strong style={{color:C.red}}>2. LIMITACIÓN MÉDICA (IMPORTANTE):</strong> La app NO es un servicio médico. Las recomendaciones son orientativas y NO reemplazan la consulta con médicos, kinesiólogos ni profesionales de la salud. Ante cualquier dolor o síntoma inusual, detenés el entrenamiento y consultás un profesional.</p>
+          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>3. RESPONSABILIDAD:</strong> El titular no asume responsabilidad por lesiones o daños derivados del uso de las recomendaciones. El usuario asume responsabilidad por la veracidad de los datos ingresados.</p>
           <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>4. SUSCRIPCIÓN:</strong> 30 días corridos desde la activación. Sin reintegros una vez activada. Precio sujeto a cambios con 15 días de preaviso.</p>
-
-          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>5. CUENTA Y SEGURIDAD:</strong> Un solo dispositivo autorizado por cuenta. Prohibido compartir credenciales. El incumplimiento puede causar suspensión sin reintegro.</p>
-
-          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>6. CONSULTAS DIARIAS:</strong> Plan Standard: 2 consultas/día · Plan PRO: 5 consultas/día · Demo: 3 consultas en 24hs. Solo la primera consulta del día se registra en el historial.</p>
-
-          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>7. DATOS PERSONALES:</strong> Tratamiento conforme a Ley 25.326. Los datos son usados exclusivamente para prestar el servicio. No se comparten con terceros con fines comerciales.</p>
-
-          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>8. PROPIEDAD INTELECTUAL:</strong> La app, su código, nombre "MG+IA Personal Trainer 24/7", slogan y contenido son propiedad exclusiva de Marcos Giménez protegidos por Ley 11.723.</p>
-
-          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>9. DATOS SENSIBLES:</strong> La información sobre ciclo menstrual es voluntaria, usada solo para adaptar recomendaciones y no compartida con terceros.</p>
-
+          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>5. CUENTA Y SEGURIDAD:</strong> Un solo dispositivo autorizado por cuenta. Prohibido compartir credenciales.</p>
+          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>6. CONSULTAS DIARIAS:</strong> Plan Standard: 2/día · Plan PRO: 5/día · Demo: 3 en 24hs. Solo la primera consulta del día se registra en el historial.</p>
+          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>7. DATOS PERSONALES:</strong> Tratamiento conforme a Ley 25.326. Datos usados exclusivamente para prestar el servicio. No se comparten con terceros con fines comerciales.</p>
+          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>8. PROPIEDAD INTELECTUAL:</strong> La app, código, nombre "MG+IA Personal Trainer 24/7" y contenido son propiedad exclusiva de Marcos Giménez — Ley 11.723.</p>
+          <p style={{marginBottom:"12px"}}><strong style={{color:C.fire}}>9. DATOS SENSIBLES:</strong> La información sobre ciclo menstrual es voluntaria, solo para adaptar recomendaciones y no compartida con terceros.</p>
           <p style={{marginBottom:"24px"}}><strong style={{color:C.fire}}>10. JURISDICCIÓN:</strong> Tribunales Ordinarios de Córdoba, Argentina. Ley 24.240 de Defensa del Consumidor.</p>
-
-          <p style={{color:C.gold,fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",letterSpacing:"1px",textAlign:"center"}}>AL ACEPTAR, CONFIRMÁS HABER LEÍDO Y COMPRENDIDO ESTOS TÉRMINOS. ESTA ACEPTACIÓN TIENE VALIDEZ DE FIRMA DIGITAL CON FECHA Y HORA REGISTRADA.</p>
-
+          <p style={{color:C.gold,fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",letterSpacing:"1px",textAlign:"center"}}>AL ACEPTAR CONFIRMÁS HABER LEÍDO ESTOS TÉRMINOS. ACEPTACIÓN VÁLIDA COMO FIRMA DIGITAL CON FECHA Y HORA REGISTRADA.</p>
           {!scrolled&&<p style={{marginTop:"16px",textAlign:"center",fontSize:"12px",color:C.gray}}>↓ Scrolleá hasta el final para habilitar el botón ↓</p>}
         </div>
-
         <div style={{padding:"16px 20px",borderTop:`1px solid #222`}}>
-          {!scrolled&&(
-            <div style={{marginBottom:"10px",padding:"8px 12px",background:"#1a0f00",border:`1px solid ${C.gold}`,borderRadius:"6px",fontSize:"12px",color:C.gold,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",textAlign:"center"}}>
-              ↑ DEBÉS LEER HASTA EL FINAL PARA CONTINUAR
-            </div>
-          )}
+          {!scrolled&&<div style={{marginBottom:"10px",padding:"8px 12px",background:"#1a0f00",border:`1px solid ${C.gold}`,borderRadius:"6px",fontSize:"12px",color:C.gold,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",textAlign:"center"}}>↑ DEBÉS LEER HASTA EL FINAL PARA CONTINUAR</div>}
           <button onClick={handleAceptar} disabled={!scrolled||accepting} style={{width:"100%",padding:"14px",background:scrolled?`linear-gradient(135deg,${C.red},${C.fire})`:"#222",border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:scrolled?"pointer":"not-allowed",opacity:scrolled?1:0.5}}>
             {accepting?"REGISTRANDO...":"✅ ACEPTO LOS TÉRMINOS Y CONDICIONES"}
           </button>
@@ -299,7 +248,7 @@ function TerminosModal({user,onAceptar}){
 
 // ─── WHATSAPP ─────────────────────────────────────────────────────────────────
 function abrirWhatsApp(alerta,motivo,nombre,apellido){
-  const texto=encodeURIComponent(`🚨 *CONSULTA COACH - MG+IA PERSONAL TRAINER 24/7*\n\n👤 Usuario: ${nombre} ${apellido}\n\n⚠️ ALERTA: ${alerta||"Sin alerta"}\n\n📋 MOTIVO: ${motivo||"Sin motivo"}\n\n_Generado desde MG+IA Personal Trainer 24/7 v${APP_VERSION}_`);
+  const texto=encodeURIComponent(`🚨 *CONSULTA COACH - MG+IA PERSONAL TRAINER 24/7*\n\n👤 Usuario: ${nombre} ${apellido}\n\n⚠️ ALERTA: ${alerta||"Sin alerta"}\n\n📋 MOTIVO: ${motivo||"Sin motivo"}\n\n_MG+IA Personal Trainer 24/7 v${APP_VERSION}_`);
   window.open(`https://wa.me/${WP_NUMBER}?text=${texto}`,"_blank");
 }
 
@@ -307,47 +256,35 @@ function abrirWhatsApp(alerta,motivo,nombre,apellido){
 // LOGIN
 // ═══════════════════════════════════════════════════════════════════════════════
 function Login({onLogin}){
-  const[dni,setDni]=useState("");
-  const[password,setPassword]=useState("");
-  const[loading,setLoading]=useState(false);
-  const[error,setError]=useState(null);
-  const[bloqueado,setBloqueado]=useState(false);
-  const[dniGuardado,setDniGuardado]=useState("");
-
+  const[dni,setDni]=useState("");const[password,setPassword]=useState("");
+  const[loading,setLoading]=useState(false);const[error,setError]=useState(null);
+  const[bloqueado,setBloqueado]=useState(false);const[dniGuardado,setDniGuardado]=useState("");
   const handleLogin=async()=>{
     if(!dni||!password){setError("Ingresá tu DNI y contraseña.");return;}
     setLoading(true);setError(null);setBloqueado(false);
     try{
       const res=await fetch(`${API}/api/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dni:dni.trim(),password:password.trim(),deviceId:getDeviceId()})});
       const data=await res.json();
-      if(data.success){
-        saveSession(data.user,data.sessionToken);
-        onLogin(data.user,data.alertaVencimiento,data.sessionToken,data.dispositivoNuevo,data.isDemo,data.horasDemo,data.limiteConsultas,data.isPro,data.necesitaTerminos);
-      }else if(data.error==="DISPOSITIVO_BLOQUEADO"){setDniGuardado(dni.trim());setBloqueado(true);}
+      if(data.success){saveSession(data.user,data.sessionToken);onLogin(data.user,data.alertaVencimiento,data.sessionToken,data.dispositivoNuevo,data.isDemo,data.horasDemo,data.limiteConsultas,data.isPro,data.necesitaTerminos);}
+      else if(data.error==="DISPOSITIVO_BLOQUEADO"){setDniGuardado(dni.trim());setBloqueado(true);}
       else setError(data.error||"Credenciales inválidas");
     }catch{setError("No se puede conectar con el servidor.");}
     setLoading(false);
   };
-
   if(bloqueado)return(
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-      <LogoWatermark/>
-      <div style={{maxWidth:"400px",width:"100%",textAlign:"center",position:"relative",zIndex:1}} className="slide-up">
+      <LogoWatermark/><div style={{maxWidth:"400px",width:"100%",textAlign:"center",position:"relative",zIndex:1}} className="slide-up">
         <div style={{fontSize:"64px",marginBottom:"20px"}}>🔒</div>
         <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"28px",color:C.red,letterSpacing:"2px",marginBottom:"16px"}}>ACCESO BLOQUEADO</div>
-        <div style={{background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"12px",padding:"24px",marginBottom:"24px"}}>
-          <p style={{color:"#fca5a5",fontSize:"15px",lineHeight:"1.8",fontFamily:"Barlow, sans-serif"}}>PARA VOLVER A USAR ESTE DISPOSITIVO DEBÉS SOLICITAR AUTORIZACIÓN AL COACH. GRACIAS.</p>
-        </div>
+        <div style={{background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"12px",padding:"24px",marginBottom:"24px"}}><p style={{color:"#fca5a5",fontSize:"15px",lineHeight:"1.8",fontFamily:"Barlow, sans-serif"}}>PARA VOLVER A USAR ESTE DISPOSITIVO DEBÉS SOLICITAR AUTORIZACIÓN AL COACH. GRACIAS.</p></div>
         <button onClick={()=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent(`Hola, necesito autorización para habilitar mi dispositivo. DNI: ${dniGuardado}`)}`,"_blank")} style={{padding:"14px 24px",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer",width:"100%",marginBottom:"12px"}}>💬 CONTACTAR AL COACH</button>
         <button onClick={()=>setBloqueado(false)} style={{background:"transparent",border:"none",color:C.gray,fontSize:"13px",cursor:"pointer",fontFamily:"Barlow, sans-serif"}}>← Volver</button>
       </div>
     </div>
   );
-
   return(
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px",position:"relative",overflow:"hidden"}}>
-      <LogoWatermark/>
-      <div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at 50% 100%, #7c1d0a22 0%, transparent 70%)",pointerEvents:"none"}}/>
+      <LogoWatermark/><div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at 50% 100%, #7c1d0a22 0%, transparent 70%)",pointerEvents:"none"}}/>
       <div style={{width:"100%",maxWidth:"400px",position:"relative",zIndex:1}} className="slide-up">
         <div style={{textAlign:"center",marginBottom:"36px"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:"16px"}}><Logo size={180} pulse={true}/></div>
@@ -376,7 +313,7 @@ function CambiarPassword({user,onClose}){
   const[loading,setLoading]=useState(false);const[msg,setMsg]=useState(null);const[ok,setOk]=useState(false);
   const handleCambiar=async()=>{
     if(!actual||!nueva||!conf){setMsg({e:true,t:"Completá todos los campos"});return;}
-    if(nueva!==conf){setMsg({e:true,t:"Las contraseñas nuevas no coinciden"});return;}
+    if(nueva!==conf){setMsg({e:true,t:"Las contraseñas no coinciden"});return;}
     if(nueva.length<6){setMsg({e:true,t:"Mínimo 6 caracteres"});return;}
     setLoading(true);
     try{const res=await fetch(`${API}/api/cambiar-password`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id,passwordActual:actual,passwordNueva:nueva})});const data=await res.json();if(data.success){setOk(true);setMsg({e:false,t:"✅ Contraseña cambiada"});}else setMsg({e:true,t:data.error});}catch{setMsg({e:true,t:"Error de conexión"});}
@@ -498,7 +435,6 @@ function AdminPanel({user,onLogout}){
   const[newUser,setNewUser]=useState({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});
 
   useEffect(()=>{fetch(`${API}/api/admin/usuarios`).then(r=>r.json()).then(d=>{if(d.success)setUsuarios(d.usuarios);setLoading(false);}).catch(()=>setLoading(false));},[]);
-
   const showMsg=t=>{setMsg(t);setTimeout(()=>setMsg(null),4000);};
   const renovar=async userId=>{setRenew(userId);const res=await fetch(`${API}/api/admin/renovar`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,fecha_expiracion:data.nuevaFecha}:u));showMsg("✅ Suscripción renovada 30 días");}setRenew(null);};
   const renovarDemo=async userId=>{const res=await fetch(`${API}/api/admin/renovar-demo`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,horas:24})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,fecha_expiracion:data.nuevaFecha}:u));showMsg("✅ Demo extendido 24hs");}};
@@ -514,12 +450,11 @@ function AdminPanel({user,onLogout}){
     setCreating(true);
     const res=await fetch(`${API}/api/admin/crear-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(newUser)});
     const data=await res.json();
-    if(data.success){setUsuarios(prev=>[data.usuario,...prev]);setNewUser({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});setShowCreate(false);showMsg("✅ Socio creado correctamente");}
+    if(data.success){setUsuarios(prev=>[data.usuario,...prev]);setNewUser({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});setShowCreate(false);showMsg("✅ Socio creado");}
     else showMsg(`❌ ${data.error}`);
     setCreating(false);
   };
 
-  // Modal historial admin
   if(verHistorial){
     const u=usuarios.find(x=>x.id===verHistorial);
     return(
@@ -529,26 +464,19 @@ function AdminPanel({user,onLogout}){
             <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"20px",color:C.fire,letterSpacing:"2px"}}>📋 HISTORIAL — {u?.nombre?.toUpperCase()} {u?.apellido?.toUpperCase()}</div>
             <button onClick={()=>{setVerHistorial(null);setHistorialData([]);}} style={{background:"transparent",border:"none",color:C.gray,fontSize:"22px",cursor:"pointer"}}>✕</button>
           </div>
-          {historialData.length===0?<div style={{textAlign:"center",padding:"24px",color:C.gray}}>Sin sesiones registradas.</div>:(
-            historialData.map(s=>{
-              const parsed=parseResponse(s.response_text||"");
-              return(
-                <div key={s.id} style={{background:"#111",border:"1px solid #222",borderRadius:"8px",padding:"14px",marginBottom:"10px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"8px"}}>
-                    <div>
-                      <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:C.white}}>{s.entrenamiento}</div>
-                      <div style={{fontSize:"11px",color:C.gray,marginTop:"2px"}}>{formatDateTime(s.created_at)} · ID: <span style={{color:C.gold,fontFamily:"monospace"}}>{s.consulta_id||"—"}</span></div>
-                    </div>
-                    <div style={{display:"flex",gap:"6px"}}>
-                      {s.es_registro&&<span style={{fontSize:"10px",color:C.green,border:`1px solid ${C.green}`,borderRadius:"3px",padding:"1px 5px",fontFamily:"Bebas Neue, sans-serif"}}>REG</span>}
-                    </div>
+          {historialData.length===0?<div style={{textAlign:"center",padding:"24px",color:C.gray}}>Sin sesiones.</div>:(
+            historialData.map(s=>(
+              <div key={s.id} style={{background:"#111",border:"1px solid #222",borderRadius:"8px",padding:"14px",marginBottom:"10px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"8px"}}>
+                  <div>
+                    <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:C.white}}>{s.entrenamiento}</div>
+                    <div style={{fontSize:"11px",color:C.gray,marginTop:"2px"}}>{formatDateTime(s.created_at)} · ID: <span style={{color:C.gold,fontFamily:"monospace"}}>{s.consulta_id||"—"}</span></div>
                   </div>
-                  <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.6",whiteSpace:"pre-wrap",background:"#0a0a0a",padding:"10px",borderRadius:"6px"}}>
-                    {s.response_text||"Sin respuesta registrada"}
-                  </div>
+                  {s.es_registro&&<span style={{fontSize:"10px",color:C.green,border:`1px solid ${C.green}`,borderRadius:"3px",padding:"1px 5px",fontFamily:"Bebas Neue, sans-serif"}}>REG</span>}
                 </div>
-              );
-            })
+                <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.6",whiteSpace:"pre-wrap",background:"#0a0a0a",padding:"10px",borderRadius:"6px"}}>{s.response_text||"Sin respuesta"}</div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -565,22 +493,18 @@ function AdminPanel({user,onLogout}){
         </div>
         <button onClick={onLogout} style={{padding:"8px 16px",background:"transparent",border:`1px solid ${C.gray}`,borderRadius:"6px",color:C.gray,fontSize:"12px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>SALIR</button>
       </div>
-
       <div style={{maxWidth:"900px",margin:"0 auto",padding:"24px 16px",position:"relative",zIndex:1}}>
         {msg&&<div style={{marginBottom:"16px",padding:"12px 16px",background:msg.startsWith("✅")?"#0d2010":"#1a0505",border:`1px solid ${msg.startsWith("✅")?C.green:C.red}`,borderRadius:"8px",color:msg.startsWith("✅")?"#86efac":"#fca5a5",fontSize:"14px"}}>{msg}</div>}
-
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"10px",marginBottom:"20px"}}>
           {[{l:"SOCIOS",v:usuarios.filter(u=>!u.is_demo).length},{l:"DEMOS",v:usuarios.filter(u=>u.is_demo).length},{l:"ACTIVOS",v:usuarios.filter(u=>(getDiasRestantes(u.fecha_expiracion)||0)>0).length},{l:"SUSPENDIDOS",v:usuarios.filter(u=>u.suspendido).length}].map(s=>(
             <div key={s.l} style={{background:"#0d0d0d",border:"1px solid #222",borderRadius:"10px",padding:"14px",textAlign:"center"}}><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"32px",color:C.fire}}>{s.v}</div><div style={{fontSize:"9px",color:C.gray,letterSpacing:"0.1em"}}>{s.l}</div></div>
           ))}
         </div>
-
         <div style={{marginBottom:"20px"}}>
           <button onClick={()=>setShowCreate(!showCreate)} style={{padding:"12px 24px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
             {showCreate?"✕ CANCELAR":"+ NUEVO SOCIO / DEMO"}
           </button>
         </div>
-
         {showCreate&&(
           <div className="slide-up" style={{background:"#0d0d0d",border:`1px solid ${C.blueL}`,borderRadius:"12px",padding:"24px",marginBottom:"20px"}}>
             <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"20px",color:C.blueL,marginBottom:"16px",letterSpacing:"2px"}}>REGISTRAR NUEVO SOCIO</div>
@@ -592,15 +516,13 @@ function AdminPanel({user,onLogout}){
               <div><label style={labelSt}>ROL</label><select value={newUser.role} onChange={e=>setNewUser(p=>({...p,role:e.target.value}))} style={inputSt}><option value="usuario">Usuario</option><option value="admin">Administrador</option></select></div>
               <div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"22px"}}>
                 <Toggle value={newUser.isDemo} onChange={()=>setNewUser(p=>({...p,isDemo:!p.isDemo,role:!p.isDemo?"demo":p.role}))}/>
-                <div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.gold}}>MODO DEMO</div><div style={{fontSize:"11px",color:C.gray}}>Acceso 24hs · 3 consultas</div></div>
+                <div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.gold}}>MODO DEMO</div><div style={{fontSize:"11px",color:C.gray}}>24hs · 3 consultas</div></div>
               </div>
             </div>
             <button onClick={crearUsuario} disabled={creating} style={{marginTop:"16px",padding:"12px 28px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:creating?"not-allowed":"pointer"}}>{creating?"CREANDO...":"CREAR SOCIO"}</button>
           </div>
         )}
-
         <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",color:C.gray,letterSpacing:"2px",marginBottom:"10px"}}>SOCIOS REGISTRADOS</div>
-
         {loading?<div style={{textAlign:"center",padding:"40px",color:C.gray}}>Cargando...</div>:(
           usuarios.map(u=>{
             const dias=getDiasRestantes(u.fecha_expiracion);
@@ -618,12 +540,8 @@ function AdminPanel({user,onLogout}){
                     </div>
                     <div style={{fontSize:"12px",color:C.gray,marginTop:"2px"}}>DNI: {u.dni} · {u.role}</div>
                   </div>
-                  <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                    <DiasRestantesBadge fechaExp={u.fecha_expiracion}/>
-                    <span style={{color:C.gray,fontSize:"12px"}}>{isOpen?"▲":"▼"}</span>
-                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:"8px"}}><DiasRestantesBadge fechaExp={u.fecha_expiracion}/><span style={{color:C.gray,fontSize:"12px"}}>{isOpen?"▲":"▼"}</span></div>
                 </div>
-
                 {isOpen&&(
                   <div style={{padding:"16px",borderTop:"1px solid #1a1a1a"}}>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}}>
@@ -631,29 +549,20 @@ function AdminPanel({user,onLogout}){
                         <div key={s.l} style={{background:"#111",borderRadius:"6px",padding:"10px"}}><div style={{fontSize:"9px",color:C.gray,fontFamily:"Bebas Neue, sans-serif"}}>{s.l}</div><div style={{fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",color:C.white,marginTop:"2px"}}>{s.v}</div></div>
                       ))}
                     </div>
-
                     {u.condicion_medica&&<div style={{marginBottom:"12px",padding:"10px",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"6px",fontSize:"13px",color:"#f9a8d4",fontFamily:"Barlow, sans-serif"}}>🩺 {u.condicion_medica}</div>}
-
                     {u.device_token&&<div style={{marginBottom:"12px",padding:"10px",background:"#111",borderRadius:"6px",fontSize:"11px",color:C.gray}}>📱 Dispositivo: {u.device_registered_at?new Date(u.device_registered_at).toLocaleString("es-AR"):"—"}{u.device_locked&&<span style={{color:C.red,marginLeft:"8px"}}>⚠️ BLOQUEADO</span>}</div>}
-
                     <div style={{display:"flex",gap:"8px",flexWrap:"wrap",marginBottom:"10px"}}>
-                      {isDemo?(
-                        <button onClick={()=>renovarDemo(u.id)} style={{padding:"9px 14px",background:"linear-gradient(135deg,#92400e,#b45309)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>⏱ +24HS</button>
-                      ):(
-                        <button onClick={()=>renovar(u.id)} disabled={renewLoading===u.id} style={{padding:"9px 14px",background:renewLoading===u.id?"#222":"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{renewLoading===u.id?"...":"🔄 +30 DÍAS"}</button>
-                      )}
+                      {isDemo?<button onClick={()=>renovarDemo(u.id)} style={{padding:"9px 14px",background:"linear-gradient(135deg,#92400e,#b45309)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>⏱ +24HS</button>:<button onClick={()=>renovar(u.id)} disabled={renewLoading===u.id} style={{padding:"9px 14px",background:renewLoading===u.id?"#222":"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{renewLoading===u.id?"...":"🔄 +30 DÍAS"}</button>}
                       <button onClick={()=>enviarWP(u.nombre)} style={{padding:"9px 14px",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>💬 WP</button>
                       <button onClick={()=>verHistorialUsuario(u.id)} style={{padding:"9px 14px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📋 HISTORIAL</button>
-                      {u.device_token&&<button onClick={()=>resetDisp(u.id,u.nombre,u.apellido)} style={{padding:"9px 14px",background:u.device_locked?`linear-gradient(135deg,${C.red},#b91c1c)`:"#1a1a1a",border:`1px solid ${u.device_locked?C.red:"#333"}`,borderRadius:"6px",color:u.device_locked?C.white:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{u.device_locked?"🔒 DESBLOQ.":"📱 RESET DISP."}</button>}
+                      {u.device_token&&<button onClick={()=>resetDisp(u.id,u.nombre,u.apellido)} style={{padding:"9px 14px",background:u.device_locked?`linear-gradient(135deg,${C.red},#b91c1c)`:"#1a1a1a",border:`1px solid ${u.device_locked?C.red:"#333"}`,borderRadius:"6px",color:u.device_locked?C.white:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{u.device_locked?"🔒 DESBLOQ.":"📱 RESET"}</button>}
                       <button onClick={()=>{setResetPwdId(resetPwdId===u.id?null:u.id);setResetPwdVal("");}} style={{padding:"9px 14px",background:"#1a1a1a",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🔑 PWD</button>
                       <button onClick={()=>{setEditCondId(editCondId===u.id?null:u.id);setEditCondVal(u.condicion_medica||"");}} style={{padding:"9px 14px",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"6px",color:"#f9a8d4",fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🩺 COND.</button>
                       <button onClick={()=>suspender(u.id,!u.suspendido,`${u.nombre} ${u.apellido}`)} style={{padding:"9px 14px",background:u.suspendido?"linear-gradient(135deg,#16a34a,#15803d)":"linear-gradient(135deg,#92400e,#78350f)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{u.suspendido?"▶ ACTIVAR":"⏸ SUSPENDER"}</button>
                       <button onClick={()=>eliminar(u.id,`${u.nombre} ${u.apellido}`)} style={{padding:"9px 14px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:C.red,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🗑 ELIMINAR</button>
                     </div>
-
                     {resetPwdId===u.id&&<div className="slide-up" style={{marginBottom:"10px",display:"flex",gap:"10px"}}><input type="password" value={resetPwdVal} onChange={e=>setResetPwdVal(e.target.value)} placeholder="Nueva contraseña" style={{...inputSt,flex:1}}/><button onClick={()=>resetPwd(u.id)} style={{padding:"10px 16px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>GUARDAR</button></div>}
-
-                    {editCondId===u.id&&<div className="slide-up" style={{marginBottom:"10px"}}><label style={labelSt}>CONDICIÓN MÉDICA</label><div style={{display:"flex",gap:"10px"}}><input type="text" value={editCondVal} onChange={e=>setEditCondVal(e.target.value)} placeholder="ej: hipertensión, lesión rodilla, diabetes..." style={{...inputSt,flex:1}}/><button onClick={()=>guardarCondicion(u.id)} style={{padding:"10px 16px",background:`linear-gradient(135deg,#be185d,#9d174d)`,border:"none",borderRadius:"6px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>GUARDAR</button></div></div>}
+                    {editCondId===u.id&&<div className="slide-up" style={{marginBottom:"10px"}}><label style={labelSt}>CONDICIÓN MÉDICA</label><div style={{display:"flex",gap:"10px"}}><input type="text" value={editCondVal} onChange={e=>setEditCondVal(e.target.value)} placeholder="ej: hipertensión, lesión rodilla..." style={{...inputSt,flex:1}}/><button onClick={()=>guardarCondicion(u.id)} style={{padding:"10px 16px",background:"linear-gradient(135deg,#be185d,#9d174d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>GUARDAR</button></div></div>}
                   </div>
                 )}
               </div>
@@ -679,6 +588,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const[showRef,setShowRef]=useState(false);
   const[consultasHoy,setConsultasHoy]=useState(0);
   const[primerRegistroHecho,setPrimerRegistroHecho]=useState(false);
+  const[showTerminos,setShowTerminos]=useState(false);
   const[form,setForm]=useState({
     peso:"",descanso:"7h",energia:"7",entrenamiento:"",dolor:"",
     alimentacion:"NORMAL",tiempo:"60min",quiereRutina:false,
@@ -689,12 +599,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   useEffect(()=>{
     if(isDemo)return;
     fetch(`${API}/api/sesiones/${user.id}`).then(r=>r.json()).then(d=>{
-      if(d.success){
-        setSesiones(d.sesiones);
-        const hoy=d.sesiones.filter(s=>isHoy(s.created_at));
-        setConsultasHoy(hoy.length);
-        setPrimerRegistroHecho(hoy.some(s=>s.es_registro));
-      }
+      if(d.success){setSesiones(d.sesiones);const hoy=d.sesiones.filter(s=>isHoy(s.created_at));setConsultasHoy(hoy.length);setPrimerRegistroHecho(hoy.some(s=>s.es_registro));}
     }).catch(()=>{});
   },[user.id,isDemo]);
 
@@ -706,49 +611,25 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
 
   const buildHistoryCtx=()=>{
     if(!sesiones.length)return"Sin historial previo.";
-    return sesiones.slice(0,10).map(s=>`• ${dayLabel(s.created_at)} — Sem ${s.training_week}${s.is_deload?"[DESC]":""} — ${s.entrenamiento} | E:${s.energia} D:${s.descanso} A:${s.alimentacion}${s.hora_del_dia!==undefined?` | ${getHorarioLabel(s.hora_del_dia)}`:""}`).join("\n");
+    return sesiones.slice(0,10).map(s=>`• ${dayLabel(s.created_at)} — Sem ${s.training_week}${s.is_deload?"[DESC]":""} — ${s.entrenamiento} | E:${s.energia} D:${s.descanso} A:${s.alimentacion}`).join("\n");
   };
 
   const handleSubmit=async()=>{
     if(!form.peso||!form.entrenamiento){setError("Completá peso y entrenamiento.");return;}
-    if(!isDemo&&consultasHoy>=limiteConsultas){
-      setError(`⚠️ Límite de ${limiteConsultas} consultas diarias alcanzado.${!isPro?" Pasate al plan PRO para tener 5 consultas/día.":""} Para registrar otra sesión, contactá al coach.`);
-      return;
-    }
+    if(!isDemo&&consultasHoy>=limiteConsultas){setError(`⚠️ Límite de ${limiteConsultas} consultas diarias alcanzado.${!isPro?" Pasate al plan PRO para 5 consultas/día.":""}`);return;}
     setError(null);setLoading(true);setResult(null);
-
     const now=new Date();
     const sexoInfo=form.sexo==="mujer"?`Sexo: Mujer${form.etapaMenstrual?" — EN ETAPA MENSTRUAL ACTIVA":""}`:`Sexo: ${form.sexo==="hombre"?"Hombre":"No especificado"}`;
-    const disciplinaInfo=form.disciplina!=="Ninguna / Solo gym"?`Disciplina deportiva: ${form.disciplina} — orientar entrenamiento para complementar esta actividad`:"Sin disciplina adicional";
-    const condInfo=condicionMedica?`⚠️ CONDICIÓN MÉDICA DEL USUARIO (PRIORIDAD): ${condicionMedica} — tener en cuenta SIEMPRE al dar recomendaciones`:"";
-
-    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}
-Semana de entrenamiento: ${trainingWeek}${deload?" — SEMANA DE DESCARGA":""}
-Racha: ${streak}d
-${deload?"⚠️ SEMANA DE DESCARGA — reducir intensidad al 50-60%\n":""}${condInfo}
-
-DATOS DE HOY:
-Peso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}
-${sexoInfo}
-${disciplinaInfo}
-Entrenamiento: ${form.entrenamiento}
-Dolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}
-Tiempo: ${form.tiempo}
-Objetivo: Masa muscular, bajo % de grasa.
-
-HISTORIAL:
-${buildHistoryCtx()}`;
-
+    const disciplinaInfo=form.disciplina!=="Ninguna / Solo gym"?`Disciplina: ${form.disciplina} — orientar para complementar`:"Sin disciplina adicional";
+    const condInfo=condicionMedica?`⚠️ CONDICIÓN MÉDICA (PRIORIDAD): ${condicionMedica}`:"";
+    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n\nDatos:\nPeso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\nObjetivo: Masa muscular, bajo % grasa.\n\nHistorial:\n${buildHistoryCtx()}`;
     const system=buildSystemPrompt(isDemo,form.quiereRutina,form.quiereRutina?form.nivelRutina:null);
-
     try{
       const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg})});
       const data=await res.json();
       if(!data.success)throw new Error(data.error);
       setResult(data.text);
-
       if(!isDemo){
-        // Primera consulta del día = registro en historial
         const esRegistro=!primerRegistroHecho;
         fetch(`${API}/api/sesion`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id,sesion:{entrenamiento:form.entrenamiento,peso:parseFloat(form.peso),descanso:form.descanso,energia:parseInt(form.energia),alimentacion:form.alimentacion,dolor:form.dolor||null,tiempo:form.tiempo,response_text:data.text,training_week:trainingWeek,is_deload:deload,streak},esRegistro})}).then(r=>r.json()).then(d=>{if(d.success){setSesiones(p=>[d.sesion,...p]);setConsultasHoy(c=>c+1);if(esRegistro)setPrimerRegistroHecho(true);}}).catch(()=>{});
       }
@@ -758,9 +639,8 @@ ${buildHistoryCtx()}`;
 
   const parsed=result?parseResponse(result):{};
   const consultarCoach=parsed.consultar?.includes("SÍ");
-  const consultasRestantes=isDemo?Math.max(0,3-parseInt(localStorage.getItem("mgfc_demo_consultas")||"0")):Math.max(0,limiteConsultas-consultasHoy);
+  const consultasRestantes=Math.max(0,limiteConsultas-consultasHoy);
   const byWeek=sesiones.reduce((acc,s)=>{const k=`Semana ${s.training_week}${s.is_deload?" — DESCARGA":""}`;(acc[k]=acc[k]||[]).push(s);return acc;},{});
-
   const tabSt=active=>({flex:1,padding:"10px",border:"none",borderRadius:"6px",background:active?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",color:active?C.white:C.gray,fontSize:"12px",fontWeight:"700",letterSpacing:"1px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif"});
 
   return(
@@ -768,20 +648,17 @@ ${buildHistoryCtx()}`;
       <LogoWatermark/>
       {showRef&&<Referencias onClose={()=>setShowRef(false)}/>}
       {showPwd&&<CambiarPassword user={user} onClose={()=>setShowPwd(false)}/>}
+      {showTerminos&&<TerminosModal user={user} onAceptar={()=>setShowTerminos(false)}/>}
 
-      {/* DEMO BANNER */}
       {isDemo&&(
         <div style={{background:"linear-gradient(90deg,#92400e,#78350f)",padding:"10px 16px",borderBottom:`2px solid ${C.gold}`,position:"sticky",top:0,zIndex:200}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"8px"}}>
-            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.gold,letterSpacing:"2px"}} className="blink">
-              🎯 VERSIÓN DEMO · {consultasRestantes} CONSULTA{consultasRestantes!==1?"S":""} RESTANTE{consultasRestantes!==1?"S":""}
-            </span>
+            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.gold,letterSpacing:"2px"}} className="blink">🎯 VERSIÓN DEMO · {consultasRestantes} CONSULTA{consultasRestantes!==1?"S":""} RESTANTE{consultasRestantes!==1?"S":""}</span>
             <button onClick={()=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero contratar MG+IA Personal Trainer 24/7.")}`,"_blank")} style={{padding:"4px 14px",background:C.gold,border:"none",borderRadius:"4px",color:"#000",fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>CONTRATAR →</button>
           </div>
         </div>
       )}
 
-      {/* Header */}
       <div style={{background:"#0a0a0a",borderBottom:"2px solid #1a1a1a",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:isDemo?"44px":0,zIndex:100}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <Logo size={40} pulse={false}/>
@@ -798,29 +675,15 @@ ${buildHistoryCtx()}`;
       </div>
 
       <div style={{maxWidth:"640px",margin:"0 auto",padding:"16px",position:"relative",zIndex:1}}>
-
-        {/* Condición médica aviso */}
-        {condicionMedica&&(
-          <div style={{marginBottom:"12px",padding:"10px 14px",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"8px",fontSize:"12px",color:"#f9a8d4",fontFamily:"Barlow, sans-serif"}}>
-            🩺 <strong>Condición médica registrada:</strong> {condicionMedica} — la IA la considera en todas las decisiones
-          </div>
-        )}
-
+        {condicionMedica&&<div style={{marginBottom:"12px",padding:"10px 14px",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"8px",fontSize:"12px",color:"#f9a8d4",fontFamily:"Barlow, sans-serif"}}>🩺 <strong>Condición médica:</strong> {condicionMedica}</div>}
         <div style={{marginBottom:"14px"}}>
           <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.white,letterSpacing:"2px"}}>HOLA, {user.nombre?.toUpperCase()} 💪</div>
           <div style={{fontSize:"12px",color:C.gray}}>{user.apellido} · DNI {user.dni} · {isPro?"⭐ PRO":"Plan Standard"}</div>
         </div>
 
-        {/* Consultas hoy */}
-        {!isDemo&&(
-          <div style={{marginBottom:"12px",padding:"10px 14px",background:"#0d0d0d",border:`1px solid ${consultasHoy>=limiteConsultas?C.red:C.fire}`,borderRadius:"8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.grayL,letterSpacing:"1px"}}>
-              CONSULTAS HOY: <span style={{color:consultasHoy>=limiteConsultas?C.red:C.fire}}>{consultasHoy}/{limiteConsultas}</span>
-              {primerRegistroHecho&&<span style={{marginLeft:"8px",fontSize:"10px",color:C.green}}>✅ 1RA SESIÓN REGISTRADA</span>}
-            </div>
-            {consultasHoy>0&&!primerRegistroHecho&&<span style={{fontSize:"10px",color:C.gray}}>Solo la 1ra se guarda en historial</span>}
-          </div>
-        )}
+        {!isDemo&&<div style={{marginBottom:"12px",padding:"10px 14px",background:"#0d0d0d",border:`1px solid ${consultasHoy>=limiteConsultas?C.red:C.fire}`,borderRadius:"8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.grayL,letterSpacing:"1px"}}>CONSULTAS HOY: <span style={{color:consultasHoy>=limiteConsultas?C.red:C.fire}}>{consultasHoy}/{limiteConsultas}</span>{primerRegistroHecho&&<span style={{marginLeft:"8px",fontSize:"10px",color:C.green}}>✅ SESIÓN REGISTRADA</span>}</div>
+        </div>}
 
         {deload&&<div className="slide-up" style={{marginBottom:"12px",padding:"12px 16px",background:"#0a1628",border:`1px solid ${C.blueL}`,borderRadius:"8px"}}><span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:C.blueL,letterSpacing:"2px"}}>🔄 SEMANA {trainingWeek} — DESCARGA ACTIVA</span></div>}
 
@@ -843,7 +706,6 @@ ${buildHistoryCtx()}`;
               <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"12px"}}>
                 <button onClick={()=>setShowRef(true)} style={{padding:"6px 14px",background:"#111",border:`1px solid ${C.gold}`,borderRadius:"6px",color:C.gold,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📖 GUÍA DE VALORES</button>
               </div>
-
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
                 <div><label style={labelSt}>Peso (kg)</label><input name="peso" value={form.peso} onChange={handleChange} placeholder="76.5" style={inputSt}/></div>
                 <div><label style={labelSt}>Descanso</label><select name="descanso" value={form.descanso} onChange={handleChange} style={inputSt}>{["1h","2h","3h","4h","5h","6h","7h","8h+"].map(v=><option key={v}>{v}</option>)}</select></div>
@@ -851,12 +713,7 @@ ${buildHistoryCtx()}`;
                 <div><label style={labelSt}>Alimentación</label><select name="alimentacion" value={form.alimentacion} onChange={handleChange} style={inputSt}>{["MUY MALA","MALA","NORMAL","BIEN","MUY BIEN"].map(v=><option key={v}>{v}</option>)}</select></div>
                 <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Entrenamiento del día</label><input name="entrenamiento" value={form.entrenamiento} onChange={handleChange} placeholder="ej: musculación, glúteos y femorales" style={inputSt}/></div>
                 <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Dolor (opcional)</label><input name="dolor" value={form.dolor} onChange={handleChange} placeholder="ej: hombro derecho leve / ninguno" style={inputSt}/></div>
-                <div style={{gridColumn:"1/-1"}}>
-                  <label style={labelSt}>¿Practicás alguna disciplina deportiva?</label>
-                  <select name="disciplina" value={form.disciplina} onChange={handleChange} style={inputSt}>{DISCIPLINAS.map(d=><option key={d}>{d}</option>)}</select>
-                </div>
-
-                {/* Sexo */}
+                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>¿Practicás alguna disciplina deportiva?</label><select name="disciplina" value={form.disciplina} onChange={handleChange} style={inputSt}>{DISCIPLINAS.map(d=><option key={d}>{d}</option>)}</select></div>
                 <div style={{gridColumn:"1/-1"}}>
                   <label style={labelSt}>Sexo</label>
                   <div style={{display:"flex",gap:"10px"}}>
@@ -867,33 +724,28 @@ ${buildHistoryCtx()}`;
                     ))}
                   </div>
                 </div>
-
                 {form.sexo==="mujer"&&(
                   <div style={{gridColumn:"1/-1",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"8px",padding:"14px"}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px"}}>
                       <div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:"#f9a8d4",letterSpacing:"1px"}}>🌸 ETAPA MENSTRUAL ACTIVA</div><div style={{fontSize:"12px",color:"#9d174d",marginTop:"2px"}}>La IA adaptará la rutina e intensidad</div></div>
                       <Toggle value={form.etapaMenstrual} onChange={()=>setForm(f=>({...f,etapaMenstrual:!f.etapaMenstrual}))}/>
                     </div>
-                    <div style={{fontSize:"11px",color:"#9d174d",fontFamily:"Barlow, sans-serif",lineHeight:"1.5"}}>ℹ️ Recomendaciones orientativas, no constituyen consejo médico. <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={{color:"#f9a8d4",textDecoration:"underline"}}>Ver Términos y Condiciones</a></div>
+                    <div style={{fontSize:"11px",color:"#9d174d",fontFamily:"Barlow, sans-serif",lineHeight:"1.5"}}>
+                      ℹ️ Recomendaciones orientativas, no constituyen consejo médico.{" "}
+                      <button onClick={()=>setShowTerminos(true)} style={{background:"transparent",border:"none",color:"#f9a8d4",textDecoration:"underline",cursor:"pointer",fontSize:"11px",fontFamily:"Barlow, sans-serif",padding:0}}>Ver Términos y Condiciones</button>
+                    </div>
                   </div>
                 )}
-
                 <div><label style={labelSt}>Tiempo disponible</label><select name="tiempo" value={form.tiempo} onChange={handleChange} style={inputSt}>{["30min","45min","60min","75min","90min","120min+"].map(v=><option key={v}>{v}</option>)}</select></div>
-
-                {/* Toggle rutina + nivel */}
-                <div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"22px"}}>
-                  {!isDemo&&<><Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/><span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span></>}
-                </div>
+                {!isDemo&&<div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"22px"}}><Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/><span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span></div>}
               </div>
 
-              {/* Selector de nivel — aparece solo con rutina activada */}
               {!isDemo&&form.quiereRutina&&(
                 <div className="slide-up" style={{marginTop:"14px",padding:"14px",background:"#0a0a0a",border:`1px solid ${C.fire}`,borderRadius:"10px"}}>
                   <label style={{...labelSt,color:C.fire,marginBottom:"10px"}}>NIVEL DE ENTRENAMIENTO</label>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
                     {NIVELES.map(n=>(
-                      <button key={n.v} onClick={()=>setForm(f=>({...f,nivelRutina:n.v}))}
-                        style={{padding:"10px",background:form.nivelRutina===n.v?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",border:`1px solid ${form.nivelRutina===n.v?C.fire:"#333"}`,borderRadius:"8px",cursor:"pointer",textAlign:"left"}}>
+                      <button key={n.v} onClick={()=>setForm(f=>({...f,nivelRutina:n.v}))} style={{padding:"10px",background:form.nivelRutina===n.v?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",border:`1px solid ${form.nivelRutina===n.v?C.fire:"#333"}`,borderRadius:"8px",cursor:"pointer",textAlign:"left"}}>
                         <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:form.nivelRutina===n.v?C.white:C.grayL,letterSpacing:"1px"}}>{n.v}</div>
                         <div style={{fontSize:"10px",color:form.nivelRutina===n.v?"#fff9":"#475569",fontFamily:"Barlow, sans-serif",marginTop:"3px",lineHeight:"1.4"}}>{n.d}</div>
                       </button>
@@ -902,13 +754,7 @@ ${buildHistoryCtx()}`;
                 </div>
               )}
 
-              {/* Aviso consultas adicionales */}
-              {!isDemo&&consultasHoy>=1&&consultasHoy<limiteConsultas&&(
-                <div style={{marginTop:"12px",padding:"10px 14px",background:"#0a0f00",border:`1px solid #365314`,borderRadius:"6px",fontSize:"12px",color:"#86efac",fontFamily:"Barlow, sans-serif"}}>
-                  ℹ️ Esta consulta es orientativa — ya registraste tu sesión del día. Si realizás otro entrenamiento hoy y querés registrarlo, contactá al coach para habilitarlo.
-                </div>
-              )}
-
+              {!isDemo&&consultasHoy>=1&&consultasHoy<limiteConsultas&&<div style={{marginTop:"12px",padding:"10px 14px",background:"#0a0f00",border:"1px solid #365314",borderRadius:"6px",fontSize:"12px",color:"#86efac",fontFamily:"Barlow, sans-serif"}}>ℹ️ Esta consulta es orientativa — ya registraste tu sesión del día.</div>}
               {!isDemo&&sesiones.length>0&&(
                 <div style={{marginTop:"12px",padding:"12px",background:"#0a0a0a",borderRadius:"8px",border:"1px solid #1a1a1a"}}>
                   <div style={{fontSize:"11px",color:C.gray,letterSpacing:"0.15em",marginBottom:"8px",fontFamily:"Bebas Neue, sans-serif"}}>🕐 ÚLTIMAS SESIONES</div>
@@ -920,19 +766,15 @@ ${buildHistoryCtx()}`;
                   ))}
                 </div>
               )}
-
               {error&&<div style={{marginTop:"12px",padding:"10px 14px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:"#fca5a5",fontSize:"13px"}}>{error}</div>}
-
-              {isDemo&&parseInt(localStorage.getItem("mgfc_demo_consultas")||"0")>=3?(
+              {isDemo&&consultasHoy>=3?(
                 <div style={{marginTop:"16px",padding:"16px",background:"#1a0f00",border:`2px solid ${C.gold}`,borderRadius:"8px",textAlign:"center"}}>
                   <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:C.gold,letterSpacing:"2px",marginBottom:"8px"}}>🔒 CONSULTAS DEMO AGOTADAS</div>
-                  <p style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",marginBottom:"12px"}}>Suscribite para acceso completo e ilimitado.</p>
+                  <p style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",marginBottom:"12px"}}>Suscribite para acceso completo.</p>
                   <button onClick={()=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero contratar MG+IA Personal Trainer 24/7.")}`,"_blank")} style={{padding:"12px 24px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>💬 CONTRATAR AHORA</button>
                 </div>
               ):(
-                <button onClick={handleSubmit} disabled={loading} style={{marginTop:"16px",width:"100%",padding:"16px",background:loading?"#222":`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"20px",fontWeight:"900",letterSpacing:"3px",cursor:loading?"not-allowed":"pointer",fontFamily:"Bebas Neue, sans-serif",boxShadow:loading?"none":`0 4px 24px ${C.red}66`}}>
-                  {loading?"ANALIZANDO...":"→ OBTENER DECISIÓN"}
-                </button>
+                <LoadingButton loading={loading} onClick={handleSubmit}>→ OBTENER DECISIÓN</LoadingButton>
               )}
             </div>
 
@@ -997,10 +839,7 @@ ${buildHistoryCtx()}`;
                         </div>
                         {isOpen&&(
                           <div style={{padding:"16px",borderTop:"1px solid #1a1a1a"}}>
-                            {/* Solo texto plano para el usuario */}
-                            <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.7",whiteSpace:"pre-wrap",background:"#0a0a0a",padding:"12px",borderRadius:"6px"}}>
-                              {s.response_text||"Sin respuesta registrada"}
-                            </div>
+                            <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.7",whiteSpace:"pre-wrap",background:"#0a0a0a",padding:"12px",borderRadius:"6px"}}>{s.response_text||"Sin respuesta registrada"}</div>
                           </div>
                         )}
                       </div>
@@ -1020,30 +859,22 @@ ${buildHistoryCtx()}`;
 // ROOT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App(){
-  const[user,setUser]=useState(null);
-  const[sessionToken,setSessionToken]=useState(null);
-  const[alertaVenc,setAlertaVenc]=useState(null);
-  const[alertaVisible,setAlertaVisible]=useState(false);
-  const[sesionCerrada,setSesionCerrada]=useState(false);
-  const[verificando,setVerificando]=useState(true);
-  const[isDemo,setIsDemo]=useState(false);
-  const[horasDemo,setHorasDemo]=useState(null);
-  const[limiteConsultas,setLimiteConsultas]=useState(2);
-  const[isPro,setIsPro]=useState(false);
+  const[user,setUser]=useState(null);const[sessionToken,setSessionToken]=useState(null);
+  const[alertaVenc,setAlertaVenc]=useState(null);const[alertaVisible,setAlertaVisible]=useState(false);
+  const[sesionCerrada,setSesionCerrada]=useState(false);const[verificando,setVerificando]=useState(true);
+  const[isDemo,setIsDemo]=useState(false);const[horasDemo,setHorasDemo]=useState(null);
+  const[limiteConsultas,setLimiteConsultas]=useState(2);const[isPro,setIsPro]=useState(false);
   const[necesitaTerminos,setNecesitaTerminos]=useState(false);
 
   useEffect(()=>{
     const saved=loadSession();
     if(saved){
-      const deviceId=getDeviceId();
-      fetch(`${API}/api/verify-session`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:saved.user.id,sessionToken:saved.token,deviceId})})
-        .then(r=>r.json())
-        .then(d=>{
+      fetch(`${API}/api/verify-session`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:saved.user.id,sessionToken:saved.token,deviceId:getDeviceId()})})
+        .then(r=>r.json()).then(d=>{
           if(d.valid){setUser(saved.user);setSessionToken(saved.token);setIsDemo(saved.user.is_demo||saved.user.role==="demo");}
-          else{clearSession();if(d.error==="SESION_CERRADA")setSesionCerrada(true);else if(d.error==="SUSPENDIDO"){clearSession();}}
+          else{clearSession();if(d.error==="SESION_CERRADA")setSesionCerrada(true);}
           setVerificando(false);
-        })
-        .catch(()=>setVerificando(false));
+        }).catch(()=>setVerificando(false));
     }else setVerificando(false);
   },[]);
 
@@ -1061,44 +892,21 @@ export default function App(){
   const handleLogin=(userData,alerta,token,dispositivoNuevo,demo,horas,limite,pro,terminos)=>{
     setUser(userData);setSessionToken(token);setSesionCerrada(false);
     setIsDemo(demo||userData.is_demo||userData.role==="demo");
-    setHorasDemo(horas||24);
-    setLimiteConsultas(limite||2);
-    setIsPro(!!pro);
-    setNecesitaTerminos(!!terminos);
+    setHorasDemo(horas||24);setLimiteConsultas(limite||2);setIsPro(!!pro);
+    setNecesitaTerminos(!!terminos&&userData.role!=="admin");
     if(alerta){setAlertaVenc(alerta);setAlertaVisible(true);}
     if(dispositivoNuevo)setTimeout(()=>alert("⚠️ Sesión anterior cerrada. Este es tu dispositivo autorizado."),500);
   };
 
   const handleLogout=()=>{clearSession();setUser(null);setSessionToken(null);setAlertaVenc(null);setAlertaVisible(false);setSesionCerrada(false);setIsDemo(false);setNecesitaTerminos(false);};
+  const handleAceptarTerminos=()=>{setNecesitaTerminos(false);const saved=loadSession();if(saved){saved.user.terminos_aceptados=true;saveSession(saved.user,saved.token);}};
 
-  const handleAceptarTerminos=()=>{
-    setNecesitaTerminos(false);
-    // Actualizar user local
-    const saved=loadSession();
-    if(saved){saved.user.terminos_aceptados=true;saveSession(saved.user,saved.token);}
-  };
+  if(verificando)return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><Logo size={100} pulse={true}/><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",color:C.gray,letterSpacing:"3px",marginTop:"16px"}}>CARGANDO...</div></div></div>);
 
-  if(verificando)return(
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{textAlign:"center"}}><Logo size={100} pulse={true}/><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",color:C.gray,letterSpacing:"3px",marginTop:"16px"}}>CARGANDO...</div></div>
-    </div>
-  );
-
-  if(sesionCerrada)return(
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-      <div style={{maxWidth:"380px",width:"100%",textAlign:"center"}}>
-        <div style={{fontSize:"50px",marginBottom:"16px"}}>📵</div>
-        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.fire,letterSpacing:"2px",marginBottom:"12px"}}>SESIÓN CERRADA</div>
-        <div style={{background:"#1a0a05",border:`1px solid ${C.fire}`,borderRadius:"10px",padding:"20px",marginBottom:"20px"}}><p style={{color:C.grayL,fontSize:"14px",lineHeight:"1.7",fontFamily:"Barlow, sans-serif"}}>Tu sesión fue cerrada porque iniciaste sesión desde otro dispositivo.</p></div>
-        <button onClick={()=>setSesionCerrada(false)} style={{padding:"14px 28px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>→ VOLVER A INGRESAR</button>
-      </div>
-    </div>
-  );
+  if(sesionCerrada)return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}><div style={{maxWidth:"380px",width:"100%",textAlign:"center"}}><div style={{fontSize:"50px",marginBottom:"16px"}}>📵</div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.fire,letterSpacing:"2px",marginBottom:"12px"}}>SESIÓN CERRADA</div><div style={{background:"#1a0a05",border:`1px solid ${C.fire}`,borderRadius:"10px",padding:"20px",marginBottom:"20px"}}><p style={{color:C.grayL,fontSize:"14px",lineHeight:"1.7",fontFamily:"Barlow, sans-serif"}}>Tu sesión fue cerrada porque iniciaste sesión desde otro dispositivo.</p></div><button onClick={()=>setSesionCerrada(false)} style={{padding:"14px 28px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>→ VOLVER A INGRESAR</button></div></div>);
 
   if(!user)return <Login onLogin={handleLogin}/>;
-
-  // Mostrar T&C si es primer inicio
-  if(necesitaTerminos&&user.role!=="admin")return <TerminosModal user={user} onAceptar={handleAceptarTerminos}/>;
+  if(necesitaTerminos)return <TerminosModal user={user} onAceptar={handleAceptarTerminos}/>;
 
   return(
     <>
@@ -1109,10 +917,7 @@ export default function App(){
         </div>
       )}
       <div style={{paddingTop:alertaVisible&&alertaVenc?"48px":0}}>
-        {user.role==="admin"
-          ?<AdminPanel user={user} onLogout={handleLogout}/>
-          :<Coach user={user} onLogout={handleLogout} isDemo={isDemo} limiteConsultas={limiteConsultas} isPro={isPro}/>
-        }
+        {user.role==="admin"?<AdminPanel user={user} onLogout={handleLogout}/>:<Coach user={user} onLogout={handleLogout} isDemo={isDemo} limiteConsultas={limiteConsultas} isPro={isPro}/>}
       </div>
     </>
   );
