@@ -1201,7 +1201,7 @@ function Landing({onIngresar}){
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700&display=swap');
         @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
         @keyframes glow-logo{0%,100%{filter:drop-shadow(0 0 24px rgba(249,115,22,.7))}50%{filter:drop-shadow(0 0 50px rgba(251,191,36,1))}}
-        @keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+        @keyframes shimmer{0%{background-position:200%}100%{background-position:0%}}
         @keyframes btn-pulse{0%,100%{box-shadow:0 4px 30px rgba(249,115,22,.65)}50%{box-shadow:0 6px 55px rgba(249,115,22,.95)}}
         @keyframes arrow{from{transform:translateX(0)}to{transform:translateX(6px)}}
       `}</style>
