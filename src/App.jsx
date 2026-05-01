@@ -1106,6 +1106,115 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
     </div>
   );
 }
+
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function Landing({onIngresar}){
+  const[slide,setSlide]=useState(0);
+  const slides=["/promo1.jpg","/promo2.jpg","/promo3.jpg","/promo4.jpg"];
+  useEffect(()=>{const t=setInterval(()=>setSlide(s=>(s+1)%slides.length),6000);return()=>clearInterval(t);},[]);
+
+  return(
+    <div style={{minHeight:"100vh",background:"#000",position:"relative",overflowX:"hidden",fontFamily:"'Barlow Condensed',sans-serif",color:"#fff"}}>
+      {/* Slideshow */}
+      {slides.map((src,i)=>(
+        <div key={i} style={{position:"fixed",inset:0,backgroundImage:`url(${src})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:slide===i?1:0,transition:"opacity 1.4s ease-in-out",zIndex:0}}/>
+      ))}
+      <div style={{position:"fixed",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.3) 40%,rgba(0,0,0,.88) 100%)",zIndex:1}}/>
+
+      {/* Content */}
+      <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 20px 130px",minHeight:"100vh"}}>
+
+        {/* Badge en construcción */}
+        <div style={{marginTop:"14px",display:"inline-flex",alignItems:"center",gap:"8px",padding:"6px 18px",borderRadius:"4px",background:"rgba(220,38,38,.15)",border:"1px solid rgba(220,38,38,.5)",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"3px",color:"#fca5a5"}}>
+          <div style={{width:"7px",height:"7px",borderRadius:"50%",background:"#dc2626",animation:"blink 1.4s ease infinite"}}/>
+          🚧 EN CONSTRUCCIÓN · UNDER CONSTRUCTION
+        </div>
+
+        {/* Logo */}
+        <div style={{marginTop:"18px",filter:"drop-shadow(0 0 30px rgba(249,115,22,.8)) drop-shadow(0 0 60px rgba(220,38,38,.5))",animation:"glow-logo 3s ease infinite"}}>
+          <img src="/logo-main.png" alt="MG+IA" style={{width:"min(300px,78vw)",height:"auto",display:"block"}}/>
+        </div>
+
+        <div style={{marginTop:"14px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
+          DECISIONES CON 100% ACTITUD!
+        </div>
+        <div style={{marginTop:"5px",textAlign:"center",fontSize:"clamp(10px,2.5vw,13px)",color:"rgba(255,255,255,.5)",letterSpacing:"2px",fontWeight:"600"}}>
+          TU PERSONAL TRAINER CON IA · 24HS · DESDE CUALQUIER LUGAR DEL MUNDO
+        </div>
+
+        {/* Features */}
+        <div style={{marginTop:"20px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",width:"100%",maxWidth:"440px"}}>
+          {[["🤖","DECISIÓN DIARIA CON IA EN 2 MIN"],["👨‍💼","COACH HUMANO REAL DISPONIBLE"],["📊","HISTORIAL Y PROGRESO"],["🌍","FUNCIONA EN CUALQUIER LUGAR"],["🛡️","100% PRIVADO Y SEGURO"],["⚡","SIN DESCARGA · ACCESO WEB"]].map(([icon,text])=>(
+            <div key={text} style={{background:"rgba(0,0,0,.55)",border:"1px solid rgba(249,115,22,.2)",borderRadius:"10px",padding:"10px",display:"flex",alignItems:"center",gap:"8px",backdropFilter:"blur(8px)"}}>
+              <span style={{fontSize:"18px",flexShrink:0}}>{icon}</span>
+              <span style={{fontSize:"11px",fontWeight:"700",color:"rgba(255,255,255,.85)",letterSpacing:".5px",lineHeight:"1.3"}}>{text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Slide dots */}
+        <div style={{marginTop:"18px",display:"flex",gap:"8px"}}>
+          {slides.map((_,i)=>(
+            <div key={i} onClick={()=>setSlide(i)} style={{height:"3px",width:slide===i?"44px":"28px",borderRadius:"2px",background:slide===i?"#f97316":"rgba(255,255,255,.2)",cursor:"pointer",transition:"all .3s"}}/>
+          ))}
+        </div>
+
+        {/* Badge gym */}
+        <div style={{marginTop:"18px",display:"flex",alignItems:"center",gap:"12px",background:"rgba(0,0,0,.55)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"12px",padding:"10px 16px",backdropFilter:"blur(8px)"}}>
+          <img src="/logo-badge.png" alt="MG+IA" style={{width:"42px",height:"auto",filter:"drop-shadow(0 0 8px rgba(249,115,22,.5));"}}/>
+          <div>
+            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"1px"}}>MG+IA PERSONAL TRAINER 24/7</div>
+            <div style={{fontSize:"10px",color:"#fbbf24",letterSpacing:"2px",marginTop:"1px"}}>RESPALDADO POR MG FITNESS CENTER · ALMAFUERTE · CBA</div>
+          </div>
+        </div>
+
+        {/* Próximamente */}
+        <div style={{marginTop:"16px",background:"rgba(0,0,0,.6)",border:"1px solid rgba(249,115,22,.25)",borderRadius:"12px",padding:"14px 20px",maxWidth:"420px",width:"100%",textAlign:"center",backdropFilter:"blur(10px)"}}>
+          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"17px",color:"#f97316",letterSpacing:"3px",marginBottom:"5px"}}>🔥 PRÓXIMAMENTE — SITIO COMPLETO</div>
+          <div style={{fontSize:"12px",color:"rgba(255,255,255,.5)",lineHeight:"1.7"}}>
+            Tienda · Videos de ejercicios · Plan alimenticio · Versión PRO<br/>
+            Mientras tanto, <strong style={{color:"#f97316"}}>la app ya está disponible.</strong>
+          </div>
+        </div>
+
+        {/* Demo WP */}
+        <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero probar 24hs gratis MG+IA Personal Trainer 24/7")}`}
+           target="_blank" rel="noopener noreferrer"
+           style={{marginTop:"14px",display:"inline-flex",alignItems:"center",gap:"8px",padding:"12px 22px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"2px",boxShadow:"0 4px 20px rgba(22,163,74,.4)"}}>
+          💬 PROBÁ 24HS GRATIS · SIN TARJETA
+        </a>
+      </div>
+
+      {/* Botón fijo */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100,padding:"10px 16px 18px",background:"linear-gradient(0deg,rgba(0,0,0,.98) 65%,transparent)"}}>
+        <button onClick={onIngresar}
+          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"14px",width:"100%",maxWidth:"500px",margin:"0 auto",padding:"17px 24px",background:"linear-gradient(135deg,#dc2626 0%,#f97316 50%,#fbbf24 100%)",backgroundSize:"200%",border:"none",borderRadius:"14px",color:"#fff",fontFamily:"Bebas Neue, sans-serif",fontSize:"21px",letterSpacing:"3px",cursor:"pointer",boxShadow:"0 4px 30px rgba(249,115,22,.65)",animation:"btn-pulse 2.5s ease infinite,shimmer 4s linear infinite"}}>
+          <span style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
+            🔥 INGRESAR A LA APP
+            <span style={{fontSize:"10px",opacity:.75,fontFamily:"Barlow Condensed, sans-serif",letterSpacing:"2px"}}>ACCESO DIRECTO · DECISIONES CON 100% ACTITUD</span>
+          </span>
+          <span style={{fontSize:"22px",animation:"arrow .8s ease infinite alternate"}}>→</span>
+        </button>
+      </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700&display=swap');
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+        @keyframes glow-logo{0%,100%{filter:drop-shadow(0 0 24px rgba(249,115,22,.7))}50%{filter:drop-shadow(0 0 50px rgba(251,191,36,1))}}
+        @keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+        @keyframes btn-pulse{0%,100%{box-shadow:0 4px 30px rgba(249,115,22,.65)}50%{box-shadow:0 6px 55px rgba(249,115,22,.95)}}
+        @keyframes arrow{from{transform:translateX(0)}to{transform:translateX(6px)}}
+      `}</style>
+    </div>
+  );
+}
+
+function LandingOrLogin({onLogin}){
+  const[showLogin,setShowLogin]=useState(false);
+  if(showLogin) return <Login onLogin={onLogin}/>;
+  return <Landing onIngresar={()=>setShowLogin(true)}/>;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App(){
   const[user,setUser]=useState(null);const[sessionToken,setSessionToken]=useState(null);
@@ -1168,7 +1277,7 @@ export default function App(){
 
   if(sesionCerrada)return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}><div style={{maxWidth:"380px",width:"100%",textAlign:"center"}}><div style={{fontSize:"50px",marginBottom:"16px"}}>📵</div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.fire,letterSpacing:"2px",marginBottom:"12px"}}>SESIÓN CERRADA</div><div style={{background:"#1a0a05",border:`1px solid ${C.fire}`,borderRadius:"10px",padding:"20px",marginBottom:"20px"}}><p style={{color:C.grayL,fontSize:"14px",lineHeight:"1.7",fontFamily:"Barlow, sans-serif"}}>Tu sesión fue cerrada porque iniciaste sesión desde otro dispositivo.</p></div><button onClick={()=>setSesionCerrada(false)} style={{padding:"14px 28px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>→ VOLVER A INGRESAR</button></div></div>);
 
-  if(!user) return <Login onLogin={handleLogin}/>;
+  if(!user) return <LandingOrLogin onLogin={handleLogin}/>;
   if(necesitaTerminos) return <TerminosModal user={user} onAceptar={handleAceptarTerminos}/>;
   if(necesitaPerfil) return <PerfilInicial user={user} onCompletar={handleCompletarPerfil}/>;
 
