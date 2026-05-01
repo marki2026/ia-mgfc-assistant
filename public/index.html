@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MG+IA Personal Trainer 24/7 — Próximamente</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;background:#000;color:#fff;font-family:'Barlow Condensed',sans-serif;overflow-x:hidden;}
+
+    .slideshow{position:fixed;inset:0;z-index:0;}
+    .slide{position:absolute;inset:0;background-size:cover;background-position:center top;opacity:0;transition:opacity 1.4s ease-in-out;}
+    .slide.active{opacity:1;}
+    .slide-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.3) 40%,rgba(0,0,0,.85) 100%);}
+
+    .content{position:relative;z-index:10;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 20px 130px;}
+
+    .badge-construccion{
+      margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+      padding:6px 18px;border-radius:4px;
+      background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.5);
+      font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:#fca5a5;
+      animation:pulse-badge 3s ease infinite;
+    }
+    @keyframes pulse-badge{0%,100%{border-color:rgba(220,38,38,.4)}50%{border-color:rgba(220,38,38,.9)}}
+    .dot{width:7px;height:7px;border-radius:50%;background:#dc2626;animation:blink 1.4s ease infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+    .logo-wrap{
+      margin-top:18px;
+      filter:drop-shadow(0 0 30px rgba(249,115,22,.8)) drop-shadow(0 0 60px rgba(220,38,38,.5));
+      animation:glow-logo 3s ease infinite;
+    }
+    @keyframes glow-logo{
+      0%,100%{filter:drop-shadow(0 0 24px rgba(249,115,22,.7)) drop-shadow(0 0 50px rgba(220,38,38,.4))}
+      50%{filter:drop-shadow(0 0 50px rgba(251,191,36,1)) drop-shadow(0 0 100px rgba(249,115,22,.6))}
+    }
+    .logo-wrap img{width:min(300px,78vw);height:auto;display:block;}
+
+    .headline{
+      margin-top:16px;text-align:center;
+      font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,4.5vw,26px);letter-spacing:4px;
+      background:linear-gradient(90deg,#f97316,#fbbf24,#f97316);background-size:200%;
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      animation:shimmer 3s linear infinite;
+    }
+    @keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+    .sub-head{margin-top:6px;text-align:center;font-size:clamp(11px,3vw,14px);color:rgba(255,255,255,.55);letter-spacing:2px;font-weight:600;}
+
+    .features{
+      margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%;max-width:460px;
+    }
+    .feat{
+      background:rgba(0,0,0,.55);border:1px solid rgba(249,115,22,.2);border-radius:10px;
+      padding:11px;display:flex;align-items:center;gap:9px;backdrop-filter:blur(8px);
+    }
+    .feat-icon{font-size:20px;flex-shrink:0;}
+    .feat-text{font-size:11px;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:.5px;line-height:1.3;}
+
+    .indicators{margin-top:20px;display:flex;gap:8px;}
+    .ind{width:28px;height:3px;border-radius:2px;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s;}
+    .ind.active{background:#f97316;width:44px;}
+
+    .badge-logo{
+      margin-top:20px;display:flex;align-items:center;gap:12px;
+      background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.1);border-radius:12px;
+      padding:11px 16px;backdrop-filter:blur(8px);
+    }
+    .badge-logo img{width:44px;height:auto;filter:drop-shadow(0 0 8px rgba(249,115,22,.5));}
+    .badge-logo-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;}
+    .badge-logo-sub{font-size:10px;color:#fbbf24;letter-spacing:2px;margin-top:1px;}
+
+    .coming-soon{
+      margin-top:18px;background:rgba(0,0,0,.6);border:1px solid rgba(249,115,22,.25);
+      border-radius:12px;padding:14px 20px;backdrop-filter:blur(10px);max-width:420px;width:100%;text-align:center;
+    }
+    .cs-title{font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f97316;letter-spacing:3px;margin-bottom:5px;}
+    .cs-sub{font-size:12px;color:rgba(255,255,255,.5);line-height:1.7;}
+
+    .btn-fixed{
+      position:fixed;bottom:0;left:0;right:0;z-index:100;
+      padding:10px 16px 18px;
+      background:linear-gradient(0deg,rgba(0,0,0,.98) 65%,transparent);
+    }
+    .btn-app{
+      display:flex;align-items:center;justify-content:center;gap:14px;
+      width:100%;max-width:500px;margin:0 auto;
+      padding:17px 24px;
+      background:linear-gradient(135deg,#dc2626 0%,#f97316 50%,#fbbf24 100%);
+      background-size:200%;
+      border:none;border-radius:14px;color:#fff;text-decoration:none;
+      font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:3px;
+      cursor:pointer;
+      box-shadow:0 4px 30px rgba(249,115,22,.65),0 0 0 1px rgba(255,255,255,.08);
+      animation:btn-pulse 2.5s ease infinite,btn-shimmer 4s linear infinite;
+    }
+    @keyframes btn-pulse{0%,100%{box-shadow:0 4px 30px rgba(249,115,22,.65)}50%{box-shadow:0 6px 55px rgba(249,115,22,.95),0 0 40px rgba(220,38,38,.5)}}
+    @keyframes btn-shimmer{0%{background-position:0%}100%{background-position:200%}}
+    .btn-inner{display:flex;flex-direction:column;align-items:center;gap:1px;}
+    .btn-sub{font-size:10px;opacity:.75;font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;}
+    .btn-arrow{font-size:24px;animation:arrow 0.8s ease infinite alternate;}
+    @keyframes arrow{from{transform:translateX(0)}to{transform:translateX(6px)}}
+
+    .demo-btn{
+      margin-top:16px;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:12px 22px;
+      background:linear-gradient(135deg,#16a34a,#15803d);
+      border-radius:10px;color:#fff;text-decoration:none;
+      font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;
+      box-shadow:0 4px 20px rgba(22,163,74,.45);
+    }
+
+    #particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;}
+    .p{position:absolute;border-radius:50%;animation:float-p linear infinite;opacity:0;}
+    @keyframes float-p{0%{transform:translateY(100vh);opacity:0}10%{opacity:.5}90%{opacity:.2}100%{transform:translateY(-80px);opacity:0}}
+  </style>
+</head>
+<body>
+<div id="particles"></div>
+
+<div class="slideshow" id="slideshow">
+  <div class="slide active" style="background-image:url('/promo1.jpg')"><div class="slide-overlay"></div></div>
+  <div class="slide" style="background-image:url('/promo2.jpg')"><div class="slide-overlay"></div></div>
+  <div class="slide" style="background-image:url('/promo3.jpg')"><div class="slide-overlay"></div></div>
+  <div class="slide" style="background-image:url('/promo4.jpg')"><div class="slide-overlay"></div></div>
+</div>
+
+<div class="content">
+
+  <div class="badge-construccion">
+    <div class="dot"></div>
+    🚧 EN CONSTRUCCIÓN &nbsp;·&nbsp; UNDER CONSTRUCTION
+  </div>
+
+  <div class="logo-wrap">
+    <img src="/logo-main.png" alt="MG+IA Personal Trainer 24/7"/>
+  </div>
+
+  <div class="headline">DECISIONES CON 100% ACTITUD!</div>
+  <div class="sub-head">TU PERSONAL TRAINER CON IA · 24HS · 365 DÍAS · DESDE CUALQUIER LUGAR DEL MUNDO</div>
+
+  <div class="features">
+    <div class="feat"><span class="feat-icon">🤖</span><span class="feat-text">DECISIÓN DIARIA CON IA EN 2 MINUTOS</span></div>
+    <div class="feat"><span class="feat-icon">👨‍💼</span><span class="feat-text">COACH HUMANO REAL SIEMPRE DISPONIBLE</span></div>
+    <div class="feat"><span class="feat-icon">📊</span><span class="feat-text">HISTORIAL Y PROGRESO PERSONALIZADO</span></div>
+    <div class="feat"><span class="feat-icon">🌍</span><span class="feat-text">FUNCIONA EN CUALQUIER LUGAR DEL MUNDO</span></div>
+    <div class="feat"><span class="feat-icon">🛡️</span><span class="feat-text">100% PRIVADO Y SEGURO</span></div>
+    <div class="feat"><span class="feat-icon">⚡</span><span class="feat-text">SIN DESCARGA · ACCESO WEB INSTANTÁNEO</span></div>
+  </div>
+
+  <div class="indicators" id="indicators">
+    <div class="ind active" onclick="goSlide(0)"></div>
+    <div class="ind" onclick="goSlide(1)"></div>
+    <div class="ind" onclick="goSlide(2)"></div>
+    <div class="ind" onclick="goSlide(3)"></div>
+  </div>
+
+  <div class="badge-logo">
+    <img src="/logo-badge.png" alt="MG+IA"/>
+    <div>
+      <div class="badge-logo-name">MG+IA PERSONAL TRAINER 24/7</div>
+      <div class="badge-logo-sub">RESPALDADO POR MG FITNESS CENTER · ALMAFUERTE · CÓRDOBA · ARGENTINA</div>
+    </div>
+  </div>
+
+  <div class="coming-soon">
+    <div class="cs-title">🔥 PRÓXIMAMENTE — SITIO COMPLETO</div>
+    <div class="cs-sub">
+      Tienda de productos · Videos de ejercicios · Plan alimenticio · Versión PRO<br/>
+      Mientras tanto, <strong style="color:#f97316">la app ya está disponible.</strong> Empezá hoy.
+    </div>
+  </div>
+
+  <a href="https://wa.me/543571587003?text=Hola!%20Quiero%20probar%2024hs%20gratis%20MG%2BIA%20Personal%20Trainer%2024%2F7"
+     target="_blank" class="demo-btn">
+    💬 PROBÁ 24HS GRATIS · SIN TARJETA · SIN COMPROMISO
+  </a>
+
+</div>
+
+<div class="btn-fixed">
+  <a href="/app" class="btn-app">
+    <span class="btn-inner">
+      🔥 INGRESAR A LA APP
+      <span class="btn-sub">ACCESO DIRECTO · DECISIONES CON 100% ACTITUD</span>
+    </span>
+    <span class="btn-arrow">→</span>
+  </a>
+</div>
+
+<script>
+let current=0;
+const slides=document.querySelectorAll('.slide');
+const inds=document.querySelectorAll('.ind');
+
+function goSlide(n){
+  slides[current].classList.remove('active');
+  inds[current].classList.remove('active');
+  current=n;
+  slides[current].classList.add('active');
+  inds[current].classList.add('active');
+}
+
+let timer=setInterval(()=>goSlide((current+1)%slides.length),6000);
+
+let sx=0;
+document.addEventListener('touchstart',e=>sx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-sx;
+  if(Math.abs(dx)>50){
+    clearInterval(timer);
+    goSlide(dx<0?(current+1)%slides.length:(current-1+slides.length)%slides.length);
+    timer=setInterval(()=>goSlide((current+1)%slides.length),6000);
+  }
+});
+
+const pc=document.getElementById('particles');
+for(let i=0;i<16;i++){
+  const p=document.createElement('div');
+  p.className='p';
+  const s=Math.random()*4+1;
+  p.style.cssText=`left:${Math.random()*100}vw;width:${s}px;height:${s}px;background:${Math.random()>.5?'#f97316':'#fbbf24'};animation-duration:${Math.random()*10+8}s;animation-delay:${Math.random()*10}s;`;
+  pc.appendChild(p);
+}
+</script>
+</body>
+</html>
