@@ -1405,7 +1405,7 @@ export default function App(){
     setHorasDemo(horas||24);setLimiteConsultas(limite||2);setIsPro(!!pro);
     const needTerminos=!!terminos&&userData.role!=="admin";
     setNecesitaTerminos(needTerminos);
-    setNecesitaPerfil(!needTerminos&&!userData.perfil_completado&&userData.role!=="admin"&&userData.role!=="demo");
+    setNecesitaPerfil(false); // deshabilitado hasta agregar campo en Supabase
     if(alerta){setAlertaVenc(alerta);setAlertaVisible(true);}
     if(dispositivoNuevo)setTimeout(()=>alert("⚠️ Sesión anterior cerrada. Este es tu dispositivo autorizado."),500);
   };
@@ -1416,7 +1416,7 @@ export default function App(){
     const saved=loadSession();
     if(saved){saved.user.terminos_aceptados=true;saveSession(saved.user,saved.token);}
     // Después de T&C verificar si necesita completar perfil
-    if(user&&!user.perfil_completado&&user.role!=="admin"&&user.role!=="demo") setNecesitaPerfil(true);
+    // setNecesitaPerfil deshabilitado
   };
   const handleCompletarPerfil=()=>{
     setNecesitaPerfil(false);
