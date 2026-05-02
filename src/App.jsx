@@ -1235,54 +1235,15 @@ function Landing({onIngresar}){
           🚧 EN CONSTRUCCIÓN · UNDER CONSTRUCTION
         </div>
 
+        {/* Logo */}
+        <div style={{filter:"drop-shadow(0 0 30px rgba(249,115,22,.8)) drop-shadow(0 0 60px rgba(220,38,38,.5))",animation:"glow-logo 3s ease infinite",marginTop:"18px"}}>
+          <img src="/logo-main.png" alt="MG+IA" style={{width:"min(280px,72vw)",height:"auto",display:"block"}}/>
+        </div>
+
         {/* BADGE LANZAMIENTO + COUNTDOWN */}
-        <div style={{marginTop:"18px",width:"100%",maxWidth:"440px",padding:"0 8px"}}>
+        <div style={{marginTop:"16px",width:"100%",maxWidth:"440px",padding:"0 8px"}}>
           <LaunchBadge/>
         </div>
-
-        {/* Logo + Badge lanzamiento */}
-        <div style={{position:"relative",display:"inline-block",marginTop:"18px"}}>
-          <div style={{filter:"drop-shadow(0 0 30px rgba(249,115,22,.8)) drop-shadow(0 0 60px rgba(220,38,38,.5))",animation:"glow-logo 3s ease infinite"}}>
-            <img src="/logo-main.png" alt="MG+IA" style={{width:"min(280px,72vw)",height:"auto",display:"block"}}/>
-          </div>
-
-          {/* BADGE LANZAMIENTO */}
-          <div style={{
-            position:"absolute",bottom:"5px",right:"-8px",
-            background:"linear-gradient(135deg,#7f1d1d,#dc2626)",
-            border:"2px solid #fbbf24",
-            borderRadius:"10px",padding:"7px 11px",minWidth:"135px",
-            boxShadow:"0 0 20px rgba(220,38,38,.9),0 0 40px rgba(251,191,36,.5)",
-            animation:"badge-pulse 1.4s ease infinite,badge-float 3s ease-in-out infinite",
-            zIndex:20,
-          }}>
-            <div style={{position:"absolute",left:"-9px",top:"50%",transform:"translateY(-50%)",
-              width:0,height:0,borderTop:"9px solid transparent",borderBottom:"9px solid transparent",borderRight:"9px solid #dc2626"}}/>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"9px",color:"#fbbf24",letterSpacing:"2px",textAlign:"center"}}>🚀 LANZAMIENTO</div>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"19px",color:"#fff",letterSpacing:"2px",textAlign:"center",lineHeight:1,textShadow:"0 0 10px rgba(251,191,36,.8)"}}>OFICIAL</div>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"12px",color:"#fbbf24",letterSpacing:"1px",textAlign:"center",marginTop:"2px"}}>LUNES 4 DE MAYO</div>
-            <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"9px",color:"rgba(255,255,255,.6)",textAlign:"center",marginTop:"1px"}}>12:00HS · ONLINE</div>
-          </div>
-        </div>
-
-        {/* COUNTDOWN */}
-        {!countdown.done?(
-          <div style={{marginTop:"16px",width:"100%",maxWidth:"380px",background:"rgba(0,0,0,.75)",border:"2px solid rgba(251,191,36,.35)",borderRadius:"14px",padding:"12px 14px",backdropFilter:"blur(10px)",textAlign:"center"}}>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:"#fbbf24",letterSpacing:"3px",marginBottom:"10px"}}>⏱ TIEMPO AL LANZAMIENTO OFICIAL</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"6px"}}>
-              {[{v:countdown.d,l:"DÍAS"},{v:countdown.h,l:"HORAS"},{v:countdown.m,l:"MIN"},{v:countdown.s,l:"SEG"}].map(({v,l})=>(
-                <div key={l} style={{background:"rgba(220,38,38,.15)",border:"1px solid rgba(220,38,38,.35)",borderRadius:"8px",padding:"8px 4px"}}>
-                  <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(26px,7vw,40px)",color:"#f97316",lineHeight:1,textShadow:"0 0 16px rgba(249,115,22,.7)"}}>{String(v).padStart(2,"0")}</div>
-                  <div style={{fontSize:"9px",color:"rgba(255,255,255,.45)",letterSpacing:"1px",marginTop:"2px"}}>{l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ):(
-          <div style={{marginTop:"16px",padding:"12px 24px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"12px",textAlign:"center",boxShadow:"0 0 30px rgba(22,163,74,.6)"}}>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"22px",color:"#fff",letterSpacing:"3px"}}>🎉 ¡ESTAMOS EN VIVO!</div>
-          </div>
-        )}
 
         <div style={{marginTop:"14px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
           DECISIONES CON 100% ACTITUD!
