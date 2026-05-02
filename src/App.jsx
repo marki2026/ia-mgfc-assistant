@@ -1107,7 +1107,123 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   );
 }
 
+// ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
+function useCountdown(){
+  const target=new Date('2026-05-04T12:00:00-03:00');
+  const calc=()=>{const diff=target-new Date();if(diff<=0)return{d:0,h:0,m:0,s:0,done:true};return{d:Math.floor(diff/86400000),h:Math.floor((diff%86400000)/3600000),m:Math.floor((diff%3600000)/60000),s:Math.floor((diff%60000)/1000),done:false};};
+  const[time,setTime]=useState(calc);
+  useEffect(()=>{const t=setInterval(()=>setTime(calc()),1000);return()=>clearInterval(t);},[]);
+  return time;
+}
+
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+// ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
+function useCountdown(){
+  const TARGET = new Date('2026-05-04T12:00:00-03:00').getTime();
+  const calc=()=>{
+    const diff=TARGET-Date.now();
+    if(diff<=0) return null;
+    return{
+      d:Math.floor(diff/86400000),
+      h:Math.floor((diff%86400000)/3600000),
+      m:Math.floor((diff%3600000)/60000),
+      s:Math.floor((diff%60000)/1000),
+    };
+  };
+  const[time,setTime]=useState(calc);
+  useEffect(()=>{const t=setInterval(()=>setTime(calc()),1000);return()=>clearInterval(t);},[]);
+  return time;
+}
+
+function LaunchBadge(){
+  const time=useCountdown();
+  const[tilt,setTilt]=useState(false);
+  useEffect(()=>{const t=setInterval(()=>setTilt(v=>!v),800);return()=>clearInterval(t);},[]);
+
+  if(!time) return(
+    // Cuenta llegó a cero — cartel verde neón
+    <div style={{
+      margin:"0 auto",maxWidth:"420px",width:"100%",
+      padding:"18px 24px",borderRadius:"14px",
+      background:"rgba(0,30,0,.85)",
+      border:"2px solid #22c55e",
+      boxShadow:"0 0 20px #22c55e,0 0 40px #22c55e88,0 0 80px #22c55e44",
+      textAlign:"center",
+      animation:"neon-green 1.2s ease infinite",
+    }}>
+      <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(22px,6vw,34px)",color:"#22c55e",letterSpacing:"3px",textShadow:"0 0 20px #22c55e,0 0 40px #22c55e",animation:"neon-text 1.2s ease infinite"}}>
+        ✅ YA PODÉS ADQUIRIR TU MEMBRESÍA!
+      </div>
+      <div style={{marginTop:"8px",fontSize:"14px",color:"rgba(255,255,255,.7)",fontFamily:"Barlow, sans-serif"}}>
+        MG+IA Personal Trainer 24/7 — Ya está disponible
+      </div>
+      <a href={`https://wa.me/543571587003?text=${encodeURIComponent("Hola! Quiero adquirir mi membresía de MG+IA Personal Trainer 24/7")}`}
+         target="_blank" rel="noopener noreferrer"
+         style={{display:"inline-flex",alignItems:"center",gap:"8px",marginTop:"12px",padding:"12px 24px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",letterSpacing:"2px"}}>
+        💬 QUIERO MI MEMBRESÍA →
+      </a>
+      <style>{`@keyframes neon-green{0%,100%{box-shadow:0 0 20px #22c55e,0 0 40px #22c55e88}50%{box-shadow:0 0 40px #22c55e,0 0 80px #22c55e,0 0 120px #22c55e66}}@keyframes neon-text{0%,100%{text-shadow:0 0 20px #22c55e,0 0 40px #22c55e}50%{text-shadow:0 0 40px #22c55e,0 0 80px #4ade80}}`}</style>
+    </div>
+  );
+
+  const pad=n=>String(n).padStart(2,'0');
+
+  return(
+    <div style={{margin:"0 auto",maxWidth:"440px",width:"100%",position:"relative"}}>
+      {/* Badge principal */}
+      <div style={{
+        background:"linear-gradient(135deg,#7f1d1d,#dc2626,#991b1b)",
+        border:"3px solid #fbbf24",
+        borderRadius:"16px",
+        padding:"16px 20px",
+        textAlign:"center",
+        boxShadow:"0 0 24px rgba(220,38,38,.8),0 0 48px rgba(220,38,38,.4),inset 0 1px 0 rgba(255,255,255,.2)",
+        animation:"badge-tilt 0.8s ease infinite",
+        transform:tilt?"rotate(-1.5deg) scale(1.02)":"rotate(1deg) scale(1)",
+        transition:"transform 0.4s ease",
+      }}>
+        {/* Estrella destellante */}
+        <div style={{position:"absolute",top:"-14px",right:"16px",fontSize:"28px",animation:"star-spin 2s linear infinite"}}>⭐</div>
+        <div style={{position:"absolute",top:"-14px",left:"16px",fontSize:"22px",animation:"star-spin 2s linear infinite reverse"}}>✨</div>
+
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:"#fbbf24",letterSpacing:"4px",marginBottom:"2px"}}>
+          🚀 LANZAMIENTO OFICIAL
+        </div>
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(26px,7vw,38px)",color:"#fff",letterSpacing:"2px",lineHeight:"1",textShadow:"0 2px 8px rgba(0,0,0,.5)"}}>
+          LUNES 4 DE MAYO
+        </div>
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:"#fca5a5",letterSpacing:"2px",marginTop:"2px"}}>
+          12:00 HS · mgfitnesscenter.com.ar
+        </div>
+
+        {/* Countdown */}
+        <div style={{marginTop:"12px",display:"flex",justifyContent:"center",gap:"8px"}}>
+          {[{v:time.d,l:"DÍAS"},{v:time.h,l:"HS"},{v:time.m,l:"MIN"},{v:time.s,l:"SEG"}].map(({v,l},i)=>(
+            <div key={l} style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+              <div style={{
+                background:"rgba(0,0,0,.5)",border:"1px solid rgba(251,191,36,.5)",borderRadius:"8px",
+                padding:"6px 10px",minWidth:"52px",
+                fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(22px,6vw,32px)",color:"#fbbf24",
+                textShadow:"0 0 12px #fbbf24",lineHeight:"1",
+                animation:l==="SEG"?"sec-pulse 1s ease infinite":"none",
+              }}>
+                {pad(v)}
+              </div>
+              <div style={{fontSize:"9px",color:"rgba(255,255,255,.6)",letterSpacing:"1px",marginTop:"3px",fontFamily:"Bebas Neue, sans-serif"}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes badge-tilt{0%,100%{box-shadow:0 0 24px rgba(220,38,38,.8),0 0 48px rgba(220,38,38,.4)}50%{box-shadow:0 0 40px rgba(251,191,36,.9),0 0 80px rgba(220,38,38,.6)}}
+        @keyframes star-spin{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.3)}100%{transform:rotate(360deg) scale(1)}}
+        @keyframes sec-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+      `}</style>
+    </div>
+  );
+}
+
 function Landing({onIngresar}){
   const[slide,setSlide]=useState(0);
   const slides=["/promo1.jpg","/promo2.jpg","/promo3.jpg","/promo4.jpg"];
@@ -1115,13 +1231,11 @@ function Landing({onIngresar}){
 
   return(
     <div style={{minHeight:"100vh",background:"#000",position:"relative",overflowX:"hidden",fontFamily:"'Barlow Condensed',sans-serif",color:"#fff"}}>
-      {/* Slideshow */}
       {slides.map((src,i)=>(
         <div key={i} style={{position:"fixed",inset:0,backgroundImage:`url(${src})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:slide===i?1:0,transition:"opacity 1.4s ease-in-out",zIndex:0}}/>
       ))}
       <div style={{position:"fixed",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.3) 40%,rgba(0,0,0,.88) 100%)",zIndex:1}}/>
 
-      {/* Content */}
       <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 20px 130px",minHeight:"100vh"}}>
 
         {/* Badge en construcción */}
@@ -1130,10 +1244,54 @@ function Landing({onIngresar}){
           🚧 EN CONSTRUCCIÓN · UNDER CONSTRUCTION
         </div>
 
-        {/* Logo */}
-        <div style={{marginTop:"18px",filter:"drop-shadow(0 0 30px rgba(249,115,22,.8)) drop-shadow(0 0 60px rgba(220,38,38,.5))",animation:"glow-logo 3s ease infinite"}}>
-          <img src="/logo-main.png" alt="MG+IA" style={{width:"min(300px,78vw)",height:"auto",display:"block"}}/>
+        {/* BADGE LANZAMIENTO + COUNTDOWN */}
+        <div style={{marginTop:"18px",width:"100%",maxWidth:"440px",padding:"0 8px"}}>
+          <LaunchBadge/>
         </div>
+
+        {/* Logo + Badge lanzamiento */}
+        <div style={{position:"relative",display:"inline-block",marginTop:"18px"}}>
+          <div style={{filter:"drop-shadow(0 0 30px rgba(249,115,22,.8)) drop-shadow(0 0 60px rgba(220,38,38,.5))",animation:"glow-logo 3s ease infinite"}}>
+            <img src="/logo-main.png" alt="MG+IA" style={{width:"min(280px,72vw)",height:"auto",display:"block"}}/>
+          </div>
+
+          {/* BADGE LANZAMIENTO */}
+          <div style={{
+            position:"absolute",bottom:"5px",right:"-8px",
+            background:"linear-gradient(135deg,#7f1d1d,#dc2626)",
+            border:"2px solid #fbbf24",
+            borderRadius:"10px",padding:"7px 11px",minWidth:"135px",
+            boxShadow:"0 0 20px rgba(220,38,38,.9),0 0 40px rgba(251,191,36,.5)",
+            animation:"badge-pulse 1.4s ease infinite,badge-float 3s ease-in-out infinite",
+            zIndex:20,
+          }}>
+            <div style={{position:"absolute",left:"-9px",top:"50%",transform:"translateY(-50%)",
+              width:0,height:0,borderTop:"9px solid transparent",borderBottom:"9px solid transparent",borderRight:"9px solid #dc2626"}}/>
+            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"9px",color:"#fbbf24",letterSpacing:"2px",textAlign:"center"}}>🚀 LANZAMIENTO</div>
+            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"19px",color:"#fff",letterSpacing:"2px",textAlign:"center",lineHeight:1,textShadow:"0 0 10px rgba(251,191,36,.8)"}}>OFICIAL</div>
+            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"12px",color:"#fbbf24",letterSpacing:"1px",textAlign:"center",marginTop:"2px"}}>LUNES 4 DE MAYO</div>
+            <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"9px",color:"rgba(255,255,255,.6)",textAlign:"center",marginTop:"1px"}}>12:00HS · ONLINE</div>
+          </div>
+        </div>
+
+        {/* COUNTDOWN */}
+        {!countdown.done?(
+          <div style={{marginTop:"16px",width:"100%",maxWidth:"380px",background:"rgba(0,0,0,.75)",border:"2px solid rgba(251,191,36,.35)",borderRadius:"14px",padding:"12px 14px",backdropFilter:"blur(10px)",textAlign:"center"}}>
+            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:"#fbbf24",letterSpacing:"3px",marginBottom:"10px"}}>⏱ TIEMPO AL LANZAMIENTO OFICIAL</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"6px"}}>
+              {[{v:countdown.d,l:"DÍAS"},{v:countdown.h,l:"HORAS"},{v:countdown.m,l:"MIN"},{v:countdown.s,l:"SEG"}].map(({v,l})=>(
+                <div key={l} style={{background:"rgba(220,38,38,.15)",border:"1px solid rgba(220,38,38,.35)",borderRadius:"8px",padding:"8px 4px"}}>
+                  <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(26px,7vw,40px)",color:"#f97316",lineHeight:1,textShadow:"0 0 16px rgba(249,115,22,.7)"}}>{String(v).padStart(2,"0")}</div>
+                  <div style={{fontSize:"9px",color:"rgba(255,255,255,.45)",letterSpacing:"1px",marginTop:"2px"}}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ):(
+          <div style={{marginTop:"16px",padding:"12px 24px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"12px",textAlign:"center",boxShadow:"0 0 30px rgba(22,163,74,.6)"}}>
+            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"22px",color:"#fff",letterSpacing:"3px"}}>🎉 ¡ESTAMOS EN VIVO!</div>
+          </div>
+        )}
 
         <div style={{marginTop:"14px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
           DECISIONES CON 100% ACTITUD!
@@ -1204,6 +1362,8 @@ function Landing({onIngresar}){
         @keyframes shimmer{0%{background-position:200%}100%{background-position:0%}}
         @keyframes btn-pulse{0%,100%{box-shadow:0 4px 30px rgba(249,115,22,.65)}50%{box-shadow:0 6px 55px rgba(249,115,22,.95)}}
         @keyframes arrow{from{transform:translateX(0)}to{transform:translateX(6px)}}
+        @keyframes badge-pulse{0%,100%{box-shadow:0 0 20px rgba(220,38,38,.9),0 0 40px rgba(251,191,36,.5);border-color:#fbbf24}50%{box-shadow:0 0 35px rgba(220,38,38,1),0 0 70px rgba(251,191,36,.8);border-color:#fff}}
+        @keyframes badge-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
       `}</style>
     </div>
   );
