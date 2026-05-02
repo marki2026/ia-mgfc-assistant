@@ -1107,15 +1107,6 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   );
 }
 
-// ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
-function useCountdown(){
-  const target=new Date('2026-05-04T12:00:00-03:00');
-  const calc=()=>{const diff=target-new Date();if(diff<=0)return{d:0,h:0,m:0,s:0,done:true};return{d:Math.floor(diff/86400000),h:Math.floor((diff%86400000)/3600000),m:Math.floor((diff%3600000)/60000),s:Math.floor((diff%60000)/1000),done:false};};
-  const[time,setTime]=useState(calc);
-  useEffect(()=>{const t=setInterval(()=>setTime(calc()),1000);return()=>clearInterval(t);},[]);
-  return time;
-}
-
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 // ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
 function useCountdown(){
