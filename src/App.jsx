@@ -568,6 +568,7 @@ function AdminPanel({user,onLogout}){
   const[msg,setMsg]=useState(null);const[resetPwdId,setResetPwdId]=useState(null);const[resetPwdVal,setResetPwdVal]=useState("");
   const[editCondId,setEditCondId]=useState(null);const[editCondVal,setEditCondVal]=useState("");
   const[editPerfilId,setEditPerfilId]=useState(null);
+  const[editFechaId,setEditFechaId]=useState(null);const[editFechaVal,setEditFechaVal]=useState("");
   const[editPerfil,setEditPerfil]=useState({});
   const[verHistorial,setVerHistorial]=useState(null);const[historialData,setHistorialData]=useState([]);
   const[newUser,setNewUser]=useState({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});
@@ -592,6 +593,14 @@ function AdminPanel({user,onLogout}){
   const resetDisp=async(userId,nombre,apellido)=>{if(!window.confirm(`¿Resetear dispositivo de ${nombre} ${apellido}?`))return;const res=await fetch(`${API}/api/admin/resetear-dispositivo`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,device_token:null,device_locked:false}:u));showMsg("✅ Dispositivo reseteado");}};
   const resetPwd=async userId=>{if(!resetPwdVal||resetPwdVal.length<4){showMsg("❌ Mínimo 4 caracteres");return;}const res=await fetch(`${API}/api/admin/resetear-password`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,nuevaPassword:resetPwdVal})});const data=await res.json();if(data.success){showMsg("✅ Contraseña reseteada");setResetPwdId(null);setResetPwdVal("");}else showMsg(`❌ ${data.error}`);};
   const suspender=async(userId,suspendido,nombre)=>{if(!window.confirm(`¿${suspendido?"SUSPENDER":"REACTIVAR"} a ${nombre}?`))return;const res=await fetch(`${API}/api/admin/suspender-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,suspendido})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,suspendido}:u));showMsg(`✅ Usuario ${suspendido?"suspendido":"reactivado"}`);}};
+  const guardarFecha=async userId=>{
+    if(!editFechaVal){showMsg("❌ Seleccioná una fecha");return;}
+    const nuevaFecha=new Date(editFechaVal+"T23:59:59-03:00").toISOString();
+    const res=await fetch(`${API}/api/admin/actualizar-perfil`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,fecha_expiracion:nuevaFecha})});
+    const data=await res.json();
+    if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,fecha_expiracion:nuevaFecha}:u));showMsg("✅ Vencimiento actualizado");setEditFechaId(null);setEditFechaVal("");}
+    else showMsg(`❌ ${data.error}`);
+  };
   const guardarCondicion=async userId=>{const res=await fetch(`${API}/api/admin/actualizar-condicion`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,condicion_medica:editCondVal})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,condicion_medica:editCondVal}:u));showMsg("✅ Condición médica actualizada");setEditCondId(null);setEditCondVal("");}};
   const eliminar=async(userId,nombre)=>{
     if(!window.confirm(`¿ELIMINAR a ${nombre}? No se puede deshacer.`))return;
@@ -729,11 +738,26 @@ function AdminPanel({user,onLogout}){
                       <button onClick={()=>verHistorialUsuario(u.id)} style={{padding:"9px 14px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📋 HISTORIAL</button>
                       {u.device_token&&<button onClick={()=>resetDisp(u.id,u.nombre,u.apellido)} style={{padding:"9px 14px",background:u.device_locked?`linear-gradient(135deg,${C.red},#b91c1c)`:"#1a1a1a",border:`1px solid ${u.device_locked?C.red:"#333"}`,borderRadius:"6px",color:u.device_locked?C.white:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{u.device_locked?"🔒 DESBLOQ.":"📱 RESET"}</button>}
                       <button onClick={()=>{setResetPwdId(resetPwdId===u.id?null:u.id);setResetPwdVal("");}} style={{padding:"9px 14px",background:"#1a1a1a",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🔑 PWD</button>
+                      <button onClick={()=>{setEditFechaId(editFechaId===u.id?null:u.id);setEditFechaVal(u.fecha_expiracion?new Date(u.fecha_expiracion).toISOString().slice(0,10):"");}} style={{padding:"9px 14px",background:"#111",border:`1px solid ${C.gold}`,borderRadius:"6px",color:C.gold,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📅 VENCIMIENTO</button>
                       <button onClick={()=>{setEditCondId(editCondId===u.id?null:u.id);setEditCondVal(u.condicion_medica||"");}} style={{padding:"9px 14px",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"6px",color:"#f9a8d4",fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🩺 COND.</button>
                       <button onClick={()=>suspender(u.id,!u.suspendido,`${u.nombre} ${u.apellido}`)} style={{padding:"9px 14px",background:u.suspendido?"linear-gradient(135deg,#16a34a,#15803d)":"linear-gradient(135deg,#92400e,#78350f)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{u.suspendido?"▶ ACTIVAR":"⏸ SUSPENDER"}</button>
                       <button onClick={()=>eliminar(u.id,`${u.nombre} ${u.apellido}`)} style={{padding:"9px 14px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:C.red,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🗑 ELIMINAR</button>
                     </div>
                     {resetPwdId===u.id&&<div className="slide-up" style={{marginBottom:"10px",display:"flex",gap:"10px"}}><input type="password" value={resetPwdVal} onChange={e=>setResetPwdVal(e.target.value)} placeholder="Nueva contraseña" style={{...inputSt,flex:1}}/><button onClick={()=>resetPwd(u.id)} style={{padding:"10px 16px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>GUARDAR</button></div>}
+
+                    {editFechaId===u.id&&(
+                      <div className="slide-up" style={{marginBottom:"10px",padding:"12px",background:"#0a0a00",border:`1px solid ${C.gold}44`,borderRadius:"8px"}}>
+                        <label style={{...labelSt,color:C.gold,marginBottom:"8px"}}>📅 NUEVO VENCIMIENTO</label>
+                        <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
+                          <input type="date" value={editFechaVal} onChange={e=>setEditFechaVal(e.target.value)} style={{...inputSt,flex:1,colorScheme:"dark"}}/>
+                          <button onClick={()=>guardarFecha(u.id)} style={{padding:"10px 16px",background:`linear-gradient(135deg,${C.gold},#d97706)`,border:"none",borderRadius:"6px",color:"#000",fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer",fontWeight:"900"}}>GUARDAR</button>
+                          <button onClick={()=>setEditFechaId(null)} style={{padding:"10px 14px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",cursor:"pointer"}}>✕</button>
+                        </div>
+                        <div style={{marginTop:"6px",fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>
+                          Actual: {u.fecha_expiracion?new Date(u.fecha_expiracion).toLocaleDateString("es-AR"):"Sin fecha"}
+                        </div>
+                      </div>
+                    )}
 
                     {editPerfilId===u.id&&(
                       <div className="slide-up" style={{marginTop:"12px",background:"#0a0a0a",border:`1px solid ${C.blueL}`,borderRadius:"10px",padding:"16px"}}>
