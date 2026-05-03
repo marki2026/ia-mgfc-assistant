@@ -1363,7 +1363,7 @@ function Landing({onIngresar}){
 
         {/* Features */}
         <div style={{marginTop:"20px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",width:"100%",maxWidth:"440px"}}>
-          {[["🤖","DECISIÓN DIARIA CON IA EN 2 MIN"],["👨‍💼","COACH HUMANO REAL DISPONIBLE"],["📊","HISTORIAL Y PROGRESO"],["🌍","FUNCIONA EN CUALQUIER LUGAR"],["🛡️","100% PRIVADO Y SEGURO"],["⚡","SIN DESCARGA · ACCESO WEB"]].map(([icon,text])=>(
+          {[["🤖","ANALISIS DIARIO DEL COACH POTENCIADO CON IA EN 2 MIN"],["👨‍💼","COACH HUMANO REAL DISPONIBLE CUANDO NECESITES"],["📊","HISTORIAL Y PROGRESO"],["🌍","FUNCIONA EN CUALQUIER LUGAR"],["🛡️","100% PRIVADO Y SEGURO"],["⚡","SIN DESCARGA · ACCESO WEB"]].map(([icon,text])=>(
             <div key={text} style={{background:"rgba(0,0,0,.55)",border:"1px solid rgba(249,115,22,.2)",borderRadius:"10px",padding:"10px",display:"flex",alignItems:"center",gap:"8px",backdropFilter:"blur(8px)"}}>
               <span style={{fontSize:"18px",flexShrink:0}}>{icon}</span>
               <span style={{fontSize:"11px",fontWeight:"700",color:"rgba(255,255,255,.85)",letterSpacing:".5px",lineHeight:"1.3"}}>{text}</span>
