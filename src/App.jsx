@@ -805,6 +805,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const[expandedId,setExp]=useState(null);
   const[result,setResult]=useState(null);
   const[loading,setLoading]=useState(false);
+  const[esperandoCoach,setEsperandoCoach]=useState(false);
   const[error,setError]=useState(null);
   const[showPwd,setShowPwd]=useState(false);
   const[showRef,setShowRef]=useState(false);
@@ -859,6 +860,11 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
       const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg})});
       const data=await res.json();
       if(!data.success)throw new Error(data.error);
+      // Pantalla de espera aleatoria 4-10 segundos
+      setLoading(false);
+      setEsperandoCoach(true);
+      await new Promise(r=>setTimeout(r,(Math.random()*6+4)*1000));
+      setEsperandoCoach(false);
       setResult(data.text);
       if(!isDemo){
         const esRegistro=!primerRegistroHecho;
@@ -866,6 +872,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
       }
     }catch(err){setError(err.message||"Error al conectar.");}
     setLoading(false);
+    setEsperandoCoach(false);
   };
 
   const parsed=result?parseResponse(result):{};
@@ -1031,6 +1038,25 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
                 <LoadingButton loading={loading} onClick={handleSubmit}>→ OBTENER DECISIÓN</LoadingButton>
               )}
             </div>
+
+            {/* PANTALLA ESPERA COACH */}
+            {esperandoCoach&&(
+              <div className="slide-up" style={{marginTop:"16px",padding:"24px",background:"linear-gradient(135deg,#0a1628,#1e3a5f)",border:`2px solid ${C.blueL}`,borderRadius:"12px",textAlign:"center"}}>
+                <div style={{fontSize:"40px",marginBottom:"12px",animation:"pulse-fire 1.5s ease infinite"}}>👨‍💼</div>
+                <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:C.blueL,letterSpacing:"2px",marginBottom:"8px",animation:"blink 1.2s ease infinite"}}>
+                  ESPERANDO APROBACIÓN DEL COACH
+                </div>
+                <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",marginBottom:"16px",lineHeight:"1.6"}}>
+                  Aguardá unos segundos mientras el coach<br/>revisa y aprueba tu consulta...
+                </div>
+                <div style={{display:"flex",justifyContent:"center",gap:"8px"}}>
+                  {[0,1,2,3,4].map(i=>(
+                    <div key={i} style={{width:"8px",height:"8px",borderRadius:"50%",background:C.blueL,animation:"dot-bounce 1.2s ease infinite",animationDelay:`${i*0.2}s`}}/>
+                  ))}
+                </div>
+                <style>{`@keyframes dot-bounce{0%,100%{transform:translateY(0);opacity:.3}50%{transform:translateY(-10px);opacity:1}}`}</style>
+              </div>
+            )}
 
             {result&&(
               <div className="slide-up" style={{marginBottom:"12px",padding:"12px 16px",background:"#0a1628",border:`1px solid ${C.blueL}`,borderRadius:"8px",display:"flex",alignItems:"center",gap:"10px"}}>
@@ -1267,8 +1293,17 @@ function LaunchBadge(){
 
 function Landing({onIngresar}){
   const[slide,setSlide]=useState(0);
+  const[visitas,setVisitas]=useState(null);
   const slides=["/promo1.jpg","/promo2.jpg","/promo3.jpg","/promo4.jpg"];
   useEffect(()=>{const t=setInterval(()=>setSlide(s=>(s+1)%slides.length),6000);return()=>clearInterval(t);},[]);
+
+  // Contador de visitas via backend
+  useEffect(()=>{
+    fetch(`${API}/api/visitas`,{method:"POST",headers:{"Content-Type":"application/json"}})
+      .then(r=>r.json())
+      .then(d=>{if(d.visitas)setVisitas(d.visitas);})
+      .catch(()=>{});
+  },[]);
 
   return(
     <div style={{minHeight:"100vh",background:"#000",position:"relative",overflowX:"hidden",fontFamily:"'Barlow Condensed',sans-serif",color:"#fff"}}>
@@ -1343,6 +1378,16 @@ function Landing({onIngresar}){
            style={{marginTop:"14px",display:"inline-flex",alignItems:"center",gap:"8px",padding:"12px 22px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"2px",boxShadow:"0 4px 20px rgba(22,163,74,.4)"}}>
           💬 PROBÁ 24HS GRATIS · SIN TARJETA
         </a>
+
+        {/* Contador de visitas */}
+        {visitas&&(
+          <div style={{marginTop:"16px",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",padding:"6px 16px",background:"rgba(0,0,0,.5)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"20px",backdropFilter:"blur(8px)"}}>
+            <div style={{width:"6px",height:"6px",borderRadius:"50%",background:C.green,animation:"blink 2s ease infinite"}}/>
+            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"12px",color:"rgba(255,255,255,.5)",letterSpacing:"2px"}}>
+              👁️ {visitas.toLocaleString("es-AR")} VISITAS AL SITIO
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Botón fijo */}
