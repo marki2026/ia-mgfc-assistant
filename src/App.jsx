@@ -1379,12 +1379,12 @@ function Landing({onIngresar}){
           💬 PROBÁ 24HS GRATIS · SIN TARJETA
         </a>
 
-        {/* Contador de visitas */}
+        {/* Contador de visitas — discreto */}
         {visitas&&(
-          <div style={{marginTop:"16px",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",padding:"6px 16px",background:"rgba(0,0,0,.5)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"20px",backdropFilter:"blur(8px)"}}>
-            <div style={{width:"6px",height:"6px",borderRadius:"50%",background:C.green,animation:"blink 2s ease infinite"}}/>
-            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"12px",color:"rgba(255,255,255,.5)",letterSpacing:"2px"}}>
-              👁️ {visitas.toLocaleString("es-AR")} VISITAS AL SITIO
+          <div style={{position:"fixed",bottom:"80px",right:"12px",zIndex:50,display:"flex",alignItems:"center",gap:"5px",padding:"4px 10px",background:"rgba(0,0,0,.4)",borderRadius:"20px",backdropFilter:"blur(4px)"}}>
+            <div style={{width:"5px",height:"5px",borderRadius:"50%",background:C.green,animation:"blink 2s ease infinite"}}/>
+            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:"rgba(255,255,255,.3)",letterSpacing:"1px"}}>
+              👁️ {visitas.toLocaleString("es-AR")}
             </span>
           </div>
         )}
