@@ -1397,11 +1397,18 @@ function Landing({onIngresar}){
         </div>
 
         {/* Demo WP */}
-        <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero probar 24hs gratis MG+IA Personal Trainer 24/7")}`}
-           target="_blank" rel="noopener noreferrer"
-           style={{marginTop:"14px",display:"inline-flex",alignItems:"center",gap:"8px",padding:"12px 22px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"2px",boxShadow:"0 4px 20px rgba(22,163,74,.4)"}}>
-          💬 PROBÁ 24HS GRATIS · SIN TARJETA
-        </a>
+        <div style={{marginTop:"14px",display:"flex",gap:"10px",flexWrap:"wrap",justifyContent:"center",width:"100%",maxWidth:"440px"}}>
+          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero probar la versión DEMO de MG+IA Personal Trainer 24/7 — 24hs gratis")}`}
+             target="_blank" rel="noopener noreferrer"
+             style={{flex:1,minWidth:"140px",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",padding:"13px 16px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",letterSpacing:"1px",boxShadow:"0 4px 20px rgba(22,163,74,.4)",textAlign:"center"}}>
+            💬 QUIERO PROBAR DEMO
+          </a>
+          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero más información sobre MG+IA Personal Trainer 24/7")}`}
+             target="_blank" rel="noopener noreferrer"
+             style={{flex:1,minWidth:"140px",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",padding:"13px 16px",background:"linear-gradient(135deg,#1d4ed8,#2563eb)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",letterSpacing:"1px",boxShadow:"0 4px 20px rgba(37,99,235,.4)",textAlign:"center"}}>
+            ℹ️ QUIERO INFO
+          </a>
+        </div>
 
         {/* Contador de visitas — discreto */}
         {visitas&&(
