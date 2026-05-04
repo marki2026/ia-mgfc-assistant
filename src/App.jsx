@@ -1296,10 +1296,10 @@ function DisciplinasFan(){
       )}
 
       <div style={{width:"100%",maxWidth:"440px",marginTop:"24px"}}>
-        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:"rgba(255,255,255,.4)",letterSpacing:"3px",textAlign:"center",marginBottom:"16px"}}>
-          🎯 DISCIPLINAS DISPONIBLES
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:"rgba(255,255,255,.4)",letterSpacing:"3px",textAlign:"center",marginBottom:"16px"}}>
+          🎯 ENTRENAMIENTO ADECUADO a cualquier DISCIPLINA!
         </div>
-        <div style={{position:"relative",height:"160px",display:"flex",alignItems:"center",justifyContent:"center"}}
+        <div style={{position:"relative",height:"190px",display:"flex",alignItems:"center",justifyContent:"center"}}
           onTouchStart={onTS} onTouchEnd={onTE}>
           {visibles.map((d,pos)=>{
             const s=getStyle(pos);
@@ -1308,7 +1308,7 @@ function DisciplinasFan(){
               <div key={d.i}
                 onClick={()=>s.rel===0?setFullscreen(pos):setIdx(pos)}
                 style={{
-                  position:"absolute",width:"120px",height:"140px",borderRadius:"14px",overflow:"hidden",
+                  position:"absolute",width:"100px",height:"170px",borderRadius:"14px",overflow:"hidden",
                   background:d.hasImg?"#000":`linear-gradient(160deg,rgba(0,0,0,.8),${d.color}33)`,
                   border:`2px solid ${s.rel===0?d.color:"rgba(255,255,255,.15)"}`,
                   display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"6px",
@@ -1319,7 +1319,7 @@ function DisciplinasFan(){
                 }}>
                 {d.hasImg?(
                   <>
-                    <img src={d.img} alt={d.nombre} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:0.85}}/>
+                    <img src={d.img} alt={d.nombre} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",opacity:0.85}}/>
                     <div style={{position:"absolute",inset:0,background:"linear-gradient(0deg,rgba(0,0,0,.75) 0%,transparent 50%)"}}/>
                     <div style={{position:"relative",zIndex:1,fontFamily:"Bebas Neue, sans-serif",fontSize:"12px",color:"#fff",letterSpacing:"1px",textAlign:"center",padding:"0 6px",marginTop:"auto",paddingBottom:"8px",textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{d.nombre}</div>
                     {s.rel===0&&<div style={{position:"relative",zIndex:1,fontSize:"9px",color:`${d.color}`,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",paddingBottom:"6px"}}>TAP PARA VER</div>}
