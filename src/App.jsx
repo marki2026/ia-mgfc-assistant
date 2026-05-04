@@ -122,6 +122,7 @@ function DiasRestantesBadge({fechaExp}){
 function Toggle({value,onChange}){return <div onClick={onChange} style={{width:"48px",height:"26px",borderRadius:"13px",background:value?C.fire:"#222",border:`1px solid ${value?C.fire:"#444"}`,position:"relative",cursor:"pointer",transition:"all .2s",flexShrink:0}}><div style={{position:"absolute",top:"3px",left:value?"24px":"3px",width:"18px",height:"18px",borderRadius:"50%",background:C.white,transition:"left .2s",boxShadow:value?`0 0 8px ${C.fire}`:"none"}}/></div>;}
 
 const inputSt={width:"100%",background:"#111",border:"1px solid #2a2a2a",borderRadius:"8px",color:C.white,padding:"12px 14px",fontSize:"14px",outline:"none",fontFamily:"Barlow, sans-serif"};
+const inputDone=(val)=>({...inputSt,border:`1px solid ${val&&String(val).trim()?"#22c55e":"#2a2a2a"}`,boxShadow:val&&String(val).trim()?"0 0 0 1px #22c55e22":""});
 const labelSt={display:"block",fontSize:"13px",fontWeight:"700",letterSpacing:"0.15em",color:"#94a3b8",marginBottom:"6px",fontFamily:"Bebas Neue",textTransform:"uppercase"};
 const cardSt={background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:"12px",padding:"18px",marginBottom:"14px"};
 
@@ -572,8 +573,13 @@ function AdminPanel({user,onLogout}){
   const[editPerfil,setEditPerfil]=useState({});
   const[verHistorial,setVerHistorial]=useState(null);const[historialData,setHistorialData]=useState([]);
   const[newUser,setNewUser]=useState({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});
+  const[sesionesHoy,setSesionesHoy]=useState(new Set());
 
-  useEffect(()=>{fetch(`${API}/api/admin/usuarios`).then(r=>r.json()).then(d=>{if(d.success)setUsuarios(d.usuarios);setLoading(false);}).catch(()=>setLoading(false));},[]);
+  useEffect(()=>{
+    fetch(`${API}/api/admin/usuarios`).then(r=>r.json()).then(d=>{if(d.success)setUsuarios(d.usuarios);setLoading(false);}).catch(()=>setLoading(false));
+    // Traer qué usuarios consultaron hoy
+    fetch(`${API}/api/admin/consultas-hoy`).then(r=>r.json()).then(d=>{if(d.success)setSesionesHoy(new Set(d.userIds));}).catch(()=>{});
+  },[]);
   const showMsg=t=>{setMsg(t);setTimeout(()=>setMsg(null),4000);};
   const renovar=async userId=>{setRenew(userId);const res=await fetch(`${API}/api/admin/renovar`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,fecha_expiracion:data.nuevaFecha}:u));showMsg("✅ Suscripción renovada 30 días");}setRenew(null);};
   const renovarDemo=async userId=>{const res=await fetch(`${API}/api/admin/renovar-demo`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,horas:24})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,fecha_expiracion:data.nuevaFecha}:u));showMsg("✅ Demo extendido 24hs");}};
@@ -707,8 +713,9 @@ function AdminPanel({user,onLogout}){
             const dias=getDiasRestantes(u.fecha_expiracion);
             const isOpen=selected===u.id;
             const isDemo=u.is_demo||u.role==="demo";
+            const consultoHoy=sesionesHoy.has(u.id);
             return(
-              <div key={u.id} style={{background:"#0d0d0d",border:`1px solid ${u.suspendido?"#7f1d1d":dias!==null&&dias<0?C.red:dias!==null&&dias<=7?C.fire:isDemo?"#92400e":"#222"}`,borderRadius:"10px",marginBottom:"10px",overflow:"hidden"}}>
+              <div key={u.id} style={{background:consultoHoy?"#071207":"#0d0d0d",border:`1px solid ${u.suspendido?"#7f1d1d":consultoHoy?"#22c55e55":dias!==null&&dias<0?C.red:dias!==null&&dias<=7?C.fire:isDemo?"#92400e":"#222"}`,borderRadius:"10px",marginBottom:"10px",overflow:"hidden"}}>
                 <div onClick={()=>setSelected(isOpen?null:u.id)} style={{padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
                     <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:u.suspendido?"#64748b":C.white,letterSpacing:"1px"}}>
@@ -840,17 +847,41 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const[notaRutina,setNotaRutina]=useState("");
   const[notaGuardada,setNotaGuardada]=useState(false);
   const[sesionIdActual,setSesionIdActual]=useState(null);
-  const[form,setForm]=useState({
-    peso:"",descanso:"7h",energia:"7",entrenamiento:"",dolor:"",
-    alimentacion:"NORMAL",tiempo:"60min",quiereRutina:false,
-    sexo:"",etapaMenstrual:false,disciplina:"Ninguna / Solo gym",
-    nivelRutina:"INTERMEDIO",
+  // Cargar form desde localStorage si existe
+  const FORM_KEY=`mgfc_form_${user.id}`;
+  const savedForm=()=>{try{const s=JSON.parse(localStorage.getItem(FORM_KEY)||"null");return s||null;}catch{return null;}};
+
+  const[form,setForm]=useState(()=>{
+    const saved=savedForm();
+    return saved||{peso:"",descanso:"7h",energia:"7",entrenamiento:"",dolor:"",alimentacion:"NORMAL",tiempo:"60min",quiereRutina:false,sexo:"",etapaMenstrual:false,disciplina:"Ninguna / Solo gym",nivelRutina:"INTERMEDIO"};
   });
+
+  // Guardar form en localStorage cada vez que cambia
+  useEffect(()=>{
+    try{localStorage.setItem(FORM_KEY,JSON.stringify(form));}catch{}
+  },[form]);
 
   useEffect(()=>{
     if(isDemo)return;
     fetch(`${API}/api/sesiones/${user.id}`).then(r=>r.json()).then(d=>{
-      if(d.success){setSesiones(d.sesiones);const hoy=d.sesiones.filter(s=>isHoy(s.created_at));setConsultasHoy(hoy.length);setPrimerRegistroHecho(hoy.some(s=>s.es_registro));}
+      if(d.success){
+        setSesiones(d.sesiones);
+        const hoy=d.sesiones.filter(s=>isHoy(s.created_at));
+        setConsultasHoy(hoy.length);
+        setPrimerRegistroHecho(hoy.some(s=>s.es_registro));
+        // Pre-llenar form con última sesión si no hay datos guardados
+        if(!savedForm()&&d.sesiones.length>0){
+          const last=d.sesiones[0];
+          setForm(f=>({...f,
+            peso:last.peso?String(last.peso):"",
+            descanso:last.descanso||f.descanso,
+            entrenamiento:"", // entrenamiento siempre vacío
+            dolor:"",
+            alimentacion:last.alimentacion||f.alimentacion,
+            tiempo:last.tiempo||f.tiempo,
+          }));
+        }
+      }
     }).catch(()=>{});
   },[user.id,isDemo]);
 
@@ -983,13 +1014,13 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
                 <button onClick={()=>setShowRef(true)} style={{padding:"6px 14px",background:"#111",border:`1px solid ${C.gold}`,borderRadius:"6px",color:C.gold,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📖 GUÍA DE VALORES</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
-                <div><label style={labelSt}>Peso (kg)</label><input name="peso" value={form.peso} onChange={handleChange} placeholder="76.5" style={inputSt}/></div>
-                <div><label style={labelSt}>Descanso</label><select name="descanso" value={form.descanso} onChange={handleChange} style={inputSt}>{["1h","2h","3h","4h","5h","6h","7h","8h+"].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div><label style={labelSt}>Energía (1-10)</label><select name="energia" value={form.energia} onChange={handleChange} style={inputSt}>{[1,2,3,4,5,6,7,8,9,10].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div><label style={labelSt}>Alimentación</label><select name="alimentacion" value={form.alimentacion} onChange={handleChange} style={inputSt}>{["MUY MALA","MALA","NORMAL","BIEN","MUY BIEN"].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Entrenamiento del día</label><input name="entrenamiento" value={form.entrenamiento} onChange={handleChange} placeholder="ej: musculación, glúteos y femorales" style={inputSt}/></div>
-                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Dolor (opcional)</label><input name="dolor" value={form.dolor} onChange={handleChange} placeholder="ej: hombro derecho leve / ninguno" style={inputSt}/></div>
-                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>¿Practicás alguna disciplina deportiva?</label><select name="disciplina" value={form.disciplina} onChange={handleChange} style={inputSt}>{DISCIPLINAS.map(d=><option key={d}>{d}</option>)}</select></div>
+                <div><label style={labelSt}>Peso (kg)</label><input name="peso" value={form.peso} onChange={handleChange} placeholder="76.5" style={inputDone(form.peso)}/></div>
+                <div><label style={labelSt}>Descanso</label><select name="descanso" value={form.descanso} onChange={handleChange} style={inputDone(form.descanso)}>{["1h","2h","3h","4h","5h","6h","7h","8h+"].map(v=><option key={v}>{v}</option>)}</select></div>
+                <div><label style={labelSt}>Energía (1-10)</label><select name="energia" value={form.energia} onChange={handleChange} style={inputDone(form.energia)}>{[1,2,3,4,5,6,7,8,9,10].map(v=><option key={v}>{v}</option>)}</select></div>
+                <div><label style={labelSt}>Alimentación</label><select name="alimentacion" value={form.alimentacion} onChange={handleChange} style={inputDone(form.alimentacion)}>{["MUY MALA","MALA","NORMAL","BIEN","MUY BIEN"].map(v=><option key={v}>{v}</option>)}</select></div>
+                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Entrenamiento del día</label><input name="entrenamiento" value={form.entrenamiento} onChange={handleChange} placeholder="ej: musculación, glúteos y femorales" style={inputDone(form.entrenamiento)}/></div>
+                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Dolor (opcional)</label><input name="dolor" value={form.dolor} onChange={handleChange} placeholder="ej: hombro derecho leve / ninguno" style={inputDone(form.dolor)}/></div>
+                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>¿Practicás alguna disciplina deportiva?</label><select name="disciplina" value={form.disciplina} onChange={handleChange} style={inputDone(form.disciplina)}>{DISCIPLINAS.map(d=><option key={d}>{d}</option>)}</select></div>
                 <div style={{gridColumn:"1/-1"}}>
                   <label style={labelSt}>Sexo</label>
                   <div style={{display:"flex",gap:"10px"}}>
@@ -1258,10 +1289,10 @@ function DisciplinasFan(){
     const abs=Math.abs(rel);
     if(abs>2) return null;
     return{
-      rot:rel*18, scale:abs===0?1:abs===1?0.78:0.58,
-      z:abs===0?10:abs===1?5:1, tx:rel*80,
-      blur:abs===0?0:abs===1?1:3,
-      opacity:abs===0?1:abs===1?0.7:0.4, rel,
+      rot:rel*14, scale:abs===0?1:abs===1?0.58:0.42,
+      z:abs===0?10:abs===1?5:1, tx:rel*72,
+      blur:abs===0?0:abs===1?2:4,
+      opacity:abs===0?1:abs===1?0.55:0.35, rel,
     };
   };
 
@@ -1276,7 +1307,7 @@ function DisciplinasFan(){
           <div style={{maxWidth:"380px",width:"100%",textAlign:"center"}} className="slide-up">
             {visibles[fullscreen]?.hasImg?(
               <img src={visibles[fullscreen].img} alt={visibles[fullscreen].nombre}
-                style={{width:"100%",maxHeight:"280px",objectFit:"cover",borderRadius:"16px",marginBottom:"16px",border:`2px solid ${visibles[fullscreen].color}`}}/>
+                style={{width:"100%",aspectRatio:"9/16",objectFit:"cover",borderRadius:"16px",marginBottom:"16px",border:`2px solid ${visibles[fullscreen].color}`,maxHeight:"70vh"}}/>
             ):(
               <div style={{fontSize:"80px",marginBottom:"16px"}}>{visibles[fullscreen]?.emoji}</div>
             )}
@@ -1296,8 +1327,8 @@ function DisciplinasFan(){
       )}
 
       <div style={{width:"100%",maxWidth:"440px",marginTop:"24px"}}>
-        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:"rgba(255,255,255,.4)",letterSpacing:"3px",textAlign:"center",marginBottom:"16px"}}>
-          🎯 ENTRENAMIENTO ADECUADO a cualquier DISCIPLINA!
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:"rgba(255,255,255,.4)",letterSpacing:"3px",textAlign:"center",marginBottom:"16px"}}>
+          🎯 DISCIPLINAS DISPONIBLES
         </div>
         <div style={{position:"relative",height:"190px",display:"flex",alignItems:"center",justifyContent:"center"}}
           onTouchStart={onTS} onTouchEnd={onTE}>
@@ -1319,18 +1350,11 @@ function DisciplinasFan(){
                 }}>
                 {d.hasImg?(
                   <>
-                    <img src={d.img} alt={d.nombre} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",opacity:0.85}}/>
-                    <div style={{position:"absolute",inset:0,background:"linear-gradient(0deg,rgba(0,0,0,.75) 0%,transparent 50%)"}}/>
-                    <div style={{position:"relative",zIndex:1,fontFamily:"Bebas Neue, sans-serif",fontSize:"12px",color:"#fff",letterSpacing:"1px",textAlign:"center",padding:"0 6px",marginTop:"auto",paddingBottom:"8px",textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>{d.nombre}</div>
-                    {s.rel===0&&<div style={{position:"relative",zIndex:1,fontSize:"9px",color:`${d.color}`,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",paddingBottom:"6px"}}>TAP PARA VER</div>}
+                    <img src={d.img} alt={d.nombre} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
+                    {s.rel===0&&<div style={{position:"absolute",inset:0,background:"linear-gradient(0deg,rgba(0,0,0,.4) 0%,transparent 40%)"}}/>}
                   </>
                 ):(
-                  <>
-                    <div style={{fontSize:"34px"}}>{d.emoji}</div>
-                    <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:s.rel===0?d.color:"rgba(255,255,255,.7)",letterSpacing:"1px",textAlign:"center",padding:"0 8px",lineHeight:"1.2"}}>{d.nombre}</div>
-                    {s.rel===0&&<div style={{fontSize:"9px",color:"rgba(255,255,255,.4)",fontFamily:"Barlow, sans-serif",textAlign:"center",padding:"0 6px",lineHeight:"1.3"}}>{d.desc}</div>}
-                    {s.rel===0&&<div style={{fontSize:"9px",color:`${d.color}bb`,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>TAP PARA VER</div>}
-                  </>
+                  <div style={{fontSize:s.rel===0?"40px":"28px"}}>{d.emoji}</div>
                 )}
               </div>
             );
