@@ -1350,113 +1350,6 @@ function DisciplinasFan(){
   );
 }
 
-function DisciplinasFan(){
-  const[active,setActive]=useState(0);
-  const[fullscreen,setFullscreen]=useState(null);
-  const total=DISCIPLINAS_CARDS.length;
-
-  const prev=()=>setActive(a=>(a-1+total)%total);
-  const next=()=>setActive(a=>(a+1)%total);
-
-  // Touch swipe
-  const[tx,setTx]=useState(0);
-  const onTS=e=>setTx(e.touches[0].clientX);
-  const onTE=e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>40){dx<0?next():prev();}};
-
-  const getStyle=(i)=>{
-    const diff=((i-active+total)%total);
-    const rel=diff>total/2?diff-total:diff; // -n to n
-    const abs=Math.abs(rel);
-    if(abs>2) return null; // no render
-    const rot=rel*18;
-    const scale=abs===0?1:abs===1?0.78:0.58;
-    const z=abs===0?10:abs===1?5:1;
-    const tx=rel*80;
-    const blur=abs===0?0:abs===1?1:3;
-    const opacity=abs===0?1:abs===1?0.7:0.4;
-    return{rot,scale,z,tx,blur,opacity,rel};
-  };
-
-  return(
-    <>
-      {/* Fullscreen overlay */}
-      {fullscreen!==null&&(
-        <div onClick={()=>setFullscreen(null)}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.92)",zIndex:3000,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}
-          className="fadeIn">
-          <div style={{maxWidth:"380px",width:"100%",textAlign:"center"}} className="slide-up">
-            <div style={{fontSize:"80px",marginBottom:"16px"}}>{DISCIPLINAS_CARDS[fullscreen].emoji}</div>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"36px",color:DISCIPLINAS_CARDS[fullscreen].color,letterSpacing:"3px",marginBottom:"8px",textShadow:`0 0 30px ${DISCIPLINAS_CARDS[fullscreen].color}`}}>
-              {DISCIPLINAS_CARDS[fullscreen].nombre}
-            </div>
-            <div style={{fontSize:"15px",color:"rgba(255,255,255,.7)",fontFamily:"Barlow, sans-serif",lineHeight:"1.7",marginBottom:"24px"}}>
-              {DISCIPLINAS_CARDS[fullscreen].desc}<br/>
-              <span style={{fontSize:"13px",color:"rgba(255,255,255,.4)"}}>
-                MG+IA adapta tu rutina específicamente para esta disciplina, complementando y potenciando tu rendimiento.
-              </span>
-            </div>
-            <div style={{padding:"12px 20px",background:`${DISCIPLINAS_CARDS[fullscreen].color}22`,border:`1px solid ${DISCIPLINAS_CARDS[fullscreen].color}55`,borderRadius:"10px",fontSize:"13px",color:"rgba(255,255,255,.6)",fontFamily:"Barlow, sans-serif"}}>
-              📋 La IA considera tu disciplina en cada sesión para orientar el entrenamiento correctamente.
-            </div>
-            <div style={{marginTop:"20px",fontSize:"12px",color:"rgba(255,255,255,.3)",fontFamily:"Barlow, sans-serif"}}>Tap para cerrar</div>
-          </div>
-        </div>
-      )}
-
-      <div style={{width:"100%",maxWidth:"440px",marginTop:"24px"}}>
-        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:"rgba(255,255,255,.4)",letterSpacing:"3px",textAlign:"center",marginBottom:"16px"}}>
-          🎯 DISCIPLINAS DISPONIBLES
-        </div>
-
-        {/* Fan container */}
-        <div style={{position:"relative",height:"160px",display:"flex",alignItems:"center",justifyContent:"center",overflow:"visible"}}
-          onTouchStart={onTS} onTouchEnd={onTE}>
-          {DISCIPLINAS_CARDS.map((d,i)=>{
-            const s=getStyle(i);
-            if(!s) return null;
-            return(
-              <div key={i}
-                onClick={()=>s.rel===0?setFullscreen(i):setActive(i)}
-                style={{
-                  position:"absolute",
-                  width:"120px",height:"140px",
-                  borderRadius:"14px",
-                  background:`linear-gradient(160deg,rgba(0,0,0,.8),${d.color}33)`,
-                  border:`2px solid ${s.rel===0?d.color:"rgba(255,255,255,.15)"}`,
-                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"8px",
-                  cursor:"pointer",
-                  transition:"all .4s cubic-bezier(.34,1.56,.64,1)",
-                  transform:`translateX(${s.tx}px) scale(${s.scale}) rotate(${s.rot}deg)`,
-                  zIndex:s.z,
-                  filter:`blur(${s.blur}px)`,
-                  opacity:s.opacity,
-                  boxShadow:s.rel===0?`0 8px 32px ${d.color}66`:"none",
-                  backdropFilter:"blur(4px)",
-                }}>
-                <div style={{fontSize:"36px"}}>{d.emoji}</div>
-                <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:s.rel===0?d.color:"rgba(255,255,255,.7)",letterSpacing:"1px",textAlign:"center",padding:"0 8px",lineHeight:"1.2"}}>{d.nombre}</div>
-                {s.rel===0&&<div style={{fontSize:"9px",color:"rgba(255,255,255,.5)",fontFamily:"Barlow, sans-serif",textAlign:"center",padding:"0 6px",lineHeight:"1.3"}}>{d.desc}</div>}
-                {s.rel===0&&<div style={{fontSize:"9px",color:`${d.color}bb`,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>TAP PARA VER</div>}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Controles */}
-        <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:"20px",marginTop:"12px"}}>
-          <button onClick={prev} style={{width:"36px",height:"36px",borderRadius:"50%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",fontSize:"16px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-          <div style={{display:"flex",gap:"5px"}}>
-            {DISCIPLINAS_CARDS.map((_,i)=>(
-              <div key={i} onClick={()=>setActive(i)} style={{width:active===i?"20px":"6px",height:"6px",borderRadius:"3px",background:active===i?DISCIPLINAS_CARDS[active].color:"rgba(255,255,255,.2)",cursor:"pointer",transition:"all .3s"}}/>
-            ))}
-          </div>
-          <button onClick={next} style={{width:"36px",height:"36px",borderRadius:"50%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",fontSize:"16px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
-        </div>
-      </div>
-    </>
-  );
-}
-
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 // ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
 function useCountdown(){
@@ -1599,6 +1492,9 @@ function Landing({onIngresar}){
           <img src="/logo-main.png" alt="MG+IA" style={{width:"min(280px,72vw)",height:"auto",display:"block"}}/>
         </div>
 
+        {/* Disciplinas Fan — entre logo y countdown */}
+        <DisciplinasFan/>
+
         {/* BADGE LANZAMIENTO + COUNTDOWN */}
         <div style={{marginTop:"16px",width:"100%",maxWidth:"440px",padding:"0 8px"}}>
           <LaunchBadge/>
@@ -1627,9 +1523,6 @@ function Landing({onIngresar}){
             <div key={i} onClick={()=>setSlide(i)} style={{height:"3px",width:slide===i?"44px":"28px",borderRadius:"2px",background:slide===i?"#f97316":"rgba(255,255,255,.2)",cursor:"pointer",transition:"all .3s"}}/>
           ))}
         </div>
-
-        {/* Disciplinas Fan */}
-        <DisciplinasFan/>
 
         {/* Badge gym */}
         <div style={{marginTop:"18px",display:"flex",alignItems:"center",gap:"12px",background:"rgba(0,0,0,.55)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"12px",padding:"10px 16px",backdropFilter:"blur(8px)"}}>
