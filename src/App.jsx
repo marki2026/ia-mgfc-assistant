@@ -61,6 +61,10 @@ function isHoy(iso){const d=new Date(iso),h=new Date();return d.getDate()===h.ge
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const DISCIPLINAS=["Ninguna / Solo gym","Fútbol","Básquet","Tenis","Pádel","Natación","Ciclismo","Running","Crossfit","Artes marciales / MMA","Vóley","Rugby","Hockey","Atletismo","Otra"];
+const PROVINCIAS_AR=["Buenos Aires","CABA","Catamarca","Chaco","Chubut","Córdoba","Corrientes","Entre Ríos","Formosa","Jujuy","La Pampa","La Rioja","Mendoza","Misiones","Neuquén","Río Negro","Salta","San Juan","San Luis","Santa Cruz","Santa Fe","Santiago del Estero","Tierra del Fuego","Tucumán"];
+const EQUIPAMIENTO_OPTS=["Gym completo (máquinas + pesas libres + todo disponible)","Gym con lo básico (barras, mancuernas, máquinas básicas)","En casa — con equipamiento (pesas, bandas, TRX, etc.)","En casa — solo peso corporal (sin equipamiento)","Al aire libre / parque de calistenia"];
+const LUGAR_OPTS=["Gimnasio","Casa","Aire libre","Mixto (gym + casa/exterior)"];
+
 const NIVELES=[
   {v:"PRINCIPIANTE",d:"Series únicas · ejercicios simples · descansos largos"},
   {v:"BÁSICO",d:"Biseries · aislados + compuestos · musculación básica"},
@@ -221,6 +225,7 @@ function Referencias({onClose}){
 function TerminosModal({user,onAceptar}){
   const[scrolled,setScrolled]=useState(false);
   const[accepting,setAccepting]=useState(false);
+  const[showLegal,setShowLegal]=useState(false);
   const handleScroll=e=>{const el=e.target;if(el.scrollHeight-el.scrollTop<=el.clientHeight+50)setScrolled(true);};
   const handleAceptar=async()=>{
     setAccepting(true);
@@ -257,6 +262,87 @@ function TerminosModal({user,onAceptar}){
             {accepting?"REGISTRANDO...":"✅ ACEPTO LOS TÉRMINOS Y CONDICIONES"}
           </button>
           <p style={{marginTop:"8px",fontSize:"10px",color:C.gray,textAlign:"center",fontFamily:"Barlow, sans-serif"}}>Aceptación registrada con fecha y hora · {new Date().toLocaleString("es-AR")}</p>
+          <div style={{marginTop:"10px",textAlign:"center"}}>
+            <button onClick={()=>setShowLegal(true)} style={{background:"transparent",border:"none",color:C.gray,fontSize:"11px",fontFamily:"Barlow, sans-serif",cursor:"pointer",textDecoration:"underline"}}>📄 Ver documentación legal completa</button>
+          </div>
+        </div>
+        {showLegal&&<LegalModal onClose={()=>setShowLegal(false)}/>}
+      </div>
+    </div>
+  );
+}
+
+// ─── LEGAL MODAL ──────────────────────────────────────────────────────────────
+const LEGAL_NOMBRE="MG+IA PERSONAL TRAINER 24/7";
+const LEGAL_DOMINIO="mgfitnesscenter.com.ar";
+
+function LegalSec({titulo,children}){return(<div style={{marginBottom:"24px"}}><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px",marginBottom:"8px",borderBottom:`1px solid #222`,paddingBottom:"5px"}}>{titulo}</div>{children}</div>);}
+function LP({children,col}){return <p style={{marginBottom:"10px",color:col||C.grayL,lineHeight:"1.8",fontSize:"13px"}}>{children}</p>;}
+function LB({children}){return <strong style={{color:C.fire}}>{children}</strong>;}
+
+function TcContent(){return(<div>
+  <div style={{marginBottom:"16px",textAlign:"center"}}><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:C.white}}>TÉRMINOS Y CONDICIONES DE USO</div><div style={{fontSize:"11px",color:C.gray,marginTop:"4px"}}>{LEGAL_NOMBRE} · Última actualización: Mayo 2026 · v2.0</div></div>
+  <LegalSec titulo="DATOS DEL TITULAR"><LP>Marcos Giménez · DNI: 31.996.621 · CUIL: 20-31996621-9</LP><LP>Categoría: Monotributista B · Actividad: Servicios de acondicionamiento físico / Gimnasio</LP><LP>Domicilio fiscal: 25 de Mayo 458, Almafuerte, Córdoba, CP 5854</LP><LP>Domicilio comercial: Corrientes 565, Almafuerte, Córdoba, CP 5854</LP><LP>WhatsApp: 3571-587003 · App: {LEGAL_DOMINIO}</LP></LegalSec>
+  <LegalSec titulo="ART. 1 — ACEPTACIÓN"><LP>El acceso y uso de <LB>{LEGAL_NOMBRE}</LB> (en adelante "la App") implica la aceptación plena, sin reservas, de los presentes Términos y Condiciones. Si el usuario no está de acuerdo, deberá abstenerse de utilizar la App.</LP><LP>El usuario declara ser mayor de 18 años o contar con autorización de su representante legal.</LP></LegalSec>
+  <LegalSec titulo="ART. 2 — DESCRIPCIÓN DEL SERVICIO"><LP>La App es una herramienta digital de asistencia para la planificación del entrenamiento físico, que utiliza inteligencia artificial para generar recomendaciones personalizadas. El servicio incluye, según el plan contratado: decisiones diarias asistidas por IA, registro y seguimiento de sesiones, registro de pesaje corporal, estadísticas de progreso, comunicación con el coach y panel de historial.</LP><LP>El servicio se presta en el marco de <LB>MG Fitness Center</LB>, gimnasio ubicado en Corrientes 565, Almafuerte, Córdoba, CP 5854.</LP></LegalSec>
+  <LegalSec titulo="ART. 3 — LIMITACIÓN DE RESPONSABILIDAD MÉDICA"><LP col="#fca5a5"><LB>Este artículo es de especial importancia y el usuario declara haberlo leído y comprendido.</LB></LP><LP><LB>3.1.</LB> La App <LB>no es un servicio médico, de salud ni de nutrición clínica</LB>. Las recomendaciones son de carácter orientativo con finalidad deportiva.</LP><LP><LB>3.2.</LB> Las recomendaciones <LB>no reemplazan</LB> la consulta con médicos, kinesiólogos, nutricionistas ni ningún profesional de la salud habilitado.</LP><LP><LB>3.3.</LB> El titular <LB>no asume responsabilidad alguna</LB> por lesiones, daños físicos o cualquier consecuencia negativa derivada del uso de las recomendaciones, incluyendo lesiones musculares, articulares, cardiovasculares o metabólicas.</LP><LP><LB>3.4.</LB> El usuario con <LB>condiciones médicas preexistentes</LB> (enfermedades cardiovasculares, diabetes, hipertensión, embarazo, lesiones crónicas u otras) debe consultar con un médico antes de usar la App.</LP><LP><LB>3.5.</LB> Las recomendaciones sobre el <LB>ciclo menstrual</LB> son de carácter general y orientativo. No constituyen consejo médico ni ginecológico.</LP><LP><LB>3.6.</LB> Ante cualquier dolor, molestia o síntoma inusual, el usuario debe <LB>detener la actividad inmediatamente</LB> y consultar con un profesional de la salud.</LP></LegalSec>
+  <LegalSec titulo="ART. 4 — SUSCRIPCIÓN Y PAGOS"><LP><LB>4.1.</LB> El acceso está sujeto al pago de una suscripción mensual cuyo valor se informa al momento de la contratación.</LP><LP><LB>4.2.</LB> La suscripción tiene duración de <LB>30 días corridos</LB> desde la activación. Al vencimiento el acceso se suspende automáticamente.</LP><LP><LB>4.3.</LB> El pago se efectúa por los medios habilitados por el titular (efectivo, transferencia bancaria o plataformas de pago digital). La renovación es manual y debe gestionarse con el titular.</LP><LP><LB>4.4.</LB> <LB>No se realizan reintegros</LB> una vez activada la suscripción, salvo caso fortuito o fuerza mayor debidamente acreditado.</LP><LP><LB>4.5.</LB> El titular puede modificar los precios con un preaviso mínimo de <LB>15 días corridos</LB>.</LP><LP><LB>4.6.</LB> El modo demo de 24 horas es gratuito, de uso único por persona, y no genera derecho a reintegro ni continuación del servicio.</LP></LegalSec>
+  <LegalSec titulo="ART. 5 — CUENTA Y SEGURIDAD"><LP><LB>5.1.</LB> El usuario es responsable de mantener la confidencialidad de su DNI y contraseña de acceso.</LP><LP><LB>5.2.</LB> Cada cuenta está asociada a <LB>un único dispositivo autorizado</LB> a la vez. El uso desde un segundo dispositivo cerrará la sesión anterior automáticamente. El reingreso desde un dispositivo bloqueado requiere autorización del administrador.</LP><LP><LB>5.3.</LB> Está expresamente <LB>prohibido compartir las credenciales</LB> con terceros. El incumplimiento puede derivar en suspensión inmediata sin derecho a reintegro.</LP><LP><LB>5.4.</LB> El usuario debe notificar inmediatamente ante cualquier uso no autorizado de su cuenta.</LP><LP><LB>5.5.</LB> El titular no asume responsabilidad por daños derivados del incumplimiento de estas obligaciones por parte del usuario.</LP></LegalSec>
+  <LegalSec titulo="ART. 6 — DATOS PERSONALES Y PRIVACIDAD"><LP>El tratamiento de datos personales se rige por la <LB>Ley Nacional N° 25.326 de Protección de Datos Personales</LB> de la República Argentina. El detalle completo se encuentra en la Política de Privacidad (pestaña 🔒 PRIVACIDAD), que forma parte integral de estos T&C.</LP></LegalSec>
+  <LegalSec titulo="ART. 7 — PROPIEDAD INTELECTUAL"><LP><LB>7.1.</LB> La App, su código fuente, diseño, logotipos, marca "MG Fitness Center", nombre <LB>"{LEGAL_NOMBRE}"</LB>, slogan "Decisiones con 100% ACTITUD!" y todo el contenido son propiedad exclusiva de Marcos Giménez, protegidos por la <LB>Ley N° 11.723 de Propiedad Intelectual</LB>.</LP><LP><LB>7.2.</LB> Queda expresamente prohibida la reproducción, copia, distribución, modificación, ingeniería inversa o cualquier explotación del software o la marca sin autorización escrita del titular.</LP><LP><LB>7.3.</LB> El usuario no adquiere ningún derecho de propiedad intelectual sobre la App por suscribirse.</LP></LegalSec>
+  <LegalSec titulo="ART. 8 — CONDUCTA DEL USUARIO"><LP><LB>8.1.</LB> Proporcionar información veraz en el formulario diario. La IA decide en base a los datos ingresados; la responsabilidad por información falsa recae exclusivamente en el usuario.</LP><LP><LB>8.2.</LB> No utilizar la App con fines distintos al entrenamiento personal.</LP><LP><LB>8.3.</LB> No intentar vulnerar, hackear o interferir con el funcionamiento de la App o sus sistemas.</LP><LP><LB>8.4.</LB> No realizar ingeniería inversa sobre el software.</LP></LegalSec>
+  <LegalSec titulo="ART. 9 — MODIFICACIONES Y DISPONIBILIDAD"><LP><LB>9.1.</LB> El titular puede modificar, actualizar o descontinuar funcionalidades sin previo aviso, salvo en condiciones de suscripción.</LP><LP><LB>9.2.</LB> Interrupciones por mantenimiento o causas técnicas no generan derecho a compensación o reintegro.</LP><LP><LB>9.3.</LB> Los T&C pueden ser actualizados. La versión vigente siempre es la publicada en la App. El uso continuado implica aceptación de los nuevos términos.</LP></LegalSec>
+  <LegalSec titulo="ART. 10 — JURISDICCIÓN Y LEY APLICABLE"><LP>Ante cualquier controversia, las partes se someten a la jurisdicción de los <LB>Tribunales Ordinarios de la ciudad de Córdoba</LB>, República Argentina, con renuncia a cualquier otro fuero. Rige la <LB>Ley N° 24.240 de Defensa del Consumidor</LB> y sus modificatorias.</LP></LegalSec>
+  <LegalSec titulo="ART. 11 — CONTACTO"><LP>Titular: Marcos Giménez · WhatsApp: 3571-587003 · Corrientes 565, Almafuerte, Córdoba, CP 5854 · Horario: Lunes a Viernes 7:00 a 22:00hs</LP></LegalSec>
+  <p style={{fontSize:"11px",color:C.gray,textAlign:"center",marginTop:"16px",fontStyle:"italic"}}>Al ingresar a la App el usuario declara haber leído, comprendido y aceptado la totalidad de estos Términos y Condiciones.</p>
+</div>);}
+
+function PrivacidadContent(){return(<div>
+  <div style={{marginBottom:"16px",textAlign:"center"}}><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:C.white}}>POLÍTICA DE PRIVACIDAD</div><div style={{fontSize:"11px",color:C.gray,marginTop:"4px"}}>{LEGAL_NOMBRE} · Última actualización: Mayo 2026 · v2.0</div></div>
+  <LegalSec titulo="DATOS DEL RESPONSABLE"><LP>Marcos Giménez · DNI: 31.996.621 · CUIL: 20-31996621-9</LP><LP>Domicilio fiscal: 25 de Mayo 458, Almafuerte, Córdoba, CP 5854</LP><LP>Domicilio comercial: Corrientes 565, Almafuerte, Córdoba, CP 5854</LP><LP>WhatsApp: 3571-587003 · App: {LEGAL_DOMINIO}</LP></LegalSec>
+  <LegalSec titulo="1. MARCO LEGAL"><LP>Esta Política se elabora en cumplimiento de la <LB>Ley Nacional N° 25.326 de Protección de los Datos Personales</LB> de la República Argentina, su Decreto Reglamentario N° 1558/2001, y las disposiciones de la Dirección Nacional de Protección de Datos Personales (DNPDP).</LP></LegalSec>
+  <LegalSec titulo="2. DATOS QUE RECOPILAMOS"><LP><LB>Identificación y acceso:</LB> Número de DNI, nombre y apellido, contraseña (almacenada con hash bcrypt — nunca en texto legible), rol en el sistema.</LP><LP><LB>Suscripción:</LB> Fecha de inicio, fecha de vencimiento, modalidad de acceso (estándar / demo).</LP><LP><LB>Uso y entrenamiento:</LB> Peso corporal, nivel de energía diaria (1-10), horas de descanso, tipo de alimentación, tipo de entrenamiento realizado, dolor o molestias físicas declaradas, disciplina deportiva, sexo declarado, información sobre ciclo menstrual (solo si el usuario la provee voluntariamente), tiempo disponible, hora de consulta.</LP><LP><LB>Técnicos:</LB> Identificador de dispositivo (generado localmente, sin datos de hardware), token de sesión, fecha y hora de inicio de sesión.</LP><LP><LB>Historial:</LB> Registro de sesiones de entrenamiento, historial de pesajes, respuestas generadas por la IA.</LP></LegalSec>
+  <LegalSec titulo="3. FINALIDAD DEL TRATAMIENTO"><LP><LB>a) Prestación del servicio:</LB> autenticación, personalización de recomendaciones, seguimiento del progreso del usuario.</LP><LP><LB>b) Mejora del servicio:</LB> análisis interno de patrones para mejorar la calidad de las recomendaciones.</LP><LP><LB>c) Seguridad:</LB> verificación de identidad, control de acceso por dispositivo autorizado, prevención de uso no autorizado.</LP><LP><LB>d) Facturación:</LB> control de vigencia del acceso.</LP><LP><LB>e) Comunicación:</LB> contacto ante vencimiento de suscripción o situaciones que requieran atención del coach.</LP><LP col={C.green}><LB>Los datos NO son utilizados para:</LB> publicidad de terceros · venta o cesión a empresas externas · perfilado comercial ajeno al servicio · ningún fin distinto a los declarados.</LP></LegalSec>
+  <LegalSec titulo="4. DATOS SENSIBLES"><LP>La información sobre el <LB>ciclo menstrual</LB> constituye un dato sensible (Art. 2, Ley 25.326). Su recolección es voluntaria y opcional — se puede usar la App sin proveer esta información. Su uso es de finalidad exclusiva — solo para adaptar recomendaciones de entrenamiento. No se comparte con terceros bajo ninguna circunstancia. El titular adopta medidas de seguridad reforzadas para este tipo de datos.</LP></LegalSec>
+  <LegalSec titulo="5. ALMACENAMIENTO Y SEGURIDAD"><LP><LB>Dónde:</LB> Los datos se almacenan en <LB>Supabase</LB> (PostgreSQL), servicio en la nube con sede en Estados Unidos (supabase.com/privacy).</LP><LP><LB>Medidas implementadas:</LB> contraseñas hasheadas con bcrypt · comunicaciones cifradas con HTTPS/TLS · tokens de sesión únicos y de duración limitada · control de acceso por dispositivo autorizado · Row Level Security (RLS) en Supabase · variables de entorno para credenciales (nunca expuestas en el código fuente).</LP><LP><LB>Retención:</LB> Los datos se conservan durante la vigencia de la suscripción y por <LB>12 meses</LB> posteriores a la baja, salvo obligación legal de conservación mayor.</LP></LegalSec>
+  <LegalSec titulo="6. TRANSFERENCIA A TERCEROS"><LP><LB>Anthropic (IA):</LB> Las consultas son procesadas por Anthropic PBC (EE.UU.). Se envían datos del formulario e historial de sesiones. No se envían datos de identificación personal (DNI, nombre). Política: anthropic.com/privacy.</LP><LP><LB>Supabase:</LB> Base de datos alojada en Supabase Inc. (EE.UU.). Política: supabase.com/privacy.</LP><LP><LB>Vercel:</LB> La interfaz web está alojada en Vercel Inc. (EE.UU.). Política: vercel.com/legal/privacy-policy.</LP><LP col={C.green}><LB>En ningún caso</LB> se ceden datos a terceros con fines publicitarios o comerciales.</LP></LegalSec>
+  <LegalSec titulo="7. DERECHOS DEL USUARIO"><LP>En cumplimiento del Art. 14 de la Ley 25.326, el usuario tiene derecho a: <LB>Acceso</LB> (solicitar qué datos están almacenados) · <LB>Rectificación</LB> (corregir datos inexactos o incompletos) · <LB>Supresión</LB> (eliminar datos cuando no sean necesarios para la finalidad declarada) · <LB>Confidencialidad</LB> (sus datos no se comunican a terceros salvo los casos indicados en esta política).</LP><LP>Para ejercer estos derechos: Marcos Giménez · WhatsApp: 3571-587003 · Corrientes 565, Almafuerte, Córdoba. Plazo de respuesta: <LB>10 días hábiles</LB>.</LP></LegalSec>
+  <LegalSec titulo="8. AUTORIDAD DE CONTROL"><LP>El usuario puede presentar denuncia ante la <LB>Dirección Nacional de Protección de Datos Personales (DNPDP)</LB>: argentina.gob.ar/aaip/datospersonales · Sarmiento 1118, Ciudad Autónoma de Buenos Aires.</LP></LegalSec>
+  <LegalSec titulo="9. COOKIES Y ALMACENAMIENTO LOCAL"><LP>La App utiliza <LB>localStorage</LB> del navegador exclusivamente para mantener la sesión activa entre visitas y almacenar el identificador de dispositivo. No se utilizan cookies de rastreo, publicidad ni analítica de terceros.</LP></LegalSec>
+  <LegalSec titulo="10. MODIFICACIONES"><LP>Esta Política puede ser actualizada. La versión vigente siempre estará disponible en la App. Los cambios sustanciales serán notificados al usuario.</LP></LegalSec>
+  <p style={{fontSize:"11px",color:C.gray,textAlign:"center",marginTop:"16px",fontStyle:"italic"}}>Titular responsable: Marcos Giménez — CUIL 20-31996621-9 — Almafuerte, Córdoba, Argentina</p>
+</div>);}
+
+function PropiedadContent(){return(<div>
+  <div style={{marginBottom:"16px",textAlign:"center"}}><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:C.white}}>PROPIEDAD INTELECTUAL Y COPYRIGHT</div><div style={{fontSize:"11px",color:C.gray,marginTop:"4px"}}>{LEGAL_NOMBRE} · Creación: Abril 2026</div></div>
+  <LegalSec titulo="TITULAR"><LP>Marcos Giménez · DNI: 31.996.621 · CUIL: 20-31996621-9</LP><LP>Domicilio fiscal: 25 de Mayo 458, Almafuerte, Córdoba, CP 5854</LP><LP>Domicilio comercial: Corrientes 565, Almafuerte, Córdoba, CP 5854 · WhatsApp: 3571-587003</LP></LegalSec>
+  <LegalSec titulo="OBRAS PROTEGIDAS"><LP>Los siguientes elementos están protegidos por la <LB>Ley N° 11.723 de Propiedad Intelectual</LB> de la República Argentina y los tratados internacionales (Convenio de Berna, Convenio de París, Acuerdo TRIPS/ADPIC):</LP><LP><LB>Software:</LB> Código fuente del frontend (React/JavaScript) y backend (Node.js/Express) · Lógica de negocio y algoritmos de detección de sobreentrenamiento y semana de descarga · Prompts de sistema para la IA · Estructura de base de datos y relaciones entre tablas.</LP><LP><LB>Marca y nombre comercial:</LB> Nombre <LB>"{LEGAL_NOMBRE}"</LB> · Slogan "Decisiones con 100% ACTITUD!" · Nombre del gimnasio "MG Fitness Center" · Logo (diseño gráfico circular) · Combinación de colores y tipografía de identidad visual (Bebas Neue + paleta fuego).</LP><LP><LB>Contenido:</LB> Sistema de prompts y formato de respuesta estructurada · Estructura de secciones (DECISIÓN PRINCIPAL, INTENSIDAD RECOMENDADA, etc.) · Metodología de detección de semanas de descarga basada en energía acumulada · Concepto de "coach de decisiones" aplicado al entrenamiento físico personalizado.</LP></LegalSec>
+  <LegalSec titulo="DECLARACIÓN DE AUTORÍA"><LP>Marcos Giménez es el autor y titular original de los derechos sobre el software <LB>{LEGAL_NOMBRE}</LB>, desarrollado a partir de abril de 2026, con soporte técnico de herramientas de inteligencia artificial utilizadas como asistente de programación — sin que esto transfiera derechos de autoría a Anthropic PBC ni a ninguna otra entidad.</LP></LegalSec>
+  <LegalSec titulo="PROHIBICIONES EXPRESAS"><LP>Queda expresamente prohibido sin autorización escrita de Marcos Giménez: copiar, reproducir o distribuir el código fuente (total o parcialmente) · crear obras derivadas o aplicaciones basadas en este software · usar el nombre "MG Fitness Center", "{LEGAL_NOMBRE}" o el logo con fines comerciales propios · realizar ingeniería inversa del software · sublicenciar o ceder el acceso a terceros · extraer la lógica de negocio para implementarla en otro sistema.</LP></LegalSec>
+  <LegalSec titulo="AVISO LEGAL — INTELIGENCIA ARTIFICIAL"><LP>La App utiliza el modelo <LB>Claude</LB> de <LB>Anthropic PBC</LB> (EE.UU.) como motor de IA. La IA no tiene conocimiento de la historia médica completa del usuario; las recomendaciones se basan únicamente en los datos ingresados. El usuario es responsable de evaluar si las recomendaciones son apropiadas para su situación.</LP><LP>Las respuestas generadas por la IA son resultado de un <LB>sistema propietario de prompts</LB> diseñado por Marcos Giménez. El titular se reserva todos los derechos sobre el sistema de prompts y el formato de output. Marcos Giménez es cliente del servicio de API de Anthropic. Anthropic no tiene relación comercial ni legal con los usuarios de la App.</LP></LegalSec>
+  <p style={{fontSize:"11px",color:C.gray,textAlign:"center",marginTop:"16px",fontStyle:"italic"}}>Documento orientativo. No reemplaza el asesoramiento de un abogado o contador matriculado.<br/>Titular: Marcos Giménez — CUIL 20-31996621-9 — Almafuerte, Córdoba, Argentina</p>
+</div>);}
+
+function LegalModal({onClose}){
+  const[tab,setTab]=useState("tc");
+  const tabs=[{k:"tc",l:"📋 TÉRMINOS"},{k:"priv",l:"🔒 PRIVACIDAD"},{k:"prop",l:"© PROPIEDAD"}];
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000000f5",zIndex:4000,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}} onClick={onClose}>
+      <div style={{background:"#0d0d0d",border:`1px solid ${C.fire}`,borderRadius:"16px",width:"100%",maxWidth:"640px",maxHeight:"92vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()} className="slide-up">
+        <div style={{padding:"14px 20px",borderBottom:`1px solid #222`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:C.fire,letterSpacing:"2px"}}>📄 DOCUMENTACIÓN LEGAL COMPLETA</div>
+          <button onClick={onClose} style={{background:"transparent",border:"none",color:C.gray,fontSize:"22px",cursor:"pointer"}}>✕</button>
+        </div>
+        <div style={{padding:"10px 16px",borderBottom:`1px solid #222`,display:"flex",gap:"8px",flexWrap:"wrap"}}>
+          {tabs.map(t=>(<button key={t.k} onClick={()=>setTab(t.k)} style={{padding:"7px 14px",background:tab===t.k?"#111":"transparent",border:`1px solid ${tab===t.k?C.fire:"#333"}`,borderRadius:"6px",color:tab===t.k?C.fire:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{t.l}</button>))}
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"20px"}}>
+          {tab==="tc"&&<TcContent/>}
+          {tab==="priv"&&<PrivacidadContent/>}
+          {tab==="prop"&&<PropiedadContent/>}
+        </div>
+        <div style={{padding:"12px 16px",borderTop:`1px solid #222`}}>
+          <button onClick={onClose} style={{width:"100%",padding:"12px",background:"transparent",border:`1px solid ${C.fire}`,borderRadius:"8px",color:C.fire,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>CERRAR</button>
         </div>
       </div>
     </div>
@@ -276,32 +362,65 @@ function abrirWhatsApp(alerta,motivo,nombre,apellido){
 // PERFIL INICIAL — aparece una sola vez después de T&C
 // ═══════════════════════════════════════════════════════════════════════════════
 function PerfilInicial({user, onCompletar}){
-  const[telefono,setTelefono]=useState(user.telefono||"");
-  const[fechaNac,setFechaNac]=useState(user.fecha_nacimiento||"");
-  const[tieneCond,setTieneCond]=useState(!!user.condicion_medica);
-  const[condicion,setCondicion]=useState(user.condicion_medica||"");
-  const[esSocio,setEsSocio]=useState(null); // null = no eligió aún
+  const[form,setForm]=useState({
+    telefono:user.telefono||"",
+    fechaNac:user.fecha_nacimiento||user.fecha_nac||"",
+    altura:"",
+    peso:"",
+    esSocio:null,
+    dias_disponibles:"4",
+    lugar:LUGAR_OPTS[0],
+    equipamiento:EQUIPAMIENTO_OPTS[0],
+    localidad:"",
+    provincia:"Córdoba",
+    pais:"Argentina",
+    tieneCond:!!user.condicion_medica,
+    condicion:user.condicion_medica||"",
+  });
+  const[step,setStep]=useState(1); // 2 pasos
   const[saving,setSaving]=useState(false);
   const[error,setError]=useState(null);
+  const set=k=>v=>setForm(f=>({...f,[k]:v}));
+  const handleInput=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
+
+  const validarStep1=()=>{
+    if(!form.fechaNac){setError("La fecha de nacimiento es obligatoria.");return false;}
+    if(!form.altura||isNaN(form.altura)||+form.altura<100||+form.altura>250){setError("Ingresá tu altura en cm (entre 100 y 250).");return false;}
+    if(!form.localidad.trim()){setError("Ingresá tu localidad.");return false;}
+    setError(null);return true;
+  };
+  const validarStep2=()=>{
+    if(form.esSocio===null){setError("Indicá si sos socio de MG Fitness Center.");return false;}
+    if(form.tieneCond&&!form.condicion.trim()){setError("Describí tu condición médica.");return false;}
+    setError(null);return true;
+  };
 
   const handleGuardar=async()=>{
-    if(esSocio===null){setError("Seleccioná si sos socio de MG Fitness Center.");return;}
-    if(!fechaNac){setError("Ingresá tu fecha de nacimiento.");return;}
-    if(tieneCond&&!condicion.trim()){setError("Describí tu condición médica o seleccioná NO.");return;}
+    if(!validarStep2())return;
     setSaving(true);
     try{
       const res=await fetch(`${API}/api/completar-perfil`,{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({userId:user.id,telefono,fecha_nacimiento:fechaNac,condicion_medica:tieneCond?condicion:"",es_socio_mg:esSocio})
+        body:JSON.stringify({
+          userId:user.id,
+          telefono:form.telefono,
+          fecha_nacimiento:form.fechaNac,
+          altura:form.altura?parseFloat(form.altura):null,
+          dias_disponibles:parseInt(form.dias_disponibles),
+          equipamiento:form.equipamiento,
+          lugar_entrenamiento:form.lugar,
+          localidad:form.localidad.trim(),
+          provincia:form.provincia,
+          pais:form.pais||"Argentina",
+          condicion_medica:form.tieneCond?form.condicion.trim():"",
+          es_socio_mg:form.esSocio,
+        })
       });
       const data=await res.json();
       if(data.success){
         const saved=loadSession();
         if(saved){
-          saved.user.perfil_completado=true;
-          saved.user.es_socio_mg=esSocio;
-          saved.user.telefono=telefono;
-          if(tieneCond) saved.user.condicion_medica=condicion;
+          Object.assign(saved.user,{perfil_completado:true,es_socio_mg:form.esSocio,telefono:form.telefono,altura:form.altura,condicion_medica:form.tieneCond?form.condicion:"",localidad:form.localidad,provincia:form.provincia});
           saveSession(saved.user,saved.token);
         }
         onCompletar();
@@ -310,82 +429,159 @@ function PerfilInicial({user, onCompletar}){
     setSaving(false);
   };
 
+  const Req=()=><span style={{color:C.red,marginLeft:"2px"}}>*</span>;
+  const Note=({t})=><div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>{t}</div>;
+
   return(
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",position:"relative"}}>
       <LogoWatermark/>
-      <div style={{width:"100%",maxWidth:"480px",position:"relative",zIndex:1}} className="slide-up">
+      <div style={{width:"100%",maxWidth:"500px",position:"relative",zIndex:1}} className="slide-up">
 
-        <div style={{textAlign:"center",marginBottom:"24px"}}>
-          <Logo size={80} pulse={true}/>
+        <div style={{textAlign:"center",marginBottom:"20px"}}>
+          <Logo size={70} pulse={true}/>
           <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"26px",color:C.fire,letterSpacing:"2px",marginTop:"12px"}}>COMPLETÁ TU PERFIL</div>
-          <div style={{fontSize:"13px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>Esta información se guarda una sola vez y ayuda a personalizar tu entrenamiento</div>
+          <div style={{fontSize:"12px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>Se completa una sola vez. Ayuda a la IA a darte recomendaciones precisas.</div>
+          <div style={{display:"flex",justifyContent:"center",gap:"8px",marginTop:"10px"}}>
+            {[1,2].map(s=><div key={s} style={{width:step>=s?"40px":"20px",height:"4px",borderRadius:"2px",background:step>=s?C.fire:"#333",transition:"all .3s"}}/>)}
+          </div>
+          <div style={{fontSize:"11px",color:C.grayL,marginTop:"6px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>PASO {step} DE 2</div>
         </div>
 
         <div style={cardSt}>
 
-          {/* SOY SOCIO MG */}
-          <div style={{marginBottom:"20px"}}>
-            <label style={{...labelSt,color:C.fire,fontSize:"14px"}}>¿SOS SOCIO DE MG FITNESS CENTER?</label>
-            <div style={{fontSize:"12px",color:C.gray,fontFamily:"Barlow, sans-serif",marginBottom:"10px"}}>Almafuerte, Córdoba — Corrientes 565</div>
-            <div style={{display:"flex",gap:"10px"}}>
-              {[{v:true,l:"🏅 SÍ, SOY SOCIO MG"},{v:false,l:"🌍 NO, ENTRENO EN OTRO LUGAR"}].map(op=>(
-                <button key={String(op.v)} onClick={()=>setEsSocio(op.v)}
-                  style={{flex:1,padding:"14px 8px",background:esSocio===op.v?(op.v?`linear-gradient(135deg,${C.blue},${C.blueL})`:`linear-gradient(135deg,${C.red},${C.fire})`):"#111",border:`2px solid ${esSocio===op.v?(op.v?C.blueL:C.fire):"#333"}`,borderRadius:"8px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer",transition:"all 0.2s",lineHeight:"1.4"}}>
-                  {op.l}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* TELÉFONO */}
-          <div style={{marginBottom:"20px"}}>
-            <label style={labelSt}>Teléfono de contacto (opcional)</label>
-            <input type="tel" value={telefono} onChange={e=>setTelefono(e.target.value)} placeholder="ej: 3571-587003" style={inputSt}/>
-            <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>Para que tu coach pueda contactarte si es necesario</div>
-          </div>
-
-          {/* FECHA DE NACIMIENTO */}
-          <div style={{marginBottom:"20px"}}>
-            <label style={labelSt}>Fecha de nacimiento <span style={{color:C.red}}>*</span></label>
-            <input type="date" value={fechaNac} onChange={e=>setFechaNac(e.target.value)}
-              max={new Date().toISOString().slice(0,10)}
-              style={inputSt}/>
-            {fechaNac&&(
-              <div style={{fontSize:"11px",color:C.fire,fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>
-                Edad: {Math.floor((new Date()-new Date(fechaNac))/31557600000)} años
-              </div>
-            )}
-          </div>
-
-          {/* CONDICIÓN MÉDICA */}
-          <div style={{marginBottom:"20px"}}>
-            <label style={labelSt}>¿Tenés alguna condición médica a tener en cuenta?</label>
-            <div style={{display:"flex",gap:"10px",marginBottom:"10px"}}>
-              {[{v:false,l:"NO"},{v:true,l:"SÍ"}].map(op=>(
-                <button key={String(op.v)} onClick={()=>setTieneCond(op.v)}
-                  style={{flex:1,padding:"10px",background:tieneCond===op.v?(op.v?`linear-gradient(135deg,#9d174d,#be185d)`:`linear-gradient(135deg,#16a34a,#15803d)`):"#111",border:`1px solid ${tieneCond===op.v?(op.v?"#ec4899":C.green):"#333"}`,borderRadius:"6px",color:C.white,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer",transition:"all 0.2s"}}>
-                  {op.l}
-                </button>
-              ))}
-            </div>
-            {tieneCond&&(
-              <div className="slide-up">
-                <textarea value={condicion} onChange={e=>setCondicion(e.target.value)}
-                  placeholder="ej: hipertensión controlada, lesión de rodilla izquierda, diabetes tipo 2..."
-                  style={{...inputSt,minHeight:"80px",resize:"vertical",lineHeight:"1.5"}}/>
-                <div style={{fontSize:"11px",color:"#9d174d",fontFamily:"Barlow, sans-serif",marginTop:"4px"}}>
-                  La IA priorizará siempre esta información en cada análisis.
+          {step===1&&(
+            <>
+              {/* DATOS FÍSICOS */}
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px",marginBottom:"14px",borderBottom:`1px solid #222`,paddingBottom:"6px"}}>📏 DATOS FÍSICOS</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"16px"}}>
+                <div>
+                  <label style={labelSt}>Fecha de nacimiento<Req/></label>
+                  <input type="date" value={form.fechaNac} onChange={handleInput("fechaNac")} max={new Date().toISOString().slice(0,10)} style={inputDone(form.fechaNac)}/>
+                  {form.fechaNac&&<Note t={`Edad: ${Math.floor((new Date()-new Date(form.fechaNac))/31557600000)} años`}/>}
+                </div>
+                <div>
+                  <label style={labelSt}>Altura (cm)<Req/></label>
+                  <input type="number" value={form.altura} onChange={handleInput("altura")} placeholder="ej: 175" min="100" max="250" style={inputDone(form.altura)}/>
+                  <Note t="Necesaria para las recomendaciones de carga"/>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* LOCALIZACIÓN */}
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px",marginBottom:"14px",marginTop:"4px",borderBottom:`1px solid #222`,paddingBottom:"6px"}}>📍 LOCALIZACIÓN</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"16px"}}>
+                <div>
+                  <label style={labelSt}>Localidad<Req/></label>
+                  <input type="text" value={form.localidad} onChange={handleInput("localidad")} placeholder="ej: Almafuerte" style={inputDone(form.localidad)}/>
+                </div>
+                <div>
+                  <label style={labelSt}>Provincia</label>
+                  <select value={form.provincia} onChange={handleInput("provincia")} style={inputDone(form.provincia)}>
+                    {PROVINCIAS_AR.map(p=><option key={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div style={{gridColumn:"1/-1"}}>
+                  <label style={labelSt}>País</label>
+                  <input type="text" value={form.pais} onChange={handleInput("pais")} placeholder="Argentina" style={inputDone(form.pais)}/>
+                </div>
+              </div>
+
+              {/* ENTRENAMIENTO */}
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px",marginBottom:"14px",borderBottom:`1px solid #222`,paddingBottom:"6px"}}>🏋️ ENTRENAMIENTO</div>
+              <div style={{marginBottom:"14px"}}>
+                <label style={labelSt}>Días disponibles por semana<Req/></label>
+                <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                  {[1,2,3,4,5,6,7].map(d=>(
+                    <button key={d} onClick={()=>set("dias_disponibles")(String(d))}
+                      style={{width:"40px",height:"40px",border:`1px solid ${form.dias_disponibles===String(d)?C.fire:"#333"}`,borderRadius:"6px",background:form.dias_disponibles===String(d)?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",color:C.white,fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",cursor:"pointer"}}>
+                      {d}
+                    </button>
+                  ))}
+                </div>
+                <Note t="Días a la semana que podés entrenar"/>
+              </div>
+              <div style={{marginBottom:"14px"}}>
+                <label style={labelSt}>Lugar donde entrenás</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                  {LUGAR_OPTS.map(l=>(
+                    <button key={l} onClick={()=>set("lugar")(l)}
+                      style={{padding:"10px",border:`1px solid ${form.lugar===l?C.fire:"#333"}`,borderRadius:"6px",background:form.lugar===l?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{marginBottom:"4px"}}>
+                <label style={labelSt}>Equipamiento disponible<Req/></label>
+                <select value={form.equipamiento} onChange={handleInput("equipamiento")} style={inputDone(form.equipamiento)}>
+                  {EQUIPAMIENTO_OPTS.map(e=><option key={e}>{e}</option>)}
+                </select>
+                <Note t="La IA adaptará los ejercicios según lo que tenés disponible"/>
+              </div>
+            </>
+          )}
+
+          {step===2&&(
+            <>
+              {/* TELÉFONO */}
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px",marginBottom:"14px",borderBottom:`1px solid #222`,paddingBottom:"6px"}}>📞 CONTACTO</div>
+              <div style={{marginBottom:"16px"}}>
+                <label style={labelSt}>Teléfono (opcional)</label>
+                <input type="tel" value={form.telefono} onChange={handleInput("telefono")} placeholder="ej: 3571-587003" style={inputSt}/>
+                <Note t="Para que tu coach pueda contactarte si es necesario"/>
+              </div>
+
+              {/* SOCIO MG */}
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px",marginBottom:"14px",borderBottom:`1px solid #222`,paddingBottom:"6px"}}>🏅 VÍNCULO CON MG FITNESS CENTER</div>
+              <div style={{marginBottom:"16px"}}>
+                <label style={labelSt}>¿Sos socio presencial de MG Fitness Center?<Req/></label>
+                <Note t="Almafuerte, Córdoba — Corrientes 565"/>
+                <div style={{display:"flex",gap:"10px",marginTop:"8px"}}>
+                  {[{v:true,l:"🏅 SÍ, SOY SOCIO MG"},{v:false,l:"🌍 ENTRENO EN OTRO LUGAR"}].map(op=>(
+                    <button key={String(op.v)} onClick={()=>set("esSocio")(op.v)}
+                      style={{flex:1,padding:"12px 8px",background:form.esSocio===op.v?(op.v?`linear-gradient(135deg,${C.blue},${C.blueL})`:`linear-gradient(135deg,${C.red},${C.fire})`):"#111",border:`2px solid ${form.esSocio===op.v?(op.v?C.blueL:C.fire):"#333"}`,borderRadius:"8px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer",lineHeight:"1.4"}}>
+                      {op.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* CONDICIÓN MÉDICA */}
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px",marginBottom:"14px",borderBottom:`1px solid #222`,paddingBottom:"6px"}}>🩺 SALUD</div>
+              <div style={{marginBottom:"16px"}}>
+                <label style={labelSt}>¿Tenés alguna condición médica relevante?</label>
+                <div style={{display:"flex",gap:"10px",marginBottom:"10px",marginTop:"6px"}}>
+                  {[{v:false,l:"NO"},{v:true,l:"SÍ"}].map(op=>(
+                    <button key={String(op.v)} onClick={()=>set("tieneCond")(op.v)}
+                      style={{flex:1,padding:"10px",background:form.tieneCond===op.v?(op.v?`linear-gradient(135deg,#9d174d,#be185d)`:`linear-gradient(135deg,#16a34a,#15803d)`):"#111",border:`1px solid ${form.tieneCond===op.v?(op.v?"#ec4899":C.green):"#333"}`,borderRadius:"6px",color:C.white,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
+                      {op.l}
+                    </button>
+                  ))}
+                </div>
+                {form.tieneCond&&(
+                  <div className="slide-up">
+                    <textarea value={form.condicion} onChange={handleInput("condicion")}
+                      placeholder="ej: hipertensión controlada, lesión rodilla izquierda, diabetes tipo 2..."
+                      style={{...inputSt,minHeight:"80px",resize:"vertical",lineHeight:"1.5"}}/>
+                    <Note t="⚠️ La IA priorizará siempre esta información en cada análisis."/>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {error&&<div style={{marginBottom:"14px",padding:"10px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:"#fca5a5",fontSize:"13px",fontFamily:"Barlow, sans-serif"}}>{error}</div>}
 
-          <button onClick={handleGuardar} disabled={saving}
-            style={{width:"100%",padding:"16px",background:saving?"#222":`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"18px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",cursor:saving?"not-allowed":"pointer",boxShadow:saving?"none":`0 4px 24px ${C.red}66`}}>
-            {saving?"GUARDANDO...":"→ GUARDAR Y CONTINUAR"}
-          </button>
+          <div style={{display:"flex",gap:"10px"}}>
+            {step===2&&<button onClick={()=>{setStep(1);setError(null);}} style={{padding:"16px 20px",background:"transparent",border:"1px solid #333",borderRadius:"8px",color:C.gray,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>← ATRÁS</button>}
+            <button onClick={()=>{
+              if(step===1){if(validarStep1())setStep(2);}
+              else handleGuardar();
+            }} disabled={saving}
+              style={{flex:1,padding:"16px",background:saving?"#222":`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"18px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",cursor:saving?"not-allowed":"pointer",boxShadow:saving?"none":`0 4px 24px ${C.red}66`}}>
+              {saving?"GUARDANDO...":(step===1?"SIGUIENTE →":"✅ GUARDAR Y CONTINUAR")}
+            </button>
+          </div>
+          <p style={{marginTop:"10px",textAlign:"center",fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>Los campos con <span style={{color:C.red}}>*</span> son obligatorios</p>
         </div>
       </div>
     </div>
@@ -574,11 +770,12 @@ function AdminPanel({user,onLogout}){
   const[verHistorial,setVerHistorial]=useState(null);const[historialData,setHistorialData]=useState([]);
   const[newUser,setNewUser]=useState({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});
   const[sesionesHoy,setSesionesHoy]=useState(new Set());
+  const[ultimaActividad,setUltimaActividad]=useState({});
 
   useEffect(()=>{
     fetch(`${API}/api/admin/usuarios`).then(r=>r.json()).then(d=>{if(d.success)setUsuarios(d.usuarios);setLoading(false);}).catch(()=>setLoading(false));
-    // Traer qué usuarios consultaron hoy
     fetch(`${API}/api/admin/consultas-hoy`).then(r=>r.json()).then(d=>{if(d.success)setSesionesHoy(new Set(d.userIds));}).catch(()=>{});
+    fetch(`${API}/api/admin/ultima-actividad`).then(r=>r.json()).then(d=>{if(d.success)setUltimaActividad(d.actividad||{});}).catch(()=>{});
   },[]);
   const showMsg=t=>{setMsg(t);setTimeout(()=>setMsg(null),4000);};
   const renovar=async userId=>{setRenew(userId);const res=await fetch(`${API}/api/admin/renovar`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,fecha_expiracion:data.nuevaFecha}:u));showMsg("✅ Suscripción renovada 30 días");}setRenew(null);};
@@ -608,6 +805,14 @@ function AdminPanel({user,onLogout}){
     else showMsg(`❌ ${data.error}`);
   };
   const guardarCondicion=async userId=>{const res=await fetch(`${API}/api/admin/actualizar-condicion`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,condicion_medica:editCondVal})});const data=await res.json();if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,condicion_medica:editCondVal}:u));showMsg("✅ Condición médica actualizada");setEditCondId(null);setEditCondVal("");}};
+  const toggleModoDios=async(userId,actual,nombre)=>{
+    const nuevo=!actual;
+    if(!window.confirm(`¿${nuevo?"ACTIVAR":"DESACTIVAR"} MODO DIOS para ${nombre}?\n${nuevo?"Consultas ilimitadas, sin dispositivo ni vencimiento.":"Volverá a restricciones normales."}`))return;
+    const res=await fetch(`${API}/api/admin/actualizar-perfil`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,modo_dios:nuevo})});
+    const data=await res.json();
+    if(data.success){setUsuarios(prev=>prev.map(u=>u.id===userId?{...u,modo_dios:nuevo}:u));showMsg(`✅ Modo Dios ${nuevo?"activado ⚡":"desactivado"} para ${nombre}`);}
+    else showMsg(`❌ ${data.error}`);
+  };
   const eliminar=async(userId,nombre)=>{
     if(!window.confirm(`¿ELIMINAR a ${nombre}? No se puede deshacer.`))return;
     const res=await fetch(`${API}/api/admin/eliminar-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId})});
@@ -714,16 +919,24 @@ function AdminPanel({user,onLogout}){
             const isOpen=selected===u.id;
             const isDemo=u.is_demo||u.role==="demo";
             const consultoHoy=sesionesHoy.has(u.id);
+            const esAdmin=u.role==="admin";
+            const esDios=!!u.modo_dios;
+            const diasSinActividad=ultimaActividad[u.id]?Math.floor((Date.now()-new Date(ultimaActividad[u.id]))/86400000):999;
+            const rowBg=u.suspendido?"#1a0505":esAdmin||esDios?"#030814":consultoHoy?"#071207":diasSinActividad<=2?"#1a0f00":"#1a0505";
+            const rowBorder=u.suspendido?"#7f1d1d":esAdmin||esDios?"#1a3a8f":consultoHoy?"#22c55e55":diasSinActividad<=2?"#f9731666":"#dc262666";
             return(
-              <div key={u.id} style={{background:consultoHoy?"#071207":"#0d0d0d",border:`1px solid ${u.suspendido?"#7f1d1d":consultoHoy?"#22c55e55":dias!==null&&dias<0?C.red:dias!==null&&dias<=7?C.fire:isDemo?"#92400e":"#222"}`,borderRadius:"10px",marginBottom:"10px",overflow:"hidden"}}>
+              <div key={u.id} style={{background:rowBg,border:`1px solid ${rowBorder}`,borderRadius:"10px",marginBottom:"10px",overflow:"hidden"}}>
                 <div onClick={()=>setSelected(isOpen?null:u.id)} style={{padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
-                    <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:u.suspendido?"#64748b":C.white,letterSpacing:"1px"}}>
+                    <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:u.suspendido?"#64748b":esAdmin||esDios?"#60a5fa":C.white,letterSpacing:"1px"}}>
                       {u.apellido?.toUpperCase()}, {u.nombre}
                       {isDemo&&<span style={{marginLeft:"8px",fontSize:"11px",color:C.gold,border:`1px solid ${C.gold}`,borderRadius:"4px",padding:"1px 5px"}}>DEMO</span>}
-                      {u.es_socio_mg&&<span style={{marginLeft:"8px",fontSize:"11px",color:C.blueL,border:`1px solid ${C.blueL}`,borderRadius:"4px",padding:"1px 5px"}}>🏅 SOCIO MG</span>}
+                      {esDios&&<span style={{marginLeft:"8px",fontSize:"11px",color:"#60a5fa",border:"1px solid #1a3a8f",borderRadius:"4px",padding:"1px 5px",background:"#0a1628"}}>⚡ MODO DIOS</span>}
+                      {esAdmin&&<span style={{marginLeft:"8px",fontSize:"11px",color:"#60a5fa",border:"1px solid #1a3a8f",borderRadius:"4px",padding:"1px 5px",background:"#0a1628"}}>👑 ADMIN</span>}
+                      {u.es_socio_mg&&!esDios&&!esAdmin&&<span style={{marginLeft:"8px",fontSize:"11px",color:C.blueL,border:`1px solid ${C.blueL}`,borderRadius:"4px",padding:"1px 5px"}}>🏅 SOCIO MG</span>}
                       {u.suspendido&&<span style={{marginLeft:"8px",fontSize:"11px",color:C.red,border:`1px solid ${C.red}`,borderRadius:"4px",padding:"1px 5px"}}>SUSPENDIDO</span>}
                       {u.condicion_medica&&<span style={{marginLeft:"8px",fontSize:"11px",color:"#f9a8d4",border:"1px solid #9d174d",borderRadius:"4px",padding:"1px 5px"}}>🩺</span>}
+                      {!consultoHoy&&!esAdmin&&!esDios&&<span style={{marginLeft:"8px",fontSize:"10px",color:diasSinActividad<=2?"#fb923c":"#f87171",border:`1px solid ${diasSinActividad<=2?"#f9731666":"#dc262666"}`,borderRadius:"4px",padding:"1px 5px"}}>{diasSinActividad===999?"SIN ACTIVIDAD":`${diasSinActividad}d sin usar`}</span>}
                     </div>
                     <div style={{fontSize:"12px",color:C.gray,marginTop:"2px"}}>DNI: {u.dni} · {u.role}</div>
                   </div>
@@ -743,6 +956,7 @@ function AdminPanel({user,onLogout}){
                       <button onClick={()=>enviarWP(u.nombre,u.telefono)} style={{padding:"9px 14px",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>💬 WP</button>
                       <button onClick={()=>editPerfilId===u.id?setEditPerfilId(null):abrirEditPerfil(u)} style={{padding:"9px 14px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>✏️ EDITAR</button>
                       <button onClick={()=>verHistorialUsuario(u.id)} style={{padding:"9px 14px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📋 HISTORIAL</button>
+                      {!esAdmin&&<button onClick={()=>toggleModoDios(u.id,esDios,`${u.nombre} ${u.apellido}`)} style={{padding:"9px 14px",background:esDios?"linear-gradient(135deg,#1e3a5f,#1a3a8f)":"#0a0a14",border:`1px solid ${esDios?"#60a5fa":"#1a3a8f"}`,borderRadius:"6px",color:esDios?"#60a5fa":"#1a3a8f",fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{esDios?"⚡ DIOS ✓":"⚡ MODO DIOS"}</button>}
                       {u.device_token&&<button onClick={()=>resetDisp(u.id,u.nombre,u.apellido)} style={{padding:"9px 14px",background:u.device_locked?`linear-gradient(135deg,${C.red},#b91c1c)`:"#1a1a1a",border:`1px solid ${u.device_locked?C.red:"#333"}`,borderRadius:"6px",color:u.device_locked?C.white:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>{u.device_locked?"🔒 DESBLOQ.":"📱 RESET"}</button>}
                       <button onClick={()=>{setResetPwdId(resetPwdId===u.id?null:u.id);setResetPwdVal("");}} style={{padding:"9px 14px",background:"#1a1a1a",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>🔑 PWD</button>
                       <button onClick={()=>{setEditFechaId(editFechaId===u.id?null:u.id);setEditFechaVal(u.fecha_expiracion?new Date(u.fecha_expiracion).toISOString().slice(0,10):"");}} style={{padding:"9px 14px",background:"#111",border:`1px solid ${C.gold}`,borderRadius:"6px",color:C.gold,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📅 VENCIMIENTO</button>
@@ -830,7 +1044,7 @@ function AdminPanel({user,onLogout}){
 // ═══════════════════════════════════════════════════════════════════════════════
 // COACH
 // ═══════════════════════════════════════════════════════════════════════════════
-function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
+function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
   const[tab,setTab]=useState("form");
   const[sesiones,setSesiones]=useState([]);
   const[expandedId,setExp]=useState(null);
@@ -843,6 +1057,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
   const[consultasHoy,setConsultasHoy]=useState(0);
   const[primerRegistroHecho,setPrimerRegistroHecho]=useState(false);
   const[showTerminos,setShowTerminos]=useState(false);
+  const[showLegal,setShowLegal]=useState(false);
   const[coachDecision,setCoachDecision]=useState(null);
   const[notaRutina,setNotaRutina]=useState("");
   const[notaGuardada,setNotaGuardada]=useState(false);
@@ -901,7 +1116,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
 
   const handleSubmit=async()=>{
     if(!form.peso||!form.entrenamiento){setError("Completá peso y entrenamiento.");return;}
-    if(!isDemo&&consultasHoy>=limiteConsultas){setError(`⚠️ Límite de ${limiteConsultas} consultas diarias alcanzado.${!isPro?" Pasate al plan PRO para 5 consultas/día.":""}`);return;}
+    if(!isDemo&&!modoDios&&consultasHoy>=limiteConsultas){setError(`⚠️ Límite de ${limiteConsultas} consultas diarias alcanzado.${!isPro?" Pasate al plan PRO para 5 consultas/día.":""}`);return;}
     setError(null);setLoading(true);setResult(null);setCoachDecision(null);setNotaRutina("");setNotaGuardada(false);setSesionIdActual(null);
     const now=new Date();
     const sexoInfo=form.sexo==="mujer"?`Sexo: Mujer${form.etapaMenstrual?" — EN ETAPA MENSTRUAL ACTIVA":""}`:`Sexo: ${form.sexo==="hombre"?"Hombre":"No especificado"}`;
@@ -909,7 +1124,12 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
     const condInfo=condicionMedica?`⚠️ CONDICIÓN MÉDICA (PRIORIDAD): ${condicionMedica}`:"";
     const perfilInfo=`Objetivo del usuario: ${objetivoUsuario||"Masa muscular"}\nNivel base del usuario: ${nivelBaseUsuario||"no definido"}${nivelBaseUsuario?` — considerar como nivel mínimo de referencia al generar la rutina`:""}`;
     const edadInfo=edadUsuario?`Edad: ${edadUsuario} años`:"Edad: no especificada";
-    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n${perfilInfo}\n\nDatos:\nPeso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\n\nHistorial:\n${buildHistoryCtx()}`;
+    const alturaInfo=user.altura?`Altura: ${user.altura} cm`:"";
+    const equipInfo=user.equipamiento?`Equipamiento: ${user.equipamiento}`:"";
+    const diasInfo=user.dias_disponibles?`Días entrenamiento/semana: ${user.dias_disponibles}`:"";
+    const localInfo=[user.localidad,user.provincia,user.pais].filter(Boolean).join(", ");
+    const ubicacionInfo=localInfo?`Ubicación: ${localInfo}`:"";
+    const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n${perfilInfo}\n${edadInfo}${alturaInfo?"\n"+alturaInfo:""}${equipInfo?"\n"+equipInfo:""}${diasInfo?"\n"+diasInfo:""}${ubicacionInfo?"\n"+ubicacionInfo:""}\n\nDatos:\nPeso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\n\nHistorial:\n${buildHistoryCtx()}`;
     const system=buildSystemPrompt(isDemo,form.quiereRutina,form.quiereRutina?form.nivelRutina:null);
     try{
       const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg})});
@@ -950,6 +1170,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
       {showRef&&<Referencias onClose={()=>setShowRef(false)}/>}
       {showPwd&&<CambiarPassword user={user} onClose={()=>setShowPwd(false)}/>}
       {showTerminos&&<TerminosModal user={user} onAceptar={()=>setShowTerminos(false)}/>}
+      {showLegal&&<LegalModal onClose={()=>setShowLegal(false)}/>}
 
       {isDemo&&(
         <div style={{background:"linear-gradient(90deg,#92400e,#78350f)",padding:"10px 16px",borderBottom:`2px solid ${C.gold}`,position:"sticky",top:0,zIndex:200}}>
@@ -971,6 +1192,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
         <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
           <DiasRestantesBadge fechaExp={user.fecha_expiracion}/>
           {!isDemo&&<button onClick={()=>setShowPwd(true)} style={{padding:"6px 10px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"11px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif"}}>🔑</button>}
+          <button onClick={()=>setShowLegal(true)} style={{padding:"6px 10px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"11px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif"}}>📄</button>
           <button onClick={onLogout} style={{padding:"6px 10px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"11px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>SALIR</button>
         </div>
       </div>
@@ -988,8 +1210,8 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro}){
           )}
         </div>
 
-        {!isDemo&&<div style={{marginBottom:"12px",padding:"10px 14px",background:"#0d0d0d",border:`1px solid ${consultasHoy>=limiteConsultas?C.red:C.fire}`,borderRadius:"8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.grayL,letterSpacing:"1px"}}>CONSULTAS HOY: <span style={{color:consultasHoy>=limiteConsultas?C.red:C.fire}}>{consultasHoy}/{limiteConsultas}</span>{primerRegistroHecho&&<span style={{marginLeft:"8px",fontSize:"10px",color:C.green}}>✅ SESIÓN REGISTRADA</span>}</div>
+        {!isDemo&&<div style={{marginBottom:"12px",padding:"10px 14px",background:"#0d0d0d",border:`1px solid ${consultasHoy>=limiteConsultas&&!modoDios?C.red:C.fire}`,borderRadius:"8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.grayL,letterSpacing:"1px"}}>CONSULTAS HOY: <span style={{color:modoDios?"#60a5fa":consultasHoy>=limiteConsultas?C.red:C.fire}}>{consultasHoy}{modoDios?"":"/"+limiteConsultas}</span>{primerRegistroHecho&&<span style={{marginLeft:"8px",fontSize:"10px",color:C.green}}>✅ SESIÓN REGISTRADA</span>}{modoDios&&<span style={{marginLeft:"8px",fontSize:"10px",color:"#60a5fa"}}>⚡ ILIMITADAS</span>}</div>
         </div>}
 
         {deload&&<div className="slide-up" style={{marginBottom:"12px",padding:"12px 16px",background:"#0a1628",border:`1px solid ${C.blueL}`,borderRadius:"8px"}}><span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:C.blueL,letterSpacing:"2px"}}>🔄 SEMANA {trainingWeek} — DESCARGA ACTIVA</span></div>}
@@ -1290,7 +1512,7 @@ function DisciplinasFan(){
     if(abs>2) return null;
     return{
       rot:rel*14, scale:abs===0?1:abs===1?0.58:0.42,
-      z:abs===0?10:abs===1?5:1, tx:rel*72,
+      z:abs===0?10:abs===1?5:1, tx:rel*144,
       blur:abs===0?0:abs===1?2:4,
       opacity:abs===0?1:abs===1?0.55:0.35, rel,
     };
@@ -1327,10 +1549,10 @@ function DisciplinasFan(){
       )}
 
       <div style={{width:"100%",maxWidth:"440px",marginTop:"24px"}}>
-        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"16px",color:"rgba(255, 237, 74, 0.84)",letterSpacing:"3px",textAlign:"center",marginBottom:"16px"}}>
-          🎯RECOMENDADO para CUALQUIER DISCIPLINA:
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:"rgba(255,255,255,.4)",letterSpacing:"3px",textAlign:"center",marginBottom:"16px"}}>
+          🎯 DISCIPLINAS DISPONIBLES
         </div>
-        <div style={{position:"relative",height:"190px",display:"flex",alignItems:"center",justifyContent:"center"}}
+        <div style={{position:"relative",height:"380px",display:"flex",alignItems:"center",justifyContent:"center"}}
           onTouchStart={onTS} onTouchEnd={onTE}>
           {visibles.map((d,pos)=>{
             const s=getStyle(pos);
@@ -1339,7 +1561,7 @@ function DisciplinasFan(){
               <div key={d.i}
                 onClick={()=>s.rel===0?setFullscreen(pos):setIdx(pos)}
                 style={{
-                  position:"absolute",width:"100px",height:"170px",borderRadius:"14px",overflow:"hidden",
+                  position:"absolute",width:"200px",height:"340px",borderRadius:"20px",overflow:"hidden",
                   background:d.hasImg?"#000":`linear-gradient(160deg,rgba(0,0,0,.8),${d.color}33)`,
                   border:`2px solid ${s.rel===0?d.color:"rgba(255,255,255,.15)"}`,
                   display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"6px",
@@ -1354,7 +1576,7 @@ function DisciplinasFan(){
                     {s.rel===0&&<div style={{position:"absolute",inset:0,background:"linear-gradient(0deg,rgba(0,0,0,.4) 0%,transparent 40%)"}}/>}
                   </>
                 ):(
-                  <div style={{fontSize:s.rel===0?"40px":"28px"}}>{d.emoji}</div>
+                  <div style={{fontSize:s.rel===0?"80px":"56px"}}>{d.emoji}</div>
                 )}
               </div>
             );
@@ -1527,7 +1749,7 @@ function Landing({onIngresar}){
         <div style={{marginTop:"14px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
           DECISIONES CON 100% ACTITUD!
         </div>
-        <div style={{marginTop:"5px",textAlign:"center",fontSize:"clamp(12px,2.5vw,17px)",color:"rgba(255, 255, 255, 0.84)",letterSpacing:"2px",fontWeight:"600"}}>
+        <div style={{marginTop:"5px",textAlign:"center",fontSize:"clamp(10px,2.5vw,13px)",color:"rgba(255,255,255,.5)",letterSpacing:"2px",fontWeight:"600"}}>
           TU PERSONAL TRAINER CON IA · 24HS · DESDE CUALQUIER LUGAR DEL MUNDO
         </div>
 
@@ -1630,6 +1852,7 @@ export default function App(){
   const[sesionCerrada,setSesionCerrada]=useState(false);const[verificando,setVerificando]=useState(true);
   const[isDemo,setIsDemo]=useState(false);const[horasDemo,setHorasDemo]=useState(null);
   const[limiteConsultas,setLimiteConsultas]=useState(2);const[isPro,setIsPro]=useState(false);
+  const[modoDios,setModoDios]=useState(false);
   const[necesitaTerminos,setNecesitaTerminos]=useState(false);
   const[necesitaPerfil,setNecesitaPerfil]=useState(false);
 
@@ -1659,10 +1882,11 @@ export default function App(){
   const handleLogin=(userData,alerta,token,dispositivoNuevo,demo,horas,limite,pro,terminos)=>{
     setUser(userData);setSessionToken(token);setSesionCerrada(false);
     setIsDemo(demo||userData.is_demo||userData.role==="demo");
-    setHorasDemo(horas||24);setLimiteConsultas(limite||2);setIsPro(!!pro);
+    setHorasDemo(horas||24);setLimiteConsultas(limite||2);setIsPro(!!pro);setModoDios(!!userData.modo_dios);
     const needTerminos=!!terminos&&userData.role!=="admin";
     setNecesitaTerminos(needTerminos);
-    setNecesitaPerfil(false); // deshabilitado hasta agregar campo en Supabase
+    const needPerfil=!userData.perfil_completado&&userData.role!=="admin"&&!needTerminos;
+    setNecesitaPerfil(needPerfil);
     if(alerta){setAlertaVenc(alerta);setAlertaVisible(true);}
     if(dispositivoNuevo)setTimeout(()=>alert("⚠️ Sesión anterior cerrada. Este es tu dispositivo autorizado."),500);
   };
@@ -1672,8 +1896,7 @@ export default function App(){
     setNecesitaTerminos(false);
     const saved=loadSession();
     if(saved){saved.user.terminos_aceptados=true;saveSession(saved.user,saved.token);}
-    // Después de T&C verificar si necesita completar perfil
-    // setNecesitaPerfil deshabilitado
+    if(saved?.user&&!saved.user.perfil_completado&&saved.user.role!=="admin") setNecesitaPerfil(true);
   };
   const handleCompletarPerfil=()=>{
     setNecesitaPerfil(false);
@@ -1698,7 +1921,7 @@ export default function App(){
         </div>
       )}
       <div style={{paddingTop:alertaVisible&&alertaVenc?"48px":0}}>
-        {user.role==="admin"?<AdminPanel user={user} onLogout={handleLogout}/>:<Coach user={user} onLogout={handleLogout} isDemo={isDemo} limiteConsultas={limiteConsultas} isPro={isPro}/>}
+        {user.role==="admin"?<AdminPanel user={user} onLogout={handleLogout}/>:<Coach user={user} onLogout={handleLogout} isDemo={isDemo} limiteConsultas={limiteConsultas} isPro={isPro} modoDios={modoDios}/>}
       </div>
     </>
   );
