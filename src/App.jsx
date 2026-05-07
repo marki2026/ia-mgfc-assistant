@@ -1725,7 +1725,7 @@ function Landing({onIngresar}){
       ))}
       <div style={{position:"fixed",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.3) 40%,rgba(0,0,0,.88) 100%)",zIndex:1}}/>
 
-      <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 20px 130px",minHeight:"100vh"}}>
+      <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 20px 180px",minHeight:"100vh"}}>
 
         {/* Badge en construcción */}
         <div style={{marginTop:"14px",display:"inline-flex",alignItems:"center",gap:"8px",padding:"6px 18px",borderRadius:"4px",background:"rgba(220,38,38,.15)",border:"1px solid rgba(220,38,38,.5)",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"3px",color:"#fca5a5"}}>
@@ -1783,23 +1783,9 @@ function Landing({onIngresar}){
           </div>
         </div>
 
-        {/* Demo WP */}
-        <div style={{marginTop:"14px",display:"flex",gap:"10px",flexWrap:"wrap",justifyContent:"center",width:"100%",maxWidth:"440px"}}>
-          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero probar la versión DEMO de MG+IA Personal Trainer 24/7 — 24hs gratis")}`}
-             target="_blank" rel="noopener noreferrer"
-             style={{flex:1,minWidth:"140px",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",padding:"13px 16px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",letterSpacing:"1px",boxShadow:"0 4px 20px rgba(22,163,74,.4)",textAlign:"center"}}>
-            💬 QUIERO PROBAR DEMO
-          </a>
-          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero más información sobre MG+IA Personal Trainer 24/7")}`}
-             target="_blank" rel="noopener noreferrer"
-             style={{flex:1,minWidth:"140px",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",padding:"13px 16px",background:"linear-gradient(135deg,#1d4ed8,#2563eb)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",letterSpacing:"1px",boxShadow:"0 4px 20px rgba(37,99,235,.4)",textAlign:"center"}}>
-            ℹ️ QUIERO INFO
-          </a>
-        </div>
-
         {/* Contador de visitas — discreto */}
         {visitas&&(
-          <div style={{position:"fixed",bottom:"80px",right:"12px",zIndex:50,display:"flex",alignItems:"center",gap:"5px",padding:"4px 10px",background:"rgba(0,0,0,.4)",borderRadius:"20px",backdropFilter:"blur(4px)"}}>
+          <div style={{position:"fixed",bottom:"175px",right:"12px",zIndex:50,display:"flex",alignItems:"center",gap:"5px",padding:"4px 10px",background:"rgba(0,0,0,.4)",borderRadius:"20px",backdropFilter:"blur(4px)"}}>
             <div style={{width:"5px",height:"5px",borderRadius:"50%",background:C.green,animation:"blink 2s ease infinite"}}/>
             <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:"rgba(255,255,255,.3)",letterSpacing:"1px"}}>
               👁️ {visitas.toLocaleString("es-AR")}
@@ -1808,10 +1794,24 @@ function Landing({onIngresar}){
         )}
       </div>
 
-      {/* Botón fijo */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100,padding:"10px 16px 18px",background:"linear-gradient(0deg,rgba(0,0,0,.98) 65%,transparent)"}}>
+      {/* Barra fija inferior — 3 botones siempre visibles */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100,padding:"10px 14px 20px",background:"linear-gradient(0deg,rgba(0,0,0,.99) 70%,transparent)"}}>
+        {/* Fila WP */}
+        <div style={{display:"flex",gap:"8px",maxWidth:"500px",margin:"0 auto 8px"}}>
+          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero probar la versión DEMO de MG+IA Personal Trainer 24/7 — 24hs gratis")}`}
+             target="_blank" rel="noopener noreferrer"
+             style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",padding:"11px 10px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"1px",boxShadow:"0 2px 14px rgba(22,163,74,.35)",whiteSpace:"nowrap"}}>
+            💬 QUIERO PROBAR DEMO
+          </a>
+          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero más información sobre MG+IA Personal Trainer 24/7")}`}
+             target="_blank" rel="noopener noreferrer"
+             style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",padding:"11px 10px",background:"linear-gradient(135deg,#1d4ed8,#2563eb)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"1px",boxShadow:"0 2px 14px rgba(37,99,235,.35)",whiteSpace:"nowrap"}}>
+            ℹ️ QUIERO INFO
+          </a>
+        </div>
+        {/* INGRESAR */}
         <button onClick={onIngresar}
-          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"14px",width:"100%",maxWidth:"500px",margin:"0 auto",padding:"17px 24px",background:"linear-gradient(135deg,#dc2626 0%,#f97316 50%,#fbbf24 100%)",backgroundSize:"200%",border:"none",borderRadius:"14px",color:"#fff",fontFamily:"Bebas Neue, sans-serif",fontSize:"21px",letterSpacing:"3px",cursor:"pointer",boxShadow:"0 4px 30px rgba(249,115,22,.65)",animation:"btn-pulse 2.5s ease infinite,shimmer 4s linear infinite"}}>
+          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"14px",width:"100%",maxWidth:"500px",margin:"0 auto",padding:"16px 24px",background:"linear-gradient(135deg,#dc2626 0%,#f97316 50%,#fbbf24 100%)",backgroundSize:"200%",border:"none",borderRadius:"14px",color:"#fff",fontFamily:"Bebas Neue, sans-serif",fontSize:"20px",letterSpacing:"3px",cursor:"pointer",boxShadow:"0 4px 30px rgba(249,115,22,.65)",animation:"btn-pulse 2.5s ease infinite,shimmer 4s linear infinite"}}>
           <span style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
             🔥 INGRESAR A LA APP
             <span style={{fontSize:"10px",opacity:.75,fontFamily:"Barlow Condensed, sans-serif",letterSpacing:"2px"}}>ACCESO DIRECTO · DECISIONES CON 100% ACTITUD</span>
