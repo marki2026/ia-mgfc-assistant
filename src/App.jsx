@@ -1738,15 +1738,10 @@ function Landing({onIngresar}){
           <img src="/logo-main.png" alt="MG+IA" style={{width:"min(280px,72vw)",height:"auto",display:"block"}}/>
         </div>
 
-        {/* Disciplinas Fan — entre logo y countdown */}
+        {/* Disciplinas Fan — entre logo y slogan */}
         <DisciplinasFan/>
 
-        {/* BADGE LANZAMIENTO + COUNTDOWN */}
-        <div style={{marginTop:"16px",width:"100%",maxWidth:"440px",padding:"0 8px"}}>
-          <LaunchBadge/>
-        </div>
-
-        <div style={{marginTop:"14px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
+        <div style={{marginTop:"20px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
           DECISIONES CON 100% ACTITUD!
         </div>
         <div style={{marginTop:"5px",textAlign:"center",fontSize:"clamp(12px,2.5vw,15px)",color:"rgba(202, 245, 12, 0.86)",letterSpacing:"2px",fontWeight:"600"}}>

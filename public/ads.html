@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-LNNR3QHLJ6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-LNNR3QHLJ6');
+  </script>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-WHT65FNR');</script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MG+IA Personal Trainer 24/7 — Empezá Ahora</title>
+  <meta name="description" content="Tu entrenamiento personalizado con inteligencia artificial. Decisiones diarias en 2 minutos. Coach humano real. 24/7 desde cualquier lugar."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --fire: #f97316;
+      --red: #dc2626;
+      --gold: #fbbf24;
+      --green: #22c55e;
+      --blue: #2563eb;
+      --blueL: #60a5fa;
+      --bg: #080808;
+      --card: #0d0d0d;
+      --border: #1a1a1a;
+      --gray: #555;
+      --grayL: #aaa;
+      --white: #f5f5f5;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{
+      background:var(--bg);
+      color:var(--white);
+      font-family:'Barlow',sans-serif;
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* ── BG GLOW ─────────────────────────────── */
+    body::before{
+      content:"";
+      position:fixed;inset:0;
+      background:
+        radial-gradient(ellipse 70% 40% at 50% 0%, rgba(220,38,38,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(249,115,22,.1) 0%, transparent 60%);
+      pointer-events:none;
+      z-index:0;
+    }
+
+    /* ── HEADER ──────────────────────────────── */
+    .header{
+      position:relative;z-index:10;
+      padding:20px 20px 0;
+      text-align:center;
+    }
+    .logo-wrap{
+      display:inline-flex;align-items:center;gap:12px;
+      padding:10px 20px;
+      background:rgba(0,0,0,.6);
+      border:1px solid rgba(249,115,22,.3);
+      border-radius:50px;
+      backdrop-filter:blur(8px);
+    }
+    .logo-wrap img{height:36px;width:auto;filter:drop-shadow(0 0 12px rgba(249,115,22,.7));}
+    .logo-wrap span{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:18px;letter-spacing:2px;
+      background:linear-gradient(90deg,#f97316,#fbbf24);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+
+    .hero{
+      position:relative;z-index:10;
+      text-align:center;
+      padding:22px 20px 8px;
+    }
+    .hero-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(32px,9vw,52px);
+      letter-spacing:2px;
+      line-height:1.05;
+      color:var(--white);
+      text-shadow:0 2px 20px rgba(249,115,22,.4);
+    }
+    .hero-title span{
+      background:linear-gradient(90deg,#f97316,#fbbf24,#f97316);
+      background-size:200%;
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      animation:shimmer 3s linear infinite;
+    }
+    .hero-sub{
+      margin-top:6px;
+      font-size:clamp(12px,3vw,15px);
+      color:rgba(255,255,255,.5);
+      letter-spacing:2px;
+      font-weight:600;
+      font-family:'Barlow Condensed',sans-serif;
+    }
+    .hero-badges{
+      display:flex;flex-wrap:wrap;justify-content:center;gap:8px;
+      margin-top:14px;
+    }
+    .badge{
+      padding:5px 12px;
+      border-radius:20px;
+      font-family:'Bebas Neue',sans-serif;
+      font-size:11px;letter-spacing:1.5px;
+    }
+    .badge-fire{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.35);color:#fb923c;}
+    .badge-blue{background:rgba(37,99,235,.15);border:1px solid rgba(96,165,250,.3);color:var(--blueL);}
+    .badge-green{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#4ade80;}
+
+    /* ── PROGRESS BAR ────────────────────────── */
+    .progress-wrap{
+      position:relative;z-index:10;
+      max-width:480px;margin:20px auto 0;padding:0 20px;
+    }
+    .progress-steps{display:flex;align-items:center;gap:0;}
+    .step-item{
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      flex:1;cursor:pointer;
+    }
+    .step-circle{
+      width:36px;height:36px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Bebas Neue',sans-serif;font-size:16px;
+      border:2px solid var(--border);
+      background:var(--card);
+      color:var(--gray);
+      transition:all .3s ease;
+    }
+    .step-item.active .step-circle{
+      border-color:var(--fire);
+      background:linear-gradient(135deg,var(--red),var(--fire));
+      color:#fff;
+      box-shadow:0 0 16px rgba(249,115,22,.5);
+    }
+    .step-item.done .step-circle{
+      border-color:var(--green);background:rgba(34,197,94,.15);color:var(--green);
+    }
+    .step-label{
+      font-size:9px;font-family:'Bebas Neue',sans-serif;
+      letter-spacing:1px;color:var(--gray);white-space:nowrap;
+      transition:color .3s;
+    }
+    .step-item.active .step-label{color:var(--fire);}
+    .step-item.done .step-label{color:var(--green);}
+    .step-line{
+      flex:1;height:2px;background:var(--border);
+      margin-bottom:18px;
+      transition:background .3s;
+    }
+    .step-line.done{background:var(--green);}
+
+    /* ── CARD ────────────────────────────────── */
+    .card{
+      position:relative;z-index:10;
+      max-width:480px;margin:16px auto 0;padding:0 16px;
+    }
+    .card-inner{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:24px 20px;
+    }
+
+    /* ── PLAN CARDS ──────────────────────────── */
+    .plan-grid{display:flex;flex-direction:column;gap:14px;}
+    .plan-card{
+      border-radius:14px;border:2px solid var(--border);
+      padding:20px;cursor:pointer;
+      transition:all .25s cubic-bezier(.34,1.56,.64,1);
+      position:relative;overflow:hidden;
+      background:#0a0a0a;
+    }
+    .plan-card::before{
+      content:"";position:absolute;inset:0;
+      opacity:0;transition:opacity .3s;
+    }
+    .plan-card.standard::before{
+      background:linear-gradient(135deg,rgba(220,38,38,.08),rgba(249,115,22,.08));
+    }
+    .plan-card.demo::before{
+      background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(96,165,250,.08));
+    }
+    .plan-card.selected{border-color:transparent;transform:scale(1.02);}
+    .plan-card.standard.selected{
+      border-color:var(--fire);
+      box-shadow:0 0 28px rgba(249,115,22,.35),0 0 60px rgba(220,38,38,.15);
+    }
+    .plan-card.standard.selected::before{opacity:1;}
+    .plan-card.demo.selected{
+      border-color:var(--blueL);
+      box-shadow:0 0 28px rgba(96,165,250,.3);
+    }
+    .plan-card.demo.selected::before{opacity:1;}
+
+    .plan-badge{
+      position:absolute;top:12px;right:12px;
+      padding:4px 10px;border-radius:20px;
+      font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1.5px;
+    }
+    .plan-badge.hot{background:rgba(220,38,38,.2);border:1px solid rgba(249,115,22,.4);color:var(--gold);}
+    .plan-badge.free{background:rgba(37,99,235,.15);border:1px solid rgba(96,165,250,.3);color:var(--blueL);}
+
+    .plan-icon{font-size:32px;margin-bottom:10px;}
+    .plan-name{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:22px;letter-spacing:2px;color:var(--white);margin-bottom:4px;
+    }
+    .plan-price{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:36px;letter-spacing:1px;
+      color:var(--fire);margin-bottom:2px;
+      text-shadow:0 0 20px rgba(249,115,22,.4);
+    }
+    .plan-price-sub{font-size:12px;color:var(--grayL);margin-bottom:12px;font-family:'Barlow',sans-serif;}
+    .plan-features{list-style:none;display:flex;flex-direction:column;gap:6px;}
+    .plan-features li{
+      font-size:13px;color:var(--grayL);
+      display:flex;align-items:center;gap:8px;
+    }
+    .plan-features li::before{content:"✓";color:var(--green);font-weight:700;flex-shrink:0;}
+    .plan-features li.x::before{content:"✗";color:var(--gray);}
+
+    .plan-select-indicator{
+      margin-top:14px;
+      padding:10px;text-align:center;
+      border-radius:8px;border:1px dashed var(--border);
+      font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;
+      color:var(--gray);transition:all .3s;
+    }
+    .plan-card.standard.selected .plan-select-indicator{
+      border:1px solid var(--fire);color:var(--fire);background:rgba(249,115,22,.08);
+    }
+    .plan-card.demo.selected .plan-select-indicator{
+      border:1px solid var(--blueL);color:var(--blueL);background:rgba(96,165,250,.08);
+    }
+
+    /* ── FORM ─────────────────────────────────── */
+    .form-group{margin-bottom:18px;}
+    .form-label{
+      display:block;
+      font-family:'Bebas Neue',sans-serif;
+      font-size:13px;letter-spacing:1.5px;
+      color:var(--grayL);margin-bottom:8px;
+    }
+    .form-label span{color:var(--red);}
+    .form-input{
+      width:100%;
+      background:#111;
+      border:1px solid #2a2a2a;
+      border-radius:8px;
+      padding:14px 16px;
+      color:var(--white);
+      font-size:15px;
+      font-family:'Barlow',sans-serif;
+      outline:none;
+      transition:border-color .2s,box-shadow .2s;
+      -webkit-appearance:none;
+    }
+    .form-input:focus{
+      border-color:var(--fire);
+      box-shadow:0 0 0 3px rgba(249,115,22,.12);
+    }
+    .form-input.filled{border-color:rgba(34,197,94,.4);}
+    .form-input::placeholder{color:#444;}
+
+    .form-note{
+      margin-top:6px;font-size:11px;color:var(--gray);
+      display:flex;align-items:center;gap:5px;
+    }
+
+    /* ── PLAN SUMMARY ────────────────────────── */
+    .plan-summary{
+      background:#0a0a0a;border:1px solid rgba(249,115,22,.25);
+      border-radius:10px;padding:14px 16px;
+      margin-bottom:20px;
+      display:flex;align-items:center;gap:12px;
+    }
+    .plan-summary-icon{font-size:24px;}
+    .plan-summary-text{flex:1;}
+    .plan-summary-name{
+      font-family:'Bebas Neue',sans-serif;font-size:15px;
+      letter-spacing:1px;color:var(--fire);
+    }
+    .plan-summary-price{font-size:12px;color:var(--grayL);}
+
+    /* ── WP BUTTON ───────────────────────────── */
+    .wp-block{text-align:center;}
+    .wp-pre{
+      font-size:14px;color:var(--grayL);margin-bottom:20px;line-height:1.7;
+    }
+    .wp-pre strong{color:var(--white);}
+    .btn-wp{
+      display:inline-flex;align-items:center;justify-content:center;gap:12px;
+      width:100%;padding:18px 24px;
+      background:linear-gradient(135deg,#16a34a,#15803d);
+      border:none;border-radius:14px;
+      color:#fff;cursor:pointer;
+      font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;
+      text-decoration:none;
+      box-shadow:0 4px 30px rgba(22,163,74,.45);
+      transition:all .2s;
+      animation:wp-pulse 2.5s ease infinite;
+    }
+    .btn-wp:hover{transform:scale(1.02);box-shadow:0 6px 40px rgba(22,163,74,.7);}
+    .btn-wp svg{width:26px;height:26px;fill:#fff;flex-shrink:0;}
+
+    .wp-note{
+      margin-top:14px;
+      padding:12px 16px;
+      background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);
+      border-radius:8px;font-size:12px;color:rgba(255,255,255,.5);
+      font-family:'Barlow',sans-serif;line-height:1.6;
+    }
+
+    /* ── NAVIGATION BUTTONS ──────────────────── */
+    .nav-row{
+      max-width:480px;margin:16px auto 0;
+      padding:0 16px;
+      display:flex;gap:10px;
+    }
+    .btn-back{
+      padding:14px 20px;
+      background:transparent;border:1px solid #2a2a2a;border-radius:10px;
+      color:var(--gray);cursor:pointer;
+      font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;
+      transition:all .2s;flex-shrink:0;
+    }
+    .btn-back:hover{border-color:var(--gray);color:var(--grayL);}
+    .btn-next{
+      flex:1;padding:16px 20px;
+      background:linear-gradient(135deg,var(--red),var(--fire));
+      border:none;border-radius:10px;
+      color:#fff;cursor:pointer;
+      font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;
+      box-shadow:0 4px 24px rgba(249,115,22,.4);
+      transition:all .2s;
+    }
+    .btn-next:hover{box-shadow:0 6px 35px rgba(249,115,22,.65);transform:translateY(-1px);}
+    .btn-next:disabled{background:#222;box-shadow:none;cursor:not-allowed;transform:none;}
+
+    /* ── ERROR ────────────────────────────────── */
+    .error-msg{
+      max-width:480px;margin:10px auto 0;padding:0 16px;
+    }
+    .error-inner{
+      padding:10px 14px;background:#1a0505;
+      border:1px solid var(--red);border-radius:8px;
+      font-size:13px;color:#fca5a5;
+    }
+
+    /* ── FOOTER ──────────────────────────────── */
+    .footer{
+      position:relative;z-index:10;
+      text-align:center;padding:28px 20px 36px;
+      font-size:11px;color:rgba(255,255,255,.2);
+      font-family:'Barlow',sans-serif;line-height:1.8;
+    }
+    .footer a{color:rgba(249,115,22,.5);text-decoration:none;}
+
+    /* ── SECTION HEADER ──────────────────────── */
+    .section-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:20px;letter-spacing:2px;
+      color:var(--white);margin-bottom:4px;
+    }
+    .section-sub{font-size:13px;color:var(--grayL);margin-bottom:20px;line-height:1.6;}
+
+    /* ── ANIMATIONS ──────────────────────────── */
+    @keyframes shimmer{0%{background-position:200%}100%{background-position:0%}}
+    @keyframes wp-pulse{0%,100%{box-shadow:0 4px 30px rgba(22,163,74,.45)}50%{box-shadow:0 6px 50px rgba(22,163,74,.7)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .35s ease forwards;}
+
+    /* ── HIDE/SHOW ───────────────────────────── */
+    .screen{display:none;}
+    .screen.active{display:block;}
+  </style>
+</head>
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WHT65FNR"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <!-- ── HEADER ──────────────────────────────── -->
+  <div class="header">
+    <div class="logo-wrap">
+      <img src="/logo-badge.png" alt="MG+IA"/>
+      <span>MG+IA PERSONAL TRAINER 24/7</span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-title">EMPEZÁ A ENTRENAR<br/><span>CON INTELIGENCIA ARTIFICIAL</span></div>
+    <div class="hero-sub">COACH HUMANO REAL · DECISIONES EN 2 MIN · 24HS · ALMAFUERTE, CÓRDOBA</div>
+    <div class="hero-badges">
+      <span class="badge badge-fire">🤖 IA PERSONALIZADA</span>
+      <span class="badge badge-green">✅ SIN DESCARGA</span>
+      <span class="badge badge-blue">🔒 100% PRIVADO</span>
+    </div>
+  </div>
+
+  <!-- ── PROGRESS BAR ─────────────────────────── -->
+  <div class="progress-wrap">
+    <div class="progress-steps">
+      <div class="step-item active" id="step1-item" onclick="goTo(1)">
+        <div class="step-circle" id="step1-circle">1</div>
+        <div class="step-label">PLAN</div>
+      </div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-item" id="step2-item" onclick="goTo(2)">
+        <div class="step-circle" id="step2-circle">2</div>
+        <div class="step-label">DATOS</div>
+      </div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-item" id="step3-item" onclick="goTo(3)">
+        <div class="step-circle" id="step3-circle">3</div>
+        <div class="step-label">ENVIAR</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- STEP 1: ELEGÍ TU PLAN                      -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="card screen active fade-up" id="screen1">
+    <div class="card-inner">
+      <div class="section-title">ELEGÍ TU PLAN</div>
+      <div class="section-sub">Seleccioná la opción que mejor se adapte a vos. Podés empezar gratis con el Demo.</div>
+
+      <div class="plan-grid">
+
+        <!-- PLAN STANDARD -->
+        <div class="plan-card standard" id="card-standard" onclick="selectPlan('standard')">
+          <span class="plan-badge hot">🔥 MÁS ELEGIDO</span>
+          <div class="plan-icon">🏆</div>
+          <div class="plan-name">PLAN MENSUAL</div>
+          <div class="plan-price">$49.999</div>
+          <div class="plan-price-sub">por mes · Transferencia bancaria o Mercado Pago</div>
+          <ul class="plan-features">
+            <li>Consultas diarias ilimitadas con IA</li>
+            <li>Rutina personalizada cada día</li>
+            <li>Historial completo de sesiones</li>
+            <li>Registro y seguimiento de peso</li>
+            <li>Acceso al coach humano por WhatsApp</li>
+            <li>Estadísticas de progreso</li>
+            <li>Adaptado a tu disciplina y objetivo</li>
+          </ul>
+          <div class="plan-select-indicator" id="indicator-standard">TAP PARA SELECCIONAR</div>
+        </div>
+
+        <!-- PLAN DEMO -->
+        <div class="plan-card demo" id="card-demo" onclick="selectPlan('demo')">
+          <span class="plan-badge free">GRATIS · 24HS</span>
+          <div class="plan-icon">⚡</div>
+          <div class="plan-name">DEMO GRATUITO</div>
+          <div class="plan-price" style="color:var(--blueL);text-shadow:0 0 20px rgba(96,165,250,.4);">GRATIS</div>
+          <div class="plan-price-sub">24 horas · Sin tarjeta de crédito</div>
+          <ul class="plan-features">
+            <li>3 consultas a la IA incluidas</li>
+            <li>Respuesta básica personalizada</li>
+            <li class="x" style="color:#666;">Sin historial ni pesaje</li>
+            <li class="x" style="color:#666;">Sin acceso al coach humano</li>
+          </ul>
+          <div class="plan-select-indicator" id="indicator-demo">TAP PARA SELECCIONAR</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row screen active" id="nav1">
+    <button class="btn-next" id="btn-next1" onclick="nextStep(1)" disabled>SIGUIENTE →</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- STEP 2: TUS DATOS                         -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="card screen" id="screen2">
+    <div class="card-inner">
+      <div class="section-title">TUS DATOS</div>
+      <div class="section-sub">Para que tu coach pueda activarte el acceso y contactarte si es necesario.</div>
+
+      <div class="form-group">
+        <label class="form-label" for="inp-nombre">NOMBRE Y APELLIDO <span>*</span></label>
+        <input class="form-input" id="inp-nombre" type="text" placeholder="ej: Juan Pérez" autocomplete="name" oninput="checkFilled(this)"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="inp-tel">WHATSAPP / TELÉFONO <span>*</span></label>
+        <input class="form-input" id="inp-tel" type="tel" placeholder="ej: 3571-587003" autocomplete="tel" oninput="checkFilled(this)"/>
+        <div class="form-note">📱 Tu coach te va a activar el acceso por este número</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="inp-localidad">LOCALIDAD (opcional)</label>
+        <input class="form-input" id="inp-localidad" type="text" placeholder="ej: Almafuerte, Córdoba" autocomplete="address-level2" oninput="checkFilled(this)"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="inp-consulta">¿ALGUNA CONSULTA O MENSAJE? (opcional)</label>
+        <input class="form-input" id="inp-consulta" type="text" placeholder="ej: quiero empezar a ganar músculo"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row screen" id="nav2">
+    <button class="btn-back" onclick="goTo(1)">← ATRÁS</button>
+    <button class="btn-next" id="btn-next2" onclick="nextStep(2)">SIGUIENTE →</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- STEP 3: ENVIAR POR WHATSAPP               -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="card screen" id="screen3">
+    <div class="card-inner">
+
+      <div class="plan-summary" id="plan-summary-box">
+        <div class="plan-summary-icon" id="summary-icon">🏆</div>
+        <div class="plan-summary-text">
+          <div class="plan-summary-name" id="summary-name">PLAN MENSUAL</div>
+          <div class="plan-summary-price" id="summary-price">$49.999/mes · Transferencia o Mercado Pago</div>
+        </div>
+      </div>
+
+      <div class="wp-block">
+        <div class="section-title" style="margin-bottom:8px;">TODO LISTO 🎯</div>
+        <div class="wp-pre">
+          Tocá el botón para enviarle un mensaje<br/>
+          directamente a tu coach.<br/>
+          <strong>Te activa el acceso en minutos.</strong>
+        </div>
+
+        <a class="btn-wp" id="btn-wp" href="#" onclick="enviarWP(event)">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          ENVIAR MENSAJE AL COACH
+        </a>
+
+        <div class="wp-note">
+          💬 Horario de atención: <strong>Lun–Vie 7:00 a 22:00hs</strong> (Almafuerte, Córdoba)<br/>
+          Tu mensaje llega directo al teléfono de Marcos Giménez · Coach MG+IA
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row screen" id="nav3">
+    <button class="btn-back" onclick="goTo(2)">← ATRÁS</button>
+  </div>
+
+  <!-- ── ERROR ──────────────────────────────────── -->
+  <div class="error-msg" id="error-msg" style="display:none;">
+    <div class="error-inner" id="error-text"></div>
+  </div>
+
+  <!-- ── FOOTER ─────────────────────────────────── -->
+  <div class="footer">
+    <strong style="color:rgba(255,255,255,.35);">MG+IA PERSONAL TRAINER 24/7</strong><br/>
+    MG Fitness Center · Corrientes 565, Almafuerte, Córdoba, CP 5854<br/>
+    Coach: Marcos Giménez · CUIL 20-31996621-9<br/>
+    <a href="/">← Volver a la app</a> · <a href="/ads.html#legal">Términos y condiciones</a>
+  </div>
+
+  <script>
+    const WP = "543571587003";
+    let planSeleccionado = null;
+    let currentStep = 1;
+
+    function selectPlan(plan) {
+      planSeleccionado = plan;
+      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('card-' + plan).classList.add('selected');
+      document.getElementById('indicator-standard').textContent = plan === 'standard' ? '✅ SELECCIONADO' : 'TAP PARA SELECCIONAR';
+      document.getElementById('indicator-demo').textContent = plan === 'demo' ? '✅ SELECCIONADO' : 'TAP PARA SELECCIONAR';
+      document.getElementById('btn-next1').disabled = false;
+
+      // GTM event
+      if(window.gtag) gtag('event','plan_selected',{plan_type:plan});
+    }
+
+    function goTo(step) {
+      if(step > currentStep) return; // no saltear hacia adelante
+      renderStep(step);
+    }
+
+    function nextStep(from) {
+      clearError();
+      if(from === 1) {
+        if(!planSeleccionado){ showError("Seleccioná un plan para continuar."); return; }
+        renderStep(2);
+      } else if(from === 2) {
+        const nombre = document.getElementById('inp-nombre').value.trim();
+        const tel = document.getElementById('inp-tel').value.trim();
+        if(!nombre){ showError("Ingresá tu nombre y apellido."); return; }
+        if(!tel){ showError("Ingresá tu número de WhatsApp."); return; }
+        updateSummary();
+        renderStep(3);
+        if(window.gtag) gtag('event','form_completed',{plan_type:planSeleccionado});
+      }
+    }
+
+    function renderStep(step) {
+      currentStep = step;
+      // Hide all
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      // Show current step screens
+      const map = {1:['screen1','nav1'], 2:['screen2','nav2'], 3:['screen3','nav3']};
+      map[step].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.add('active');
+        el.classList.remove('fade-up');
+        void el.offsetWidth;
+        el.classList.add('fade-up');
+      });
+      // Update progress
+      for(let i=1;i<=3;i++){
+        const item = document.getElementById('step'+i+'-item');
+        const circle = document.getElementById('step'+i+'-circle');
+        item.classList.remove('active','done');
+        circle.textContent = i;
+        if(i < step){ item.classList.add('done'); circle.textContent = '✓'; }
+        else if(i === step){ item.classList.add('active'); }
+        if(i < 3){
+          const line = document.getElementById('line'+i);
+          line.classList.toggle('done', i < step);
+        }
+      }
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    function updateSummary() {
+      const icon = planSeleccionado === 'standard' ? '🏆' : '⚡';
+      const name = planSeleccionado === 'standard' ? 'PLAN MENSUAL' : 'DEMO GRATUITO 24HS';
+      const price = planSeleccionado === 'standard' ? '$49.999/mes · Transferencia o Mercado Pago' : 'Gratis · Sin tarjeta de crédito';
+      document.getElementById('summary-icon').textContent = icon;
+      document.getElementById('summary-name').textContent = name;
+      document.getElementById('summary-price').textContent = price;
+      if(planSeleccionado === 'demo'){
+        document.querySelector('.plan-summary').style.borderColor = 'rgba(96,165,250,.35)';
+        document.getElementById('summary-name').style.color = 'var(--blueL)';
+      } else {
+        document.querySelector('.plan-summary').style.borderColor = 'rgba(249,115,22,.35)';
+        document.getElementById('summary-name').style.color = 'var(--fire)';
+      }
+    }
+
+    function enviarWP(e) {
+      e.preventDefault();
+      const nombre = document.getElementById('inp-nombre').value.trim();
+      const tel = document.getElementById('inp-tel').value.trim();
+      const local = document.getElementById('inp-localidad').value.trim();
+      const consulta = document.getElementById('inp-consulta').value.trim();
+
+      const planTexto = planSeleccionado === 'standard'
+        ? 'Plan Mensual — $49.999/mes (Transferencia o Mercado Pago)'
+        : 'Demo Gratuito 24hs';
+
+      let msg = `Hola Marcos! Vengo desde la página web de MG+IA Personal Trainer 24/7.\n\n`;
+      msg += `📋 *Plan elegido:* ${planTexto}\n`;
+      msg += `👤 *Nombre:* ${nombre}\n`;
+      msg += `📞 *WhatsApp:* ${tel}\n`;
+      if(local) msg += `📍 *Localidad:* ${local}\n`;
+      if(consulta) msg += `\n💬 *Consulta:* ${consulta}\n`;
+      msg += `\n¡Quiero empezar! ¿Cómo sigo?`;
+
+      const url = `https://wa.me/${WP}?text=${encodeURIComponent(msg)}`;
+      if(window.gtag) gtag('event','whatsapp_click',{plan_type:planSeleccionado});
+      window.open(url, '_blank');
+    }
+
+    function checkFilled(el) {
+      if(el.value.trim()) el.classList.add('filled');
+      else el.classList.remove('filled');
+    }
+
+    function showError(msg) {
+      const box = document.getElementById('error-msg');
+      document.getElementById('error-text').textContent = '⚠️ ' + msg;
+      box.style.display = 'block';
+      box.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    function clearError() {
+      document.getElementById('error-msg').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
