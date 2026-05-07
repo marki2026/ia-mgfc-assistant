@@ -1749,7 +1749,7 @@ function Landing({onIngresar}){
         <div style={{marginTop:"14px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
           DECISIONES CON 100% ACTITUD!
         </div>
-        <div style={{marginTop:"5px",textAlign:"center",fontSize:"clamp(10px,2.5vw,13px)",color:"rgba(255,255,255,.5)",letterSpacing:"2px",fontWeight:"600"}}>
+        <div style={{marginTop:"5px",textAlign:"center",fontSize:"clamp(12px,2.5vw,15px)",color:"rgba(202, 245, 12, 0.86)",letterSpacing:"2px",fontWeight:"600"}}>
           TU PERSONAL TRAINER CON IA · 24HS · DESDE CUALQUIER LUGAR DEL MUNDO
         </div>
 
