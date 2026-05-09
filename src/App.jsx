@@ -95,7 +95,7 @@ const SECTIONS=[
 function buildSystemPrompt(isDemo,incluirRutina,nivelRutina){
   const nivelInfo=incluirRutina&&nivelRutina?`\nNIVEL DE RUTINA: ${nivelRutina}\n- PRINCIPIANTE: series únicas, ejercicios mecánicos simples, descansos 90-120s\n- BÁSICO: biseries, aislados+compuestos, descansos 60-90s\n- INTERMEDIO: triseries, antagonistas, superseries, descansos 45-60s\n- AVANZADO: escalonadas, superseries complejas, técnicas avanzadas, descansos 30-45s`:"";
   if(isDemo)return`Actúa como coach de entrenamiento. Versión DEMO simplificada. Respuesta básica y breve. Al final de MOTIVO agregá: "Versión demo — análisis completo disponible en versión oficial."\nFORMATO:\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\nSin texto extra.`;
-  return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\nSin texto extra.`;
+  return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre\n- Si el historial incluye RUTINAS PREVIAS EJECUTADAS: analizalas obligatoriamente. Podés repetir el estímulo muscular pero con ejercicios DISTINTOS. PROHIBIDO dar la misma rutina exacta. Si el entrenamiento es igual a las últimas 2 sesiones, cambiá al menos el 60% de los ejercicios${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\nSin texto extra.`;
 }
 
 function parseResponse(text){
@@ -1111,7 +1111,17 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
 
   const buildHistoryCtx=()=>{
     if(!sesiones.length)return"Sin historial previo.";
-    return sesiones.slice(0,10).map(s=>`• ${dayLabel(s.created_at)} — Sem ${s.training_week}${s.is_deload?"[DESC]":""} — ${s.entrenamiento} | E:${s.energia} D:${s.descanso} A:${s.alimentacion}`).join("\n");
+    const resumen=sesiones.slice(0,10).map(s=>`• ${dayLabel(s.created_at)} — Sem ${s.training_week}${s.is_deload?"[DESC]":""} — ${s.entrenamiento} | E:${s.energia} D:${s.descanso} A:${s.alimentacion}`).join("\n");
+    // Extraer rutinas generadas de las últimas 2 sesiones con rutina
+    const conRutina=sesiones.filter(s=>s.response_text&&s.response_text.includes("RUTINA DEL DÍA")).slice(0,2);
+    if(!conRutina.length)return resumen;
+    const rutinasCtx=conRutina.map((s,i)=>{
+      const partes=s.response_text.split(/RUTINA DEL DÍA[:\n\s]*/i);
+      const texto=partes[1]?partes[1].trim().slice(0,700):"";
+      if(!texto)return null;
+      return `\n[RUTINA ${i===0?"ÚLTIMA":"PENÚLTIMA"} — ${dayLabel(s.created_at)} — ${s.entrenamiento}]\n${texto}`;
+    }).filter(Boolean).join("\n");
+    return resumen+(rutinasCtx?`\n\n⚠️ RUTINAS PREVIAS EJECUTADAS — ANALIZÁ PARA NO REPETIR EJERCICIOS IDÉNTICOS:${rutinasCtx}`:"");
   };
 
   const handleSubmit=async()=>{
