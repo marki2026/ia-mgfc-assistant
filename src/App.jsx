@@ -95,18 +95,22 @@ const SECTIONS=[
 function buildSystemPrompt(isDemo,incluirRutina,nivelRutina){
   const nivelInfo=incluirRutina&&nivelRutina?`\nNIVEL DE RUTINA: ${nivelRutina}\n- PRINCIPIANTE: series únicas, ejercicios mecánicos simples, descansos 90-120s\n- BÁSICO: biseries, aislados+compuestos, descansos 60-90s\n- INTERMEDIO: triseries, antagonistas, superseries, descansos 45-60s\n- AVANZADO: escalonadas, superseries complejas, técnicas avanzadas, descansos 30-45s`:"";
   if(isDemo)return`Actúa como coach de entrenamiento. Versión DEMO simplificada. Respuesta básica y breve. Al final de MOTIVO agregá: "Versión demo — análisis completo disponible en versión oficial."\nFORMATO:\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\nSin texto extra.`;
-  return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre\n- Si el historial incluye RUTINAS PREVIAS EJECUTADAS: analizalas obligatoriamente. Podés repetir el estímulo muscular pero con ejercicios DISTINTOS. PROHIBIDO dar la misma rutina exacta. Si el entrenamiento es igual a las últimas 2 sesiones, cambiá al menos el 60% de los ejercicios${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\nSin texto extra.`;
+  return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre\n- Si el historial incluye RUTINAS PREVIAS EJECUTADAS: analizalas obligatoriamente. Podés repetir el estímulo muscular pero con ejercicios DISTINTOS. PROHIBIDO dar la misma rutina exacta. Si el entrenamiento es igual a las últimas 2 sesiones, cambiá al menos el 60% de los ejercicios${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\n\nTABLERO TÁCTICO (SOLO si la disciplina es fútbol/hockey/básquet/vóley Y la rutina incluye ejercicio de desplazamiento en cancha con conos, patrones o movimiento espacial):\nAgregá al final del response, en una sola línea:\nTABLERO:{"campo":"futbol|hockey|basket|voley","elementos":[{"tipo":"cono|jugador|pelota|zona","x":0.0,"y":0.0,"color":"naranja|amarillo|rojo|azul|blanco"},...],"trayectorias":[{"de":{"x":0.0,"y":0.0},"a":{"x":0.0,"y":0.0},"tipo":"sprint|trote|cambio_ritmo|lateral|retroceso","orden":1},...],"descripcion":"descripción breve del ejercicio"}\nCOORDENADAS: x=0 izquierda, x=1 derecha, y=0 arco/red/aro propio, y=1 fondo campo del jugador. Máximo 6 elementos y 4 trayectorias. Si el ejercicio es de gym sin desplazamiento en cancha, NO incluir TABLERO.\nSin texto extra.`;
 }
 
 function parseResponse(text){
   const parsed={};
+  // Strip TABLERO block before parsing sections
+  const tableroMatch=text.match(/TABLERO:\s*(\{[\s\S]*?\})\s*$/m);
+  if(tableroMatch){try{parsed.tablero=JSON.parse(tableroMatch[1]);}catch(e){parsed.tablero=null;}}
+  const cleanText=tableroMatch?text.slice(0,tableroMatch.index):text;
   SECTIONS.forEach((s,i)=>{
-    const start=text.indexOf(s.label+":");
+    const start=cleanText.indexOf(s.label+":");
     if(start===-1)return;
     const nextLabels=SECTIONS.slice(i+1).map(ns=>ns.label+":");
-    let end=text.length;
-    nextLabels.forEach(nl=>{const idx=text.indexOf(nl,start);if(idx!==-1&&idx<end)end=idx;});
-    parsed[s.key]=text.slice(start+s.label.length+1,end).replace(/^---\s*/gm,"").trim();
+    let end=cleanText.length;
+    nextLabels.forEach(nl=>{const idx=cleanText.indexOf(nl,start);if(idx!==-1&&idx<end)end=idx;});
+    parsed[s.key]=cleanText.slice(start+s.label.length+1,end).replace(/^---\s*/gm,"").trim();
   });
   return parsed;
 }
@@ -345,6 +349,265 @@ function LegalModal({onClose}){
           <button onClick={onClose} style={{width:"100%",padding:"12px",background:"transparent",border:`1px solid ${C.fire}`,borderRadius:"8px",color:C.fire,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>CERRAR</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── TACTICAL BOARD ───────────────────────────────────────────────────────────
+const VW=100,VH=65;
+const fx=x=>x*VW, fy=y=>y*VH;
+
+const COL_TRAY={sprint:"#f97316",trote:"#22c55e",cambio_ritmo:"#fbbf24",lateral:"#60a5fa",retroceso:"#f472b6"};
+const COL_CONO={naranja:"#f97316",amarillo:"#fbbf24",rojo:"#dc2626",azul:"#3b82f6",blanco:"#fff",verde:"#22c55e"};
+
+// ── Campos SVG ─────────────────────────────────────────────────────────────────
+function CampoFutbol(){return(<g>
+  <rect x="0" y="0" width={VW} height={VH} fill="#2d6a4f"/>
+  {/* Líneas principales */}
+  <rect x=".5" y=".5" width={VW-1} height={VH-1} fill="none" stroke="#fff" strokeWidth=".7"/>
+  {/* Línea centro (top) */}
+  <line x1="0" y1="0" x2={VW} y2="0" stroke="#fff" strokeWidth=".7"/>
+  {/* Arco centro */}
+  <path d={`M${VW*.38} 0 A${VW*.14} ${VH*.22} 0 0 1 ${VW*.62} 0`} fill="none" stroke="#fff" strokeWidth=".7"/>
+  {/* Área grande */}
+  <rect x={VW*.2} y={VH*.65} width={VW*.6} height={VH*.35} fill="rgba(255,255,255,.04)" stroke="#fff" strokeWidth=".7"/>
+  {/* Área chica */}
+  <rect x={VW*.34} y={VH*.84} width={VW*.32} height={VH*.16} fill="none" stroke="#fff" strokeWidth=".7"/>
+  {/* Punto penal */}
+  <circle cx={VW*.5} cy={VH*.77} r=".9" fill="#fff"/>
+  {/* Arco del área */}
+  <path d={`M${VW*.28} ${VH*.65} A${VH*.18} ${VH*.18} 0 0 1 ${VW*.72} ${VH*.65}`} fill="none" stroke="#fff" strokeWidth=".6" strokeDasharray="2 1.5"/>
+  {/* Arco (portería) */}
+  <rect x={VW*.4} y={VH*.95} width={VW*.2} height={VH*.05} fill="none" stroke="#fff" strokeWidth="1.2"/>
+</g>);}
+
+function CampoHockey(){return(<g>
+  <rect x="0" y="0" width={VW} height={VH} fill="#1a5e35"/>
+  <rect x=".5" y=".5" width={VW-1} height={VH-1} fill="none" stroke="#fff" strokeWidth=".7"/>
+  <line x1="0" y1="0" x2={VW} y2="0" stroke="#fff" strokeWidth=".7"/>
+  {/* Línea 23m */}
+  <line x1="0" y1={VH*.42} x2={VW} y2={VH*.42} stroke="#fff" strokeWidth=".6" strokeDasharray="3 2"/>
+  <text x="2" y={VH*.4} fill="#fff" fontSize="3" opacity=".5" fontFamily="monospace">23m</text>
+  {/* D (shooting circle) */}
+  <path d={`M${VW*.16} ${VH} A${VW*.37} ${VH*.75} 0 0 1 ${VW*.84} ${VH}`} fill="rgba(255,255,255,.05)" stroke="#fff" strokeWidth=".7"/>
+  {/* Portería */}
+  <rect x={VW*.4} y={VH*.93} width={VW*.2} height={VH*.07} fill="none" stroke="#fff" strokeWidth="1.2"/>
+  {/* Punto penal (penalty stroke) */}
+  <circle cx={VW*.5} cy={VH*.86} r=".9" fill="#fff"/>
+  <line x1={VW*.46} y1={VH*.84} x2={VW*.54} y2={VH*.84} stroke="#fff" strokeWidth=".6"/>
+</g>);}
+
+function CampoBasket(){return(<g>
+  <rect x="0" y="0" width={VW} height={VH} fill="#7c4a1a"/>
+  <rect x=".5" y=".5" width={VW-1} height={VH-1} fill="none" stroke="#fff" strokeWidth=".7"/>
+  <line x1="0" y1="0" x2={VW} y2="0" stroke="#fff" strokeWidth=".7"/>
+  {/* Pintura */}
+  <rect x={VW*.33} y={VH*.62} width={VW*.34} height={VH*.38} fill="rgba(255,255,255,.07)" stroke="#fff" strokeWidth=".7"/>
+  {/* Semicírculo tiro libre */}
+  <path d={`M${VW*.33} ${VH*.62} A${VW*.17} ${VH*.26} 0 0 1 ${VW*.67} ${VH*.62}`} fill="none" stroke="#fff" strokeWidth=".7"/>
+  {/* Línea tiro libre */}
+  <line x1={VW*.33} y1={VH*.62} x2={VW*.67} y2={VH*.62} stroke="#fff" strokeWidth=".7"/>
+  {/* Arco 3 puntos */}
+  <path d={`M${VW*.06} ${VH} A${VW*.46} ${VH*.72} 0 0 1 ${VW*.94} ${VH}`} fill="none" stroke="#fff" strokeWidth=".7"/>
+  <line x1={VW*.06} y1={VH*.77} x2={VW*.06} y2={VH} stroke="#fff" strokeWidth=".7"/>
+  <line x1={VW*.94} y1={VH*.77} x2={VW*.94} y2={VH} stroke="#fff" strokeWidth=".7"/>
+  {/* Zona restringida bajo aro */}
+  <path d={`M${VW*.43} ${VH} A${VW*.07} ${VH*.1} 0 0 1 ${VW*.57} ${VH}`} fill="none" stroke="#fff" strokeWidth=".6"/>
+  {/* Tablero */}
+  <rect x={VW*.43} y={VH*.87} width={VW*.14} height={VH*.025} fill="#fff" opacity=".6"/>
+  {/* Aro */}
+  <circle cx={VW*.5} cy={VH*.91} r="3" fill="none" stroke="#f97316" strokeWidth="1.4"/>
+</g>);}
+
+function CampoVoley(){return(<g>
+  <rect x="0" y="0" width={VW} height={VH} fill="#1a3a6a"/>
+  <rect x=".5" y=".5" width={VW-1} height={VH-1} fill="none" stroke="#fff" strokeWidth=".7"/>
+  {/* Red */}
+  <line x1="0" y1="3" x2={VW} y2="3" stroke="#fff" strokeWidth="2.5"/>
+  <rect x="0" y="0" width="1.5" height="8" fill="#fff"/>
+  <rect x={VW-1.5} y="0" width="1.5" height="8" fill="#fff"/>
+  {/* Línea de ataque (3m) */}
+  <line x1="0" y1={VH*.48} x2={VW} y2={VH*.48} stroke="#fff" strokeWidth=".7" strokeDasharray="3 2"/>
+  <text x="2" y={VH*.46} fill="#fff" fontSize="3.2" opacity=".55" fontFamily="monospace">3m</text>
+  {/* Zonas (guías suaves) */}
+  <line x1={VW/3} y1="3" x2={VW/3} y2={VH} stroke="#fff" strokeWidth=".3" opacity=".25"/>
+  <line x1={VW*2/3} y1="3" x2={VW*2/3} y2={VH} stroke="#fff" strokeWidth=".3" opacity=".25"/>
+  <line x1="0" y1={VH*.25} x2={VW} y2={VH*.25} stroke="#fff" strokeWidth=".3" opacity=".25"/>
+  {/* Línea servicio */}
+  <line x1="0" y1={VH*.9} x2={VW} y2={VH*.9} stroke="#fff" strokeWidth=".5" strokeDasharray="2 2"/>
+</g>);}
+
+// Registry extensible — agregar nuevas disciplinas aquí
+const CAMPOS={
+  futbol: {Campo:CampoFutbol, nombre:"Fútbol",    bg:"#2d6a4f"},
+  hockey: {Campo:CampoHockey, nombre:"Hockey",    bg:"#1a5e35"},
+  basket: {Campo:CampoBasket, nombre:"Básquet",   bg:"#7c4a1a"},
+  voley:  {Campo:CampoVoley,  nombre:"Vóley",     bg:"#1a3a6a"},
+  // ↓ Agregar aquí futuras disciplinas:
+  // rugby: {Campo:CampoRugby, nombre:"Rugby", bg:"#2d4a1a"},
+};
+
+function detectarCampo(disciplina){
+  const d=(disciplina||"").toLowerCase();
+  if(d.includes("fútbol")||d.includes("futbol")||d.includes("soccer"))return"futbol";
+  if(d.includes("hockey"))return"hockey";
+  if(d.includes("basket")||d.includes("básquet"))return"basket";
+  if(d.includes("voley")||d.includes("vóley")||d.includes("voleibol"))return"voley";
+  return null;
+}
+
+// ── Elementos SVG ──────────────────────────────────────────────────────────────
+function Cono({x,y,color="naranja",size=2.8}){
+  const cx=fx(x),cy=fy(y);
+  const col=COL_CONO[color]||COL_CONO.naranja;
+  return(<g>
+    <ellipse cx={cx} cy={cy+size*.7} rx={size*.9} ry={size*.3} fill="rgba(0,0,0,.35)"/>
+    <polygon points={`${cx},${cy-size} ${cx-size*.85},${cy+size*.7} ${cx+size*.85},${cy+size*.7}`} fill={col} opacity=".92"/>
+    <polygon points={`${cx},${cy-size*.6} ${cx-size*.4},${cy+size*.1} ${cx+size*.4},${cy+size*.1}`} fill="rgba(255,255,255,.2)"/>
+  </g>);}
+
+function Jugador({x,y,label,color="#fff",numero=1}){
+  const cx=fx(x),cy=fy(y);
+  const txt=label||(numero?""+numero:"J");
+  return(<g>
+    <circle cx={cx} cy={cy} r="4" fill={color} stroke="#111" strokeWidth=".8"/>
+    <circle cx={cx} cy={cy} r="4" fill="none" stroke={C.fire} strokeWidth=".4" opacity=".5"/>
+    <text x={cx} y={cy+1.4} textAnchor="middle" fontSize="4" fill="#111" fontWeight="bold" fontFamily="Bebas Neue,sans-serif">{txt}</text>
+  </g>);}
+
+function Pelota({x,y}){
+  const cx=fx(x),cy=fy(y);
+  return(<g>
+    <circle cx={cx} cy={cy} r="2.2" fill="#fff" stroke="#333" strokeWidth=".5"/>
+    <circle cx={cx-.5} cy={cy-.5} r=".8" fill="#ccc" opacity=".4"/>
+  </g>);}
+
+function ZonaTrabajo({x,y,w=0.2,h=0.15,color="naranja"}){
+  const col=COL_CONO[color]||COL_CONO.naranja;
+  return(<rect x={fx(x)} y={fy(y)} width={fx(w)} height={fy(h)}
+    fill={col} opacity=".12" stroke={col} strokeWidth=".6" strokeDasharray="2 1.5" rx="1.5"/>);}
+
+// ── Trayectoria animada ────────────────────────────────────────────────────────
+function Trayectoria({de,a,tipo="sprint",orden=1,playing,animKey}){
+  const x1=fx(de.x),y1=fy(de.y),x2=fx(a.x),y2=fy(a.y);
+  const col=COL_TRAY[tipo]||"#fff";
+  const dash={sprint:"none",trote:"4 2",cambio_ritmo:"2 2",lateral:"5 3",retroceso:"3 3"}[tipo]||"4 2";
+  const delay=(orden-1)*1.1;
+  // Curva leve para cambio_ritmo
+  const isCurva=tipo==="cambio_ritmo";
+  const dx=x2-x1, dy=y2-y1;
+  const mx=(x1+x2)/2-dy*.18, my=(y1+y2)/2+dx*.18;
+  const d=isCurva?`M${x1},${y1} Q${mx},${my} ${x2},${y2}`:`M${x1},${y1} L${x2},${y2}`;
+  const len=Math.hypot(dx,dy)+2;
+  // Flecha
+  const ang=Math.atan2(y2-y1,x2-x1);
+  const ax=x2-Math.cos(ang)*3, ay=y2-Math.sin(ang)*3;
+  const lx1=ax+Math.cos(ang-2.4)*2.5, ly1=ay+Math.sin(ang-2.4)*2.5;
+  const lx2=ax+Math.cos(ang+2.4)*2.5, ly2=ay+Math.sin(ang+2.4)*2.5;
+
+  const animStyle=playing?{
+    strokeDasharray:len,
+    strokeDashoffset:0,
+    animation:`drawPath 0.9s ${delay}s ease both`
+  }:{strokeDasharray:len,strokeDashoffset:len};
+
+  return(<g>
+    <path d={d} fill="none" stroke="rgba(0,0,0,.3)" strokeWidth="1.8"/>
+    <path d={d} fill="none" stroke={col} strokeWidth="1.5"
+      strokeDasharray={animStyle.strokeDasharray}
+      strokeDashoffset={animStyle.strokeDashoffset}
+      style={playing?{animation:`drawPath 0.9s ${delay}s ease both`}:{}}/>
+    <text x={(x1+x2)/2+2} y={(y1+y2)/2-2} textAnchor="middle" fontSize="3.2"
+      fill={col} fontWeight="bold" fontFamily="Bebas Neue,sans-serif" opacity=".85">{orden}</text>
+    <polygon points={`${x2},${y2} ${lx1},${ly1} ${lx2},${ly2}`} fill={col} opacity=".8"/>
+  </g>);}
+
+// ── Componente principal TacticalBoard ─────────────────────────────────────────
+function TacticalBoard({data,disciplina}){
+  const[playing,setPlaying]=useState(false);
+  const[animKey,setAnimKey]=useState(0);
+
+  if(!data)return null;
+  const campoKey=data.campo||detectarCampo(disciplina)||null;
+  if(!campoKey||!CAMPOS[campoKey])return null;
+
+  const{Campo,nombre}=CAMPOS[campoKey];
+  const elementos=data.elementos||[];
+  const trayectorias=data.trayectorias||[];
+
+  const tipoLabel={sprint:"⚡ Sprint",trote:"🏃 Trote",cambio_ritmo:"↩️ Cambio ritmo",lateral:"↔️ Lateral",retroceso:"⬇️ Retroceso"};
+  const tiposUnicos=[...new Set(trayectorias.map(t=>t.tipo))];
+
+  const handlePlay=()=>{
+    if(playing){setPlaying(false);}
+    else{setAnimKey(k=>k+1);setTimeout(()=>setPlaying(true),30);}
+  };
+
+  return(
+    <div style={{marginTop:"16px",background:"#0a0a0a",border:`1px solid ${C.fire}22`,borderRadius:"14px",overflow:"hidden"}}>
+      <style>{`@keyframes drawPath{from{stroke-dashoffset:var(--len,120)}to{stroke-dashoffset:0}}`}</style>
+
+      {/* Header */}
+      <div style={{padding:"10px 14px",background:"#0d0d0d",borderBottom:"1px solid #1a1a1a",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:C.fire,letterSpacing:"2px"}}>
+          📋 TABLERO TÁCTICO — {nombre.toUpperCase()}
+        </div>
+        <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
+          <button onClick={handlePlay}
+            style={{padding:"6px 16px",background:playing?`linear-gradient(135deg,${C.red},#9b1c1c)`:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"6px",color:"#fff",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"1px",cursor:"pointer",boxShadow:playing?"none":`0 2px 12px ${C.fire}55`}}>
+            {playing?"⏸ PAUSA":"▶ REPRODUCIR"}
+          </button>
+        </div>
+      </div>
+
+      {/* Campo SVG */}
+      <div style={{padding:"10px",background:"#080808"}}>
+        <svg key={animKey} viewBox={`0 0 ${VW} ${VH}`}
+          style={{width:"100%",height:"auto",borderRadius:"8px",display:"block",filter:"drop-shadow(0 4px 20px rgba(0,0,0,.5))"}}>
+
+          <Campo/>
+
+          {/* Zonas primero (fondo) */}
+          {elementos.filter(e=>e.tipo==="zona").map((e,i)=><ZonaTrabajo key={i} {...e}/>)}
+
+          {/* Trayectorias */}
+          {trayectorias.map((t,i)=>(
+            <Trayectoria key={i} {...t} orden={t.orden||i+1} playing={playing} animKey={animKey}/>
+          ))}
+
+          {/* Conos */}
+          {elementos.filter(e=>e.tipo==="cono").map((e,i)=><Cono key={i} {...e}/>)}
+
+          {/* Pelotas */}
+          {elementos.filter(e=>e.tipo==="pelota").map((e,i)=><Pelota key={i} {...e}/>)}
+
+          {/* Jugadores (encima de todo) */}
+          {elementos.filter(e=>e.tipo==="jugador").map((e,i)=><Jugador key={i} {...e}/>)}
+        </svg>
+      </div>
+
+      {/* Leyenda */}
+      {tiposUnicos.length>0&&(
+        <div style={{padding:"8px 14px",borderTop:"1px solid #1a1a1a",display:"flex",flexWrap:"wrap",gap:"10px",alignItems:"center"}}>
+          {tiposUnicos.map(tipo=>(
+            <div key={tipo} style={{display:"flex",alignItems:"center",gap:"5px"}}>
+              <div style={{width:"18px",height:"2.5px",background:COL_TRAY[tipo]||"#fff",borderRadius:"2px"}}/>
+              <span style={{fontSize:"10px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>{tipoLabel[tipo]||tipo}</span>
+            </div>
+          ))}
+          <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
+            <div style={{width:"10px",height:"10px",background:"transparent",border:"1px solid #f97316",borderRadius:"2px"}}/>
+            <span style={{fontSize:"10px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>ZONA</span>
+          </div>
+        </div>
+      )}
+
+      {/* Descripción */}
+      {data.descripcion&&(
+        <div style={{padding:"10px 14px",borderTop:"1px solid #1a1a1a",fontSize:"12px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.7"}}>
+          📌 {data.descripcion}
+        </div>
+      )}
     </div>
   );
 }
@@ -1398,10 +1661,14 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
                 />
               );
             })}
+            {/* TABLERO TÁCTICO — solo usuarios PRO y Modo Dios */}
+            {parsed.tablero&&(isPro||modoDios)&&(
+              <TacticalBoard data={parsed.tablero} disciplina={form.disciplina}/>
+            )}
           </>
         )}
 
-        {tab==="peso"&&!isDemo&&<PesajeTab user={user}/>}
+        {tab==="peso"&&!isDemo&&<PesajeTab user={user}/>}}
         {tab==="stats"&&!isDemo&&<Estadisticas sesiones={sesiones.filter(s=>s.es_registro)}/>}
 
         {tab==="history"&&!isDemo&&(
@@ -1717,132 +1984,74 @@ function LaunchBadge(){
 function Landing({onIngresar}){
   const[slide,setSlide]=useState(0);
   const[visitas,setVisitas]=useState(null);
-  const slides=["/promo1.jpg","/promo2.jpg","/promo3.jpg","/promo4.jpg"];
-  useEffect(()=>{const t=setInterval(()=>setSlide(s=>(s+1)%slides.length),6000);return()=>clearInterval(t);},[]);
+  const slides=["/promo1.webp","/promo2.webp","/promo3.webp"];
+  useEffect(()=>{const t=setInterval(()=>setSlide(s=>(s+1)%slides.length),5000);return()=>clearInterval(t);},[]);
 
-  // Contador de visitas via backend
+  // Swipe táctil
+  const touchStart=useRef(null);
+  const handleTouchStart=e=>touchStart.current=e.touches[0].clientX;
+  const handleTouchEnd=e=>{
+    if(touchStart.current===null)return;
+    const diff=touchStart.current-e.changedTouches[0].clientX;
+    if(Math.abs(diff)>40)setSlide(s=>(s+(diff>0?1:-1)+slides.length)%slides.length);
+    touchStart.current=null;
+  };
+
   useEffect(()=>{
     fetch(`${API}/api/visitas`,{method:"POST",headers:{"Content-Type":"application/json"}})
-      .then(r=>r.json())
-      .then(d=>{if(d.visitas)setVisitas(d.visitas);})
-      .catch(()=>{});
+      .then(r=>r.json()).then(d=>{if(d.visitas)setVisitas(d.visitas);}).catch(()=>{});
   },[]);
 
   return(
-    <div style={{minHeight:"100vh",background:"#000",position:"relative",overflowX:"hidden",fontFamily:"'Barlow Condensed',sans-serif",color:"#fff"}}>
+    <div style={{minHeight:"100vh",background:"#000",position:"relative",overflow:"hidden"}}
+      onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+
+      {/* Fondo slideshow */}
       {slides.map((src,i)=>(
         <div key={i} style={{position:"fixed",inset:0,backgroundImage:`url(${src})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:slide===i?1:0,transition:"opacity 1.4s ease-in-out",zIndex:0}}/>
       ))}
-      <div style={{position:"fixed",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.3) 40%,rgba(0,0,0,.88) 100%)",zIndex:1}}/>
+      <div style={{position:"fixed",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.2) 35%,rgba(0,0,0,.92) 100%)",zIndex:1}}/>
 
-      <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 20px 180px",minHeight:"100vh"}}>
+      {/* Contenido centrado */}
+      <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"20px 20px 130px"}}>
 
-        {/* Badge en construcción */}
-        <div style={{marginTop:"14px",display:"inline-flex",alignItems:"center",gap:"8px",padding:"6px 18px",borderRadius:"4px",background:"rgba(220,38,38,.15)",border:"1px solid rgba(220,38,38,.5)",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"3px",color:"#fca5a5"}}>
-          <div style={{width:"7px",height:"7px",borderRadius:"50%",background:"#dc2626",animation:"blink 1.4s ease infinite"}}/>
-          🚧 EN CONSTRUCCIÓN · UNDER CONSTRUCTION
+        {/* Logo con efecto fuego */}
+        <div style={{filter:"drop-shadow(0 0 40px rgba(249,115,22,.9)) drop-shadow(0 0 80px rgba(220,38,38,.6))",animation:"glow-logo 3s ease infinite"}}>
+          <img src="/logo-main.png" alt="MG+IA Personal Trainer 24/7" style={{width:"min(300px,78vw)",height:"auto",display:"block"}}/>
         </div>
 
-        {/* Logo */}
-        <div style={{filter:"drop-shadow(0 0 30px rgba(249,115,22,.8)) drop-shadow(0 0 60px rgba(220,38,38,.5))",animation:"glow-logo 3s ease infinite",marginTop:"18px"}}>
-          <img src="/logo-main.png" alt="MG+IA" style={{width:"min(280px,72vw)",height:"auto",display:"block"}}/>
-        </div>
-
-        {/* Disciplinas Fan — entre logo y slogan */}
-        <DisciplinasFan/>
-
-        <div style={{marginTop:"20px",textAlign:"center",fontFamily:"Bebas Neue, sans-serif",fontSize:"clamp(16px,4.5vw,24px)",letterSpacing:"4px",background:"linear-gradient(90deg,#f97316,#fbbf24,#f97316)",backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmer 3s linear infinite"}}>
-          DECISIONES CON 100% ACTITUD!
-        </div>
-        <div style={{marginTop:"5px",textAlign:"center",fontSize:"clamp(12px,2.5vw,15px)",color:"rgba(202, 245, 12, 0.86)",letterSpacing:"2px",fontWeight:"600"}}>
-          TU PERSONAL TRAINER CON IA · 24HS · DESDE CUALQUIER LUGAR DEL MUNDO
-        </div>
-
-        {/* Features */}
-        <div style={{marginTop:"20px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",width:"100%",maxWidth:"440px"}}>
-          {[["🤖","DECISIÓN DIARIA entre COACH e IA EN 2 MIN"],["👨‍💼","COACH HUMANO REAL DISPONIBLE 24/7"],["📊","HISTORIAL Y PROGRESO"],["🌍","FUNCIONA EN CUALQUIER LUGAR"],["🛡️","100% PRIVADO Y SEGURO"],["⚡","SIN DESCARGA · ACCESO WEB"]].map(([icon,text])=>(
-            <div key={text} style={{background:"rgba(0,0,0,.55)",border:"1px solid rgba(249,115,22,.2)",borderRadius:"10px",padding:"10px",display:"flex",alignItems:"center",gap:"8px",backdropFilter:"blur(8px)"}}>
-              <span style={{fontSize:"20px",flexShrink:0}}>{icon}</span>
-              <span style={{fontSize:"13px",fontWeight:"700",color:"rgba(255, 255, 255, 0.94)",letterSpacing:".5px",lineHeight:"1.3"}}>{text}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Slide dots */}
-        <div style={{marginTop:"18px",display:"flex",gap:"8px"}}>
+        {/* Dots slideshow */}
+        <div style={{marginTop:"32px",display:"flex",gap:"10px"}}>
           {slides.map((_,i)=>(
-            <div key={i} onClick={()=>setSlide(i)} style={{height:"3px",width:slide===i?"44px":"28px",borderRadius:"2px",background:slide===i?"#f97316":"rgba(255,255,255,.2)",cursor:"pointer",transition:"all .3s"}}/>
+            <div key={i} onClick={()=>setSlide(i)} style={{height:"3px",width:slide===i?"48px":"24px",borderRadius:"2px",background:slide===i?"#f97316":"rgba(255,255,255,.2)",cursor:"pointer",transition:"all .4s"}}/>
           ))}
         </div>
-
-        {/* Badge gym */}
-        <div style={{marginTop:"18px",display:"flex",alignItems:"center",gap:"12px",background:"rgba(0,0,0,.55)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"12px",padding:"10px 16px",backdropFilter:"blur(8px)"}}>
-          <img src="/logo-badge.png" alt="MG+IA" style={{width:"42px",height:"auto",filter:"drop-shadow(0 0 8px rgba(249,115,22,.5));"}}/>
-          <div>
-            <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"1px"}}>MG+IA PERSONAL TRAINER 24/7</div>
-            <div style={{fontSize:"10px",color:"#fbbf24",letterSpacing:"2px",marginTop:"1px"}}>RESPALDADO POR MG FITNESS CENTER · ALMAFUERTE · CBA</div>
-          </div>
-        </div>
-
-        {/* Próximamente */}
-        <div style={{marginTop:"16px",background:"rgba(0,0,0,.6)",border:"1px solid rgba(249,115,22,.25)",borderRadius:"12px",padding:"14px 20px",maxWidth:"420px",width:"100%",textAlign:"center",backdropFilter:"blur(10px)"}}>
-          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"17px",color:"#f97316",letterSpacing:"3px",marginBottom:"5px"}}>🔥 PRÓXIMAMENTE — SITIO COMPLETO</div>
-          <div style={{fontSize:"12px",color:"rgba(255,255,255,.5)",lineHeight:"1.7"}}>
-            Tienda · Videos de ejercicios · Plan alimenticio · Versión PRO<br/>
-            Mientras tanto, <strong style={{color:"#f97316"}}>la app ya está disponible.</strong>
-          </div>
-        </div>
-
-        {/* Contador de visitas — discreto */}
-        {visitas&&(
-          <div style={{position:"fixed",bottom:"175px",right:"12px",zIndex:50,display:"flex",alignItems:"center",gap:"5px",padding:"4px 10px",background:"rgba(0,0,0,.4)",borderRadius:"20px",backdropFilter:"blur(4px)"}}>
-            <div style={{width:"5px",height:"5px",borderRadius:"50%",background:C.green,animation:"blink 2s ease infinite"}}/>
-            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:"rgba(255,255,255,.3)",letterSpacing:"1px"}}>
-              👁️ {visitas.toLocaleString("es-AR")}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Barra fija inferior — 3 botones siempre visibles */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100,padding:"10px 14px 20px",background:"linear-gradient(0deg,rgba(0,0,0,.99) 70%,transparent)"}}>
-        {/* Fila WP */}
-        <div style={{display:"flex",gap:"8px",maxWidth:"500px",margin:"0 auto 8px"}}>
-          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero probar la versión DEMO de MG+IA Personal Trainer 24/7 — 24hs gratis")}`}
-             target="_blank" rel="noopener noreferrer"
-             style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",padding:"11px 10px",background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"1px",boxShadow:"0 2px 14px rgba(22,163,74,.35)",whiteSpace:"nowrap"}}>
-            💬 QUIERO PROBAR DEMO
-          </a>
-          <a href={`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero más información sobre MG+IA Personal Trainer 24/7")}`}
-             target="_blank" rel="noopener noreferrer"
-             style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",padding:"11px 10px",background:"linear-gradient(135deg,#1d4ed8,#2563eb)",borderRadius:"10px",color:"#fff",textDecoration:"none",fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",letterSpacing:"1px",boxShadow:"0 2px 14px rgba(37,99,235,.35)",whiteSpace:"nowrap"}}>
-            ℹ️ QUIERO INFO
-          </a>
+      {/* Contador de visitas */}
+      {visitas&&(
+        <div style={{position:"fixed",bottom:"100px",right:"12px",zIndex:50,display:"flex",alignItems:"center",gap:"5px",padding:"4px 10px",background:"rgba(0,0,0,.4)",borderRadius:"20px",backdropFilter:"blur(4px)"}}>
+          <div style={{width:"5px",height:"5px",borderRadius:"50%",background:C.green,animation:"blink 2s ease infinite"}}/>
+          <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:"rgba(255,255,255,.3)",letterSpacing:"1px"}}>👁️ {visitas.toLocaleString("es-AR")}</span>
         </div>
-        {/* INGRESAR */}
+      )}
+
+      {/* Botón INGRESAR fijo */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100,padding:"12px 16px 24px",background:"linear-gradient(0deg,rgba(0,0,0,.99) 60%,transparent)"}}>
         <button onClick={onIngresar}
-          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"14px",width:"100%",maxWidth:"500px",margin:"0 auto",padding:"16px 24px",background:"linear-gradient(135deg,#dc2626 0%,#f97316 50%,#fbbf24 100%)",backgroundSize:"200%",border:"none",borderRadius:"14px",color:"#fff",fontFamily:"Bebas Neue, sans-serif",fontSize:"20px",letterSpacing:"3px",cursor:"pointer",boxShadow:"0 4px 30px rgba(249,115,22,.65)",animation:"btn-pulse 2.5s ease infinite,shimmer 4s linear infinite"}}>
-          <span style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
+          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"14px",width:"100%",maxWidth:"500px",margin:"0 auto",padding:"18px 24px",background:"linear-gradient(135deg,#dc2626 0%,#f97316 50%,#fbbf24 100%)",backgroundSize:"200%",border:"none",borderRadius:"14px",color:"#fff",fontFamily:"Bebas Neue, sans-serif",fontSize:"21px",letterSpacing:"3px",cursor:"pointer",boxShadow:"0 4px 30px rgba(249,115,22,.65)",animation:"btn-pulse 2.5s ease infinite,shimmer 4s linear infinite"}}>
+          <span style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"2px"}}>
             🔥 INGRESAR A LA APP
             <span style={{fontSize:"10px",opacity:.75,fontFamily:"Barlow Condensed, sans-serif",letterSpacing:"2px"}}>ACCESO DIRECTO · DECISIONES CON 100% ACTITUD</span>
           </span>
           <span style={{fontSize:"22px",animation:"arrow .8s ease infinite alternate"}}>→</span>
         </button>
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700&display=swap');
-        @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-        @keyframes glow-logo{0%,100%{filter:drop-shadow(0 0 24px rgba(249,115,22,.7))}50%{filter:drop-shadow(0 0 50px rgba(251,191,36,1))}}
-        @keyframes shimmer{0%{background-position:200%}100%{background-position:0%}}
-        @keyframes btn-pulse{0%,100%{box-shadow:0 4px 30px rgba(249,115,22,.65)}50%{box-shadow:0 6px 55px rgba(249,115,22,.95)}}
-        @keyframes arrow{from{transform:translateX(0)}to{transform:translateX(6px)}}
-        @keyframes badge-pulse{0%,100%{box-shadow:0 0 20px rgba(220,38,38,.9),0 0 40px rgba(251,191,36,.5);border-color:#fbbf24}50%{box-shadow:0 0 35px rgba(220,38,38,1),0 0 70px rgba(251,191,36,.8);border-color:#fff}}
-        @keyframes badge-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-      `}</style>
     </div>
   );
 }
+
+// ─── LANDING OR LOGIN ─────────────────────────────────────────────────────────
 
 function LandingOrLogin({onLogin}){
   const[showLogin,setShowLogin]=useState(false);
