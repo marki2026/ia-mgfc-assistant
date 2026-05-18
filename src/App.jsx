@@ -24,6 +24,10 @@ GLOBAL_STYLE.textContent = `
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
   @keyframes progress-bar { 0%{width:0%} 20%{width:35%} 60%{width:70%} 85%{width:88%} 100%{width:95%} }
   @keyframes progress-done { from{width:95%} to{width:100%} }
+  @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:0% center} }
+  @keyframes btn-pulse { 0%,100%{box-shadow:0 4px 30px rgba(249,115,22,.65)} 50%{box-shadow:0 6px 55px rgba(249,115,22,.95)} }
+  @keyframes glow-logo { 0%,100%{filter:drop-shadow(0 0 24px rgba(249,115,22,.7)) drop-shadow(0 0 48px rgba(220,38,38,.4))} 50%{filter:drop-shadow(0 0 50px rgba(251,191,36,1)) drop-shadow(0 0 80px rgba(249,115,22,.6))} }
+  @keyframes arrow { from{transform:translateX(0)} to{transform:translateX(6px)} }
   .slide-up { animation: slide-up 0.4s ease forwards; }
   .pulse-fire { animation: pulse-fire 2.5s ease infinite; }
   .pulse-btn { animation: pulse-btn 2s ease infinite; }
