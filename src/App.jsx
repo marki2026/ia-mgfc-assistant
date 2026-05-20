@@ -96,10 +96,10 @@ const SECTIONS=[
   {key:"rutina",label:"RUTINA DEL DÍA",icon:"🏋️"},
 ];
 
-function buildSystemPrompt(isDemo,incluirRutina,nivelRutina){
+function buildSystemPrompt(isDemo,incluirRutina,nivelRutina,incluirTablero){
   const nivelInfo=incluirRutina&&nivelRutina?`\nNIVEL DE RUTINA: ${nivelRutina}\n- PRINCIPIANTE: series únicas, ejercicios mecánicos simples, descansos 90-120s\n- BÁSICO: biseries, aislados+compuestos, descansos 60-90s\n- INTERMEDIO: triseries, antagonistas, superseries, descansos 45-60s\n- AVANZADO: escalonadas, superseries complejas, técnicas avanzadas, descansos 30-45s`:"";
   if(isDemo)return`Actúa como coach de entrenamiento. Versión DEMO simplificada. Respuesta básica y breve. Al final de MOTIVO agregá: "Versión demo — análisis completo disponible en versión oficial."\nFORMATO:\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\nSin texto extra.`;
-  return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre\n- Si el historial incluye RUTINAS PREVIAS EJECUTADAS: analizalas obligatoriamente. Podés repetir el estímulo muscular pero con ejercicios DISTINTOS. PROHIBIDO dar la misma rutina exacta. Si el entrenamiento es igual a las últimas 2 sesiones, cambiá al menos el 60% de los ejercicios${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\n\nTABLERO TÁCTICO (SOLO si la disciplina es fútbol/hockey/básquet/vóley Y la rutina incluye ejercicio de desplazamiento en cancha con conos, patrones o movimiento espacial):\nAgregá al final del response, en una sola línea:\nTABLERO:{"campo":"futbol|hockey|basket|voley","elementos":[{"tipo":"cono|jugador|pelota|zona","x":0.0,"y":0.0,"color":"naranja|amarillo|rojo|azul|blanco"},...],"trayectorias":[{"de":{"x":0.0,"y":0.0},"a":{"x":0.0,"y":0.0},"tipo":"sprint|trote|cambio_ritmo|lateral|retroceso","orden":1},...],"descripcion":"descripción breve del ejercicio"}\nCOORDENADAS: x=0 izquierda, x=1 derecha, y=0 arco/red/aro propio, y=1 fondo campo del jugador. Máximo 6 elementos y 4 trayectorias. Si el ejercicio es de gym sin desplazamiento en cancha, NO incluir TABLERO.\nSin texto extra.`;
+  return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre\n- Si el historial incluye RUTINAS PREVIAS EJECUTADAS: analizalas obligatoriamente. Podés repetir el estímulo muscular pero con ejercicios DISTINTOS. PROHIBIDO dar la misma rutina exacta. Si el entrenamiento es igual a las últimas 2 sesiones, cambiá al menos el 60% de los ejercicios${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\n\n${incluirTablero?`TABLERO TÁCTICO OBLIGATORIO: El usuario solicitó explícitamente el tablero táctico. DEBÉS incluirlo siempre al final de tu respuesta, incluso si el ejercicio no es de desplazamiento — adaptá uno de los ejercicios para que tenga componente espacial en cancha.`:`TABLERO TÁCTICO (SOLO si la disciplina es fútbol/hockey/básquet/vóley Y la rutina incluye ejercicio de desplazamiento en cancha con conos, patrones o movimiento espacial):`}\nAgregá al final del response, en una sola línea:\nTABLERO:{"campo":"futbol|hockey|basket|voley","elementos":[{"tipo":"cono|jugador|pelota|zona","x":0.0,"y":0.0,"color":"naranja|amarillo|rojo|azul|blanco"},...],"trayectorias":[{"de":{"x":0.0,"y":0.0},"a":{"x":0.0,"y":0.0},"tipo":"sprint|trote|cambio_ritmo|lateral|retroceso","orden":1},...],"descripcion":"descripción breve del ejercicio"}\nCOORDENADAS: x=0 izquierda, x=1 derecha, y=0 arco/red/aro propio, y=1 fondo campo del jugador. Máximo 6 elementos y 4 trayectorias.\nSin texto extra.`;
 }
 
 function parseResponse(text){
@@ -1335,7 +1335,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
 
   const[form,setForm]=useState(()=>{
     const saved=savedForm();
-    return saved||{peso:"",descanso:"7h",energia:"7",entrenamiento:"",dolor:"",alimentacion:"NORMAL",tiempo:"60min",quiereRutina:false,sexo:"",etapaMenstrual:false,disciplina:"Ninguna / Solo gym",nivelRutina:"INTERMEDIO"};
+    return saved||{peso:"",descanso:"7h",energia:"7",entrenamiento:"",dolor:"",alimentacion:"NORMAL",tiempo:"60min",quiereRutina:false,quiereTablero:false,sexo:"",etapaMenstrual:false,disciplina:"Ninguna / Solo gym",nivelRutina:"INTERMEDIO"};
   });
 
   // Guardar form en localStorage cada vez que cambia
@@ -1407,7 +1407,8 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
     const localInfo=[user.localidad,user.provincia,user.pais].filter(Boolean).join(", ");
     const ubicacionInfo=localInfo?`Ubicación: ${localInfo}`:"";
     const userMsg=`Fecha: ${formatDateTime(now.toISOString())}\nSemana: ${trainingWeek}${deload?" — DESCARGA":""}\nRacha: ${streak}d\n${condInfo}\n${perfilInfo}\n${edadInfo}${alturaInfo?"\n"+alturaInfo:""}${equipInfo?"\n"+equipInfo:""}${diasInfo?"\n"+diasInfo:""}${ubicacionInfo?"\n"+ubicacionInfo:""}\n\nDatos:\nPeso: ${form.peso}kg | Descanso: ${form.descanso} | Energía: ${form.energia}\n${sexoInfo}\n${disciplinaInfo}\nEntrenamiento: ${form.entrenamiento}\nDolor: ${form.dolor||"Ninguno"} | Alimentación: ${form.alimentacion}\nTiempo: ${form.tiempo}\n\nHistorial:\n${buildHistoryCtx()}`;
-    const system=buildSystemPrompt(isDemo,form.quiereRutina,form.quiereRutina?form.nivelRutina:null);
+    const tableroActivo=form.quiereTablero&&(isPro||modoDios)&&detectarCampo(form.disciplina)!==null;
+    const system=buildSystemPrompt(isDemo,form.quiereRutina,form.quiereRutina?form.nivelRutina:null,tableroActivo);
     try{
       const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg})});
       const data=await res.json();
@@ -1548,6 +1549,15 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
                   <span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span>
                   {isDemo&&<span style={{fontSize:"10px",color:"#b45309",fontFamily:"Barlow, sans-serif"}}>Solo Standard/PRO</span>}
                 </div>
+                {(isPro||modoDios)&&detectarCampo(form.disciplina)!==null&&(
+                  <div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"12px"}}>
+                    <Toggle value={form.quiereTablero} onChange={()=>setForm(f=>({...f,quiereTablero:!f.quiereTablero}))}/>
+                    <span style={{fontSize:"12px",color:form.quiereTablero?"#34d399":C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>
+                      📋 TABLERO TÉCNICO
+                    </span>
+                    <span style={{fontSize:"10px",color:"#60a5fa",fontFamily:"Barlow, sans-serif"}}>⭐ PRO</span>
+                  </div>
+                )}
                 {isDemo&&form.quiereRutina&&(
                   <div style={{marginTop:"8px",padding:"8px 12px",background:"#0a0800",border:"1px solid #92400e",borderRadius:"6px",fontSize:"12px",color:C.gold,fontFamily:"Barlow, sans-serif"}}>
                     🔒 La rutina no se muestra en modo DEMO. Disponible en versión Standard o PRO.
