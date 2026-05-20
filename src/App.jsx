@@ -105,7 +105,7 @@ function buildSystemPrompt(isDemo,incluirRutina,nivelRutina,incluirTablero){
 function parseResponse(text){
   const parsed={};
   // Strip TABLERO block before parsing sections
-  const tableroMatch=text.match(/TABLERO:\s*(\{[\s\S]*?\})\s*$/m);
+  const tableroMatch=text.match(/\*{0,2}TABLERO:\*{0,2}\s*(\{[\s\S]*?\})\s*$/m);
   if(tableroMatch){try{parsed.tablero=JSON.parse(tableroMatch[1]);}catch(e){parsed.tablero=null;}}
   const cleanText=tableroMatch?text.slice(0,tableroMatch.index):text;
   SECTIONS.forEach((s,i)=>{
@@ -1544,20 +1544,20 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
                   </div>
                 )}
                 <div><label style={labelSt}>Tiempo disponible</label><select name="tiempo" value={form.tiempo} onChange={handleChange} style={inputSt}>{["30min","45min","60min","75min","90min","120min+"].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"22px"}}>
-                  <Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/>
-                  <span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span>
-                  {isDemo&&<span style={{fontSize:"10px",color:"#b45309",fontFamily:"Barlow, sans-serif"}}>Solo Standard/PRO</span>}
-                </div>
-                {(isPro||modoDios)&&detectarCampo(form.disciplina)!==null&&(
-                  <div style={{display:"flex",alignItems:"center",gap:"10px",paddingTop:"12px"}}>
-                    <Toggle value={form.quiereTablero} onChange={()=>setForm(f=>({...f,quiereTablero:!f.quiereTablero}))}/>
-                    <span style={{fontSize:"12px",color:form.quiereTablero?"#34d399":C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>
-                      📋 TABLERO TÉCNICO
-                    </span>
-                    <span style={{fontSize:"10px",color:"#60a5fa",fontFamily:"Barlow, sans-serif"}}>⭐ PRO</span>
+                <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:"16px",paddingTop:"22px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                    <Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/>
+                    <span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span>
+                    {isDemo&&<span style={{fontSize:"10px",color:"#b45309",fontFamily:"Barlow, sans-serif"}}>Solo Standard/PRO</span>}
                   </div>
-                )}
+                  {(isPro||modoDios)&&detectarCampo(form.disciplina)!==null&&(
+                    <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                      <Toggle value={form.quiereTablero} onChange={()=>setForm(f=>({...f,quiereTablero:!f.quiereTablero}))}/>
+                      <span style={{fontSize:"12px",color:form.quiereTablero?"#34d399":C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>📋 TABLERO TÉCNICO</span>
+                      <span style={{fontSize:"10px",color:"#60a5fa",fontFamily:"Barlow, sans-serif"}}>⭐ PRO</span>
+                    </div>
+                  )}
+                </div>
                 {isDemo&&form.quiereRutina&&(
                   <div style={{marginTop:"8px",padding:"8px 12px",background:"#0a0800",border:"1px solid #92400e",borderRadius:"6px",fontSize:"12px",color:C.gold,fontFamily:"Barlow, sans-serif"}}>
                     🔒 La rutina no se muestra en modo DEMO. Disponible en versión Standard o PRO.
