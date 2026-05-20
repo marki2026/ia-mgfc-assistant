@@ -1672,7 +1672,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
           </>
         )}
 
-        {tab==="peso"&&!isDemo&&<PesajeTab user={user}/>}}
+        {tab==="peso"&&!isDemo&&<PesajeTab user={user}/>}
         {tab==="stats"&&!isDemo&&<Estadisticas sesiones={sesiones.filter(s=>s.es_registro)}/>}
 
         {tab==="history"&&!isDemo&&(
