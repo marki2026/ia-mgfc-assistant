@@ -1410,7 +1410,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
     const tableroActivo=form.quiereTablero&&(isPro||modoDios)&&detectarCampo(form.disciplina)!==null;
     const system=buildSystemPrompt(isDemo,form.quiereRutina,form.quiereRutina?form.nivelRutina:null,tableroActivo);
     try{
-      const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg})});
+      const res=await fetch(`${API}/api/coach`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,userMsg,userName:`${user.nombre} ${user.apellido}`.trim()})});
       const data=await res.json();
       if(!data.success)throw new Error(data.error);
       // Pantalla de espera aleatoria 4-10 segundos
