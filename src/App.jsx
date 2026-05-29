@@ -153,9 +153,10 @@ function LoadingButton({loading,done,onClick,children}){
 }
 
 // ─── SECTION CARD ─────────────────────────────────────────────────────────────
-function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDemo,isDemoBlocked,notaRutina,onNotaChange,onNotaGuardar,notaGuardada}){
+function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDemo,isDemoBlocked,notaRutina,onNotaChange,onNotaGuardar,notaGuardada,isAdmin}){
   const intColor=content?.includes("ALTA")?C.fire:content?.includes("MEDIA")?C.gold:C.green;
   const[copied,setCopied]=useState(false);
+  const[exModal,setExModal]=useState(null);
 
   const handleCopy=()=>{
     if(content){navigator.clipboard.writeText(content).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});}
@@ -181,7 +182,10 @@ function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDe
         )}
       </div>
       {isDemo&&!isAlert&&<div style={{marginBottom:"10px",padding:"6px 10px",background:"#0a0800",border:"1px solid #92400e55",borderRadius:"6px",fontSize:"11px",color:"#b45309",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>⚠️ RESPUESTA SIMPLIFICADA · VERSIÓN DEMO</div>}
-      <div style={{fontSize:isIntensity?"40px":"15px",fontWeight:isIntensity?"900":"400",fontFamily:isIntensity?"Bebas Neue":"Barlow, sans-serif",color:isIntensity?intColor:isAlert?"#fca5a5":C.white,lineHeight:"1.6",whiteSpace:"pre-wrap",textShadow:isIntensity?`0 0 30px ${intColor}`:"none"}}>{content}</div>
+      <div style={{fontSize:isIntensity?"40px":"15px",fontWeight:isIntensity?"900":"400",fontFamily:isIntensity?"Bebas Neue":"Barlow, sans-serif",color:isIntensity?intColor:isAlert?"#fca5a5":C.white,lineHeight:"1.6",whiteSpace:isRutina?"normal":"pre-wrap",textShadow:isIntensity?`0 0 30px ${intColor}`:"none"}}>
+        {isRutina&&content?<RutinaContent content={content} onExercise={setExModal}/>:content}
+      </div>
+      {exModal&&<ExerciseModal nombre={exModal} onClose={()=>setExModal(null)} isAdmin={isAdmin}/>}
       {isRutina&&content&&!isDemoBlocked&&(
         <div style={{marginTop:"14px",borderTop:"1px solid #1a1a1a",paddingTop:"12px"}}>
           <label style={{...labelSt,color:C.gold,marginBottom:"6px"}}>📝 TU NOTA PERSONAL (opcional)</label>
@@ -199,6 +203,90 @@ function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDe
         </div>
       )}
       {extra}
+    </div>
+  );
+}
+
+// ─── EXERCISE MEDIA MODAL ────────────────────────────────────────────────────
+function ExerciseModal({nombre,onClose,isAdmin}){
+  const[media,setMedia]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[editUrl,setEditUrl]=useState("");
+  const[editDesc,setEditDesc]=useState("");
+  const[saving,setSaving]=useState(false);
+  const[saved,setSaved]=useState(false);
+  useEffect(()=>{
+    fetch(`${API}/api/ejercicio-media/${encodeURIComponent(nombre.toLowerCase().trim())}`)
+      .then(r=>r.json())
+      .then(d=>{setMedia(d.media||null);setEditUrl(d.media?.gif_url||"");setEditDesc(d.media?.descripcion||"");setLoading(false);})
+      .catch(()=>setLoading(false));
+  },[nombre]);
+  const handleSave=async()=>{
+    setSaving(true);
+    try{
+      const r=await fetch(`${API}/api/admin/ejercicio-media`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:nombre.toLowerCase().trim(),gif_url:editUrl,descripcion:editDesc,validado:true})});
+      const d=await r.json();
+      if(d.success){setMedia(d.media);setSaved(true);setTimeout(()=>setSaved(false),2500);}
+    }catch(e){}
+    setSaving(false);
+  };
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:3000,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
+      <div style={{background:"#0d0d0d",border:`2px solid ${C.blue}`,borderRadius:"16px 16px 0 0",padding:"20px",width:"100%",maxWidth:"640px",maxHeight:"88vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()} className="slide-up">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+          <div style={{fontFamily:"Bebas Neue",fontSize:"17px",color:C.blue,letterSpacing:"2px"}}>👁️ {nombre.toUpperCase()}</div>
+          <button onClick={onClose} style={{background:"transparent",border:"none",color:C.gray,fontSize:"22px",cursor:"pointer"}}>✕</button>
+        </div>
+        {loading?(
+          <div style={{textAlign:"center",padding:"40px",color:C.gray,fontFamily:"Bebas Neue",letterSpacing:"2px"}}>CARGANDO...</div>
+        ):media?.gif_url?(
+          <div>
+            <img src={media.gif_url} alt={nombre} style={{width:"100%",borderRadius:"10px",marginBottom:"12px",maxHeight:"280px",objectFit:"contain",background:"#111"}} onError={e=>e.target.style.display="none"}/>
+            {media.descripcion&&<div style={{fontSize:"14px",color:C.white,fontFamily:"Barlow",lineHeight:"1.7",marginBottom:"12px",padding:"10px",background:"#111",borderRadius:"8px"}}>{media.descripcion}</div>}
+          </div>
+        ):(
+          <div style={{textAlign:"center",padding:"28px",border:"1px solid #222",borderRadius:"10px",marginBottom:"12px"}}>
+            <div style={{fontSize:"36px",marginBottom:"8px"}}>🏋️</div>
+            <div style={{fontFamily:"Bebas Neue",fontSize:"13px",color:C.gray,letterSpacing:"1px",marginBottom:"10px"}}>SIN MEDIA DISPONIBLE AÚN</div>
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(nombre+" ejercicio cómo hacer")}`} target="_blank" rel="noreferrer" style={{color:C.blue,fontSize:"13px",fontFamily:"Barlow",textDecoration:"none"}}>🔍 Ver en YouTube →</a>
+          </div>
+        )}
+        {isAdmin&&(
+          <div style={{borderTop:"1px solid #1a1a1a",paddingTop:"14px",marginTop:"4px"}}>
+            <div style={{fontFamily:"Bebas Neue",fontSize:"12px",color:C.gold,letterSpacing:"1px",marginBottom:"8px"}}>⚙️ ADMIN — CARGAR MEDIA</div>
+            <input value={editUrl} onChange={e=>setEditUrl(e.target.value)} placeholder="URL del GIF o imagen" style={{...inputSt,marginBottom:"8px",fontSize:"12px"}}/>
+            <textarea value={editDesc} onChange={e=>setEditDesc(e.target.value)} placeholder="Descripción técnica del ejercicio (opcional)" rows={2} style={{...inputSt,resize:"vertical",fontSize:"12px",marginBottom:"8px"}}/>
+            <button onClick={handleSave} disabled={saving||!editUrl} style={{width:"100%",padding:"10px",background:saved?"#16a34a":`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",cursor:saving||!editUrl?"not-allowed":"pointer"}}>
+              {saving?"GUARDANDO...":saved?"✅ GUARDADO":"💾 GUARDAR MEDIA"}
+            </button>
+          </div>
+        )}
+        <button onClick={onClose} style={{width:"100%",padding:"12px",background:"#111",border:"1px solid #222",borderRadius:"8px",color:C.gray,fontSize:"13px",fontFamily:"Bebas Neue",letterSpacing:"2px",cursor:"pointer",marginTop:"10px"}}>← VOLVER A LA RUTINA</button>
+      </div>
+    </div>
+  );
+}
+// ─── RUTINA CONTENT con botones 👁️ ───────────────────────────────────────────
+function RutinaContent({content,onExercise}){
+  const lines=content.split("\n");
+  return(
+    <div style={{fontSize:"15px",fontFamily:"Barlow, sans-serif",color:C.white,lineHeight:"1.7"}}>
+      {lines.map((line,i)=>{
+        const clean=line.replace(/\*\*/g,"").trim();
+        if(!clean)return <div key={i} style={{height:"6px"}}/>;
+        const isExercicio=/[·×x]\s*\d|(?:series|reps|kg|\d+rm|descanso)/i.test(clean)&&!/^\s*[#\*]{2,}/.test(clean);
+        let ejercicio=null;
+        if(isExercicio){
+          const m=clean.match(/^[-–\*\d\.\)\s]*(.+?)(?:\s*[·:]\s*|\s+\d+\s*[x×]\s*\d|\s+x\s*\d)/i);
+          if(m)ejercicio=m[1].replace(/^[-–\*\s]+/,"").trim();
+        }
+        return(
+          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"6px",marginBottom:"1px"}}>
+            <span style={{flex:1,whiteSpace:"pre-wrap"}}>{line}</span>
+            {ejercicio&&<button onClick={()=>onExercise(ejercicio)} title="Ver ejercicio" style={{flexShrink:0,background:"transparent",border:`1px solid ${C.blue}55`,borderRadius:"4px",color:C.blue,fontSize:"12px",padding:"1px 5px",cursor:"pointer",marginTop:"3px",lineHeight:"1.4"}}>👁️</button>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1644,6 +1732,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
                   onNotaGuardar={s.key==="rutina"?guardarNota:undefined}
                   notaGuardada={s.key==="rutina"?notaGuardada:undefined}
                   isDemo={isDemo} isDemoBlocked={isDemoBlocked}
+                  isAdmin={user?.role==="admin"||modoDios}
                   extra={s.key==="consultar"?(
                     consultarCoach&&!isDemo?(
                       <div style={{marginTop:"14px"}}>
