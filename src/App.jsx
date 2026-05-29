@@ -208,6 +208,11 @@ function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDe
 }
 
 // ─── EXERCISE MEDIA MODAL ────────────────────────────────────────────────────
+function getYouTubeId(url){
+  if(!url)return null;
+  const m=url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([^&\n?#]{11})/);
+  return m?m[1]:null;
+}
 function ExerciseModal({nombre,onClose,isAdmin}){
   const[media,setMedia]=useState(null);
   const[loading,setLoading]=useState(true);
@@ -230,34 +235,37 @@ function ExerciseModal({nombre,onClose,isAdmin}){
     }catch(e){}
     setSaving(false);
   };
+  const videoId=getYouTubeId(media?.gif_url||"");
   return(
     <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:3000,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:"#0d0d0d",border:`2px solid ${C.blue}`,borderRadius:"16px 16px 0 0",padding:"20px",width:"100%",maxWidth:"640px",maxHeight:"88vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()} className="slide-up">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
-          <div style={{fontFamily:"Bebas Neue",fontSize:"17px",color:C.blue,letterSpacing:"2px"}}>👁️ {nombre.toUpperCase()}</div>
+          <div style={{fontFamily:"Bebas Neue",fontSize:"17px",color:C.blue,letterSpacing:"2px"}}>▶ {nombre.toUpperCase()}</div>
           <button onClick={onClose} style={{background:"transparent",border:"none",color:C.gray,fontSize:"22px",cursor:"pointer"}}>✕</button>
         </div>
         {loading?(
           <div style={{textAlign:"center",padding:"40px",color:C.gray,fontFamily:"Bebas Neue",letterSpacing:"2px"}}>CARGANDO...</div>
-        ):media?.gif_url?(
+        ):videoId?(
           <div>
-            <img src={media.gif_url} alt={nombre} style={{width:"100%",borderRadius:"10px",marginBottom:"12px",maxHeight:"280px",objectFit:"contain",background:"#111"}} onError={e=>e.target.style.display="none"}/>
-            {media.descripcion&&<div style={{fontSize:"14px",color:C.white,fontFamily:"Barlow",lineHeight:"1.7",marginBottom:"12px",padding:"10px",background:"#111",borderRadius:"8px"}}>{media.descripcion}</div>}
+            <div style={{position:"relative",paddingBottom:"56.25%",height:0,borderRadius:"10px",overflow:"hidden",marginBottom:"12px",background:"#000"}}>
+              <iframe src={`https://www.youtube.com/embed/${videoId}`} title={nombre} allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowFullScreen style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}}/>
+            </div>
+            {media?.descripcion&&<div style={{fontSize:"14px",color:C.white,fontFamily:"Barlow",lineHeight:"1.7",marginBottom:"12px",padding:"10px",background:"#111",borderRadius:"8px"}}>{media.descripcion}</div>}
           </div>
         ):(
           <div style={{textAlign:"center",padding:"28px",border:"1px solid #222",borderRadius:"10px",marginBottom:"12px"}}>
-            <div style={{fontSize:"36px",marginBottom:"8px"}}>🏋️</div>
-            <div style={{fontFamily:"Bebas Neue",fontSize:"13px",color:C.gray,letterSpacing:"1px",marginBottom:"10px"}}>SIN MEDIA DISPONIBLE AÚN</div>
-            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(nombre+" ejercicio cómo hacer")}`} target="_blank" rel="noreferrer" style={{color:C.blue,fontSize:"13px",fontFamily:"Barlow",textDecoration:"none"}}>🔍 Ver en YouTube →</a>
+            <div style={{fontSize:"36px",marginBottom:"8px"}}>🎬</div>
+            <div style={{fontFamily:"Bebas Neue",fontSize:"13px",color:C.gray,letterSpacing:"1px",marginBottom:"12px"}}>VIDEO NO ASIGNADO AÚN</div>
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(nombre+" ejercicio técnica correcta")}`} target="_blank" rel="noreferrer" style={{display:"inline-block",padding:"10px 20px",background:"linear-gradient(135deg,#dc2626,#ef4444)",borderRadius:"8px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>🔍 BUSCAR EN YOUTUBE</a>
           </div>
         )}
         {isAdmin&&(
           <div style={{borderTop:"1px solid #1a1a1a",paddingTop:"14px",marginTop:"4px"}}>
-            <div style={{fontFamily:"Bebas Neue",fontSize:"12px",color:C.gold,letterSpacing:"1px",marginBottom:"8px"}}>⚙️ ADMIN — CARGAR MEDIA</div>
-            <input value={editUrl} onChange={e=>setEditUrl(e.target.value)} placeholder="URL del GIF o imagen" style={{...inputSt,marginBottom:"8px",fontSize:"12px"}}/>
+            <div style={{fontFamily:"Bebas Neue",fontSize:"12px",color:C.gold,letterSpacing:"1px",marginBottom:"8px"}}>⚙️ ADMIN — ASIGNAR VIDEO</div>
+            <input value={editUrl} onChange={e=>setEditUrl(e.target.value)} placeholder="URL de YouTube (ej: https://youtu.be/xxxxx)" style={{...inputSt,marginBottom:"8px",fontSize:"12px"}}/>
             <textarea value={editDesc} onChange={e=>setEditDesc(e.target.value)} placeholder="Descripción técnica del ejercicio (opcional)" rows={2} style={{...inputSt,resize:"vertical",fontSize:"12px",marginBottom:"8px"}}/>
             <button onClick={handleSave} disabled={saving||!editUrl} style={{width:"100%",padding:"10px",background:saved?"#16a34a":`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",cursor:saving||!editUrl?"not-allowed":"pointer"}}>
-              {saving?"GUARDANDO...":saved?"✅ GUARDADO":"💾 GUARDAR MEDIA"}
+              {saving?"GUARDANDO...":saved?"✅ GUARDADO":"💾 GUARDAR VIDEO"}
             </button>
           </div>
         )}
@@ -266,7 +274,7 @@ function ExerciseModal({nombre,onClose,isAdmin}){
     </div>
   );
 }
-// ─── RUTINA CONTENT con botones 👁️ ───────────────────────────────────────────
+
 function RutinaContent({content,onExercise}){
   const lines=content.split("\n");
   return(
@@ -1111,7 +1119,99 @@ function Estadisticas({sesiones}){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ADMIN PANEL
+// ─── ADMIN: GESTIÓN DE MEDIA EJERCICIOS ──────────────────────────────────────
+function EjerciciosMediaAdmin(){
+  const[ejercicios,setEjercicios]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[editId,setEditId]=useState(null);
+  const[editUrl,setEditUrl]=useState("");
+  const[editDesc,setEditDesc]=useState("");
+  const[saving,setSaving]=useState(false);
+  const[saved,setSaved]=useState(null);
+  const[filter,setFilter]=useState("");
+
+  useEffect(()=>{
+    fetch(`${API}/api/admin/ejercicios-media`)
+      .then(r=>r.json())
+      .then(d=>{if(d.success)setEjercicios(d.ejercicios);setLoading(false);})
+      .catch(()=>setLoading(false));
+  },[]);
+
+  const startEdit=(ej)=>{setEditId(ej.id||ej.nombre);setEditUrl(ej.gif_url||"");setEditDesc(ej.descripcion||"");};
+  const cancelEdit=()=>{setEditId(null);setEditUrl("");setEditDesc("");};
+
+  const handleSave=async(nombre)=>{
+    setSaving(true);
+    try{
+      const r=await fetch(`${API}/api/admin/ejercicio-media`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre,gif_url:editUrl,descripcion:editDesc,validado:true})});
+      const d=await r.json();
+      if(d.success){
+        setEjercicios(prev=>prev.some(e=>e.nombre===nombre)?prev.map(e=>e.nombre===nombre?d.media:e):[...prev,d.media]);
+        setSaved(nombre);setTimeout(()=>setSaved(null),2500);
+        cancelEdit();
+      }
+    }catch(e){}
+    setSaving(false);
+  };
+
+  const filtered=ejercicios.filter(e=>e.nombre.includes(filter.toLowerCase()));
+  const sinVideo=ejercicios.filter(e=>!e.gif_url).length;
+
+  return(
+    <div className="slide-up" style={{background:"#0d0d0d",border:`1px solid ${C.blue}44`,borderRadius:"12px",padding:"20px",marginBottom:"20px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px",flexWrap:"wrap",gap:"10px"}}>
+        <div>
+          <div style={{fontFamily:"Bebas Neue",fontSize:"18px",color:C.blue,letterSpacing:"2px"}}>📺 MEDIA EJERCICIOS</div>
+          <div style={{fontSize:"11px",color:C.gray,marginTop:"2px"}}>{ejercicios.length} ejercicios · <span style={{color:sinVideo>0?C.fire:C.green}}>{sinVideo} sin video</span></div>
+        </div>
+        <input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Buscar ejercicio..." style={{...inputSt,width:"200px",fontSize:"12px",padding:"8px 12px"}}/>
+      </div>
+      {loading?(
+        <div style={{textAlign:"center",padding:"30px",color:C.gray,fontFamily:"Bebas Neue",letterSpacing:"1px"}}>CARGANDO...</div>
+      ):filtered.length===0?(
+        <div style={{textAlign:"center",padding:"24px",color:C.gray,fontSize:"13px"}}>
+          {ejercicios.length===0?"Aún no hay ejercicios registrados. Aparecerán automáticamente cuando los usuarios presionen 👁️ en sus rutinas.":"Sin resultados para esa búsqueda."}
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+          {filtered.map(ej=>{
+            const videoId=getYouTubeId(ej.gif_url||"");
+            const isEditing=editId===ej.id||editId===ej.nombre;
+            return(
+              <div key={ej.nombre} style={{background:"#111",border:`1px solid ${ej.gif_url?"#1a3a1a":"#2a1a1a"}`,borderRadius:"8px",padding:"12px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"10px",flexWrap:"wrap"}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontFamily:"Bebas Neue",fontSize:"14px",color:C.white,letterSpacing:"1px"}}>{ej.nombre}</div>
+                    {ej.gif_url&&<div style={{fontSize:"10px",color:C.green,marginTop:"2px",fontFamily:"Barlow"}}>✅ Video asignado{videoId?"":" · URL inválida"}</div>}
+                    {!ej.gif_url&&<div style={{fontSize:"10px",color:C.fire,marginTop:"2px",fontFamily:"Barlow"}}>⚠️ Sin video</div>}
+                    {ej.descripcion&&<div style={{fontSize:"11px",color:C.gray,marginTop:"3px",fontFamily:"Barlow",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"280px"}}>{ej.descripcion}</div>}
+                  </div>
+                  <div style={{display:"flex",gap:"6px",flexShrink:0}}>
+                    {videoId&&<a href={`https://youtu.be/${videoId}`} target="_blank" rel="noreferrer" style={{padding:"5px 10px",background:"#1a0000",border:"1px solid #dc2626",borderRadius:"5px",color:"#ef4444",fontSize:"11px",fontFamily:"Bebas Neue",textDecoration:"none",letterSpacing:"1px"}}>▶ VER</a>}
+                    <button onClick={()=>isEditing?cancelEdit():startEdit(ej)} style={{padding:"5px 10px",background:isEditing?"#1a1a1a":"transparent",border:`1px solid ${isEditing?"#333":C.blue}`,borderRadius:"5px",color:isEditing?C.gray:C.blue,fontSize:"11px",fontFamily:"Bebas Neue",letterSpacing:"1px",cursor:"pointer"}}>
+                      {isEditing?"CANCELAR":"✏️ EDITAR"}
+                    </button>
+                  </div>
+                </div>
+                {isEditing&&(
+                  <div style={{marginTop:"10px",paddingTop:"10px",borderTop:"1px solid #222"}} className="slide-up">
+                    <input value={editUrl} onChange={e=>setEditUrl(e.target.value)} placeholder="URL YouTube (https://youtu.be/xxxxx)" style={{...inputSt,fontSize:"12px",marginBottom:"6px"}}/>
+                    <textarea value={editDesc} onChange={e=>setEditDesc(e.target.value)} placeholder="Descripción técnica (opcional)" rows={2} style={{...inputSt,resize:"vertical",fontSize:"12px",marginBottom:"8px"}}/>
+                    <button onClick={()=>handleSave(ej.nombre)} disabled={saving||!editUrl} style={{width:"100%",padding:"9px",background:saved===ej.nombre?"#16a34a":`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue",letterSpacing:"1px",cursor:saving?"not-allowed":"pointer"}}>
+                      {saving?"GUARDANDO...":saved===ej.nombre?"✅ GUARDADO":"💾 GUARDAR"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ═══════════════════════════════════════════════════════════════════════════════
 function AdminPanel({user,onLogout}){
   const[usuarios,setUsuarios]=useState([]);const[loading,setLoading]=useState(true);
@@ -1126,6 +1226,7 @@ function AdminPanel({user,onLogout}){
   const[newUser,setNewUser]=useState({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});
   const[sesionesHoy,setSesionesHoy]=useState(new Set());
   const[ultimaActividad,setUltimaActividad]=useState({});
+  const[showMedia,setShowMedia]=useState(false);
 
   useEffect(()=>{
     fetch(`${API}/api/admin/usuarios`).then(r=>r.json()).then(d=>{if(d.success)setUsuarios(d.usuarios);setLoading(false);}).catch(()=>setLoading(false));
@@ -1245,11 +1346,15 @@ function AdminPanel({user,onLogout}){
             <div key={s.l} style={{background:"#0d0d0d",border:"1px solid #222",borderRadius:"10px",padding:"14px",textAlign:"center"}}><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"32px",color:C.fire}}>{s.v}</div><div style={{fontSize:"9px",color:C.gray,letterSpacing:"0.1em"}}>{s.l}</div></div>
           ))}
         </div>
-        <div style={{marginBottom:"20px"}}>
+        <div style={{marginBottom:"20px",display:"flex",gap:"10px",flexWrap:"wrap"}}>
           <button onClick={()=>setShowCreate(!showCreate)} style={{padding:"12px 24px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
             {showCreate?"✕ CANCELAR":"+ NUEVO SOCIO / DEMO"}
           </button>
+          <button onClick={()=>{setShowMedia(!showMedia);if(showCreate)setShowCreate(false);}} style={{padding:"12px 24px",background:showMedia?`linear-gradient(135deg,${C.fire},${C.red})`:"transparent",border:`1px solid ${showMedia?C.fire:C.gray}`,borderRadius:"8px",color:showMedia?C.white:C.gray,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
+            📺 MEDIA EJERCICIOS
+          </button>
         </div>
+        {showMedia&&<EjerciciosMediaAdmin/>}
         {showCreate&&(
           <div className="slide-up" style={{background:"#0d0d0d",border:`1px solid ${C.blueL}`,borderRadius:"12px",padding:"24px",marginBottom:"20px"}}>
             <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"20px",color:C.blueL,marginBottom:"16px",letterSpacing:"2px"}}>REGISTRAR NUEVO SOCIO</div>
