@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conectar WhatsApp — MG Fitness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0e0f0d; --ink:#e9ece4; --muted:#9aa093; --line:#2a2d26; --accent:#c6ff3a; --ok:#25d366; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.6;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background-image:radial-gradient(circle at 50% 0%, rgba(198,255,58,.07), transparent 45%);}
+  .card{max-width:560px;width:100%;}
+  .kicker{font-family:'Oswald',sans-serif;letter-spacing:.28em;text-transform:uppercase;font-size:.72rem;color:var(--accent);font-weight:500;}
+  h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:2.4rem;text-transform:uppercase;line-height:1.05;margin:.3em 0 .5em;}
+  p{color:#cfd3c7;margin-bottom:22px;}
+  button{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    font-size:1.05rem;background:var(--accent);color:#0e0f0d;border:none;padding:16px 28px;border-radius:6px;
+    cursor:pointer;transition:transform .12s ease, box-shadow .2s ease;width:100%;}
+  button:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(198,255,58,.25);}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+  .out{margin-top:28px;display:none;}
+  .out.show{display:block;}
+  .row{border-top:1px solid var(--line);padding:14px 0;}
+  .lbl{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.75rem;color:var(--muted);margin-bottom:6px;}
+  .val{font-family:'IBM Plex Mono',monospace;font-size:.95rem;color:#fff;word-break:break-all;
+    background:rgba(255,255,255,.04);padding:10px 12px;border-radius:5px;border:1px solid var(--line);}
+  .status{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;border-radius:6px;margin-bottom:18px;font-size:.9rem;}
+  .status.ok{background:rgba(37,211,102,.12);color:var(--ok);border:1px solid rgba(37,211,102,.3);}
+  .status.err{background:rgba(255,90,90,.12);color:#ff7a7a;border:1px solid rgba(255,90,90,.3);}
+  .status.info{background:rgba(198,255,58,.1);color:var(--accent);border:1px solid rgba(198,255,58,.25);}
+  .hint{font-size:.82rem;color:var(--muted);margin-top:18px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="kicker">MG Fitness Center</div>
+  <h1>Conectar WhatsApp</h1>
+  <p>Conectá tu número de WhatsApp Business por coexistencia. Vas a escanear un QR desde la app de WhatsApp Business en tu celular.</p>
+
+  <button id="connectBtn" onclick="launchWhatsAppSignup()">Conectar WhatsApp Business</button>
+
+  <div id="output" class="out">
+    <div id="status" class="status info">Esperando…</div>
+    <div class="row"><div class="lbl">Phone Number ID</div><div id="pnid" class="val">—</div></div>
+    <div class="row"><div class="lbl">WABA ID</div><div id="wabaid" class="val">—</div></div>
+    <div class="row"><div class="lbl">Code (token exchange)</div><div id="code" class="val">—</div></div>
+  </div>
+
+  <div class="hint">Si el botón no responde, revisá que el dominio esté autorizado en la config de Facebook Login (ver instrucciones).</div>
+</div>
+
+<script>
+  // --- Config de Marki (ya cargados) ---
+  const APP_ID = '1648355279728171';
+  const CONFIG_ID = '26939474805718202';
+
+  // --- SDK de Facebook ---
+  window.fbAsyncInit = function () {
+    FB.init({ appId: APP_ID, cookie: true, xfbml: true, version: 'v22.0' });
+  };
+  (function (d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = 'https://connect.facebook.net/en_US/sdk.js';
+    fjs.parentNode.insertBefore(js, fjs);
+  })(document, 'script', 'facebook-jssdk');
+
+  const out = document.getElementById('output');
+  const statusEl = document.getElementById('status');
+  function showOut(){ out.classList.add('show'); }
+  function setStatus(txt, kind){ statusEl.textContent = txt; statusEl.className = 'status ' + (kind || 'info'); }
+
+  // --- Captura de datos del onboarding (WABA ID + Phone Number ID) ---
+  window.addEventListener('message', (event) => {
+    if (!/facebook\.com$/.test(new URL(event.origin).hostname)) return;
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'WA_EMBEDDED_SIGNUP') {
+        showOut();
+        if (data.event === 'FINISH') {
+          setStatus('Conexion completada ✓', 'ok');
+          if (data.data) {
+            document.getElementById('pnid').textContent  = data.data.phone_number_id || '—';
+            document.getElementById('wabaid').textContent = data.data.waba_id || '—';
+          }
+        } else if (data.event === 'CANCEL') {
+          setStatus('Cancelaste en el paso: ' + (data.data && data.data.current_step || '?'), 'err');
+        } else if (data.event === 'ERROR') {
+          setStatus('Error: ' + (data.data && data.data.error_message || 'desconocido'), 'err');
+        }
+      }
+    } catch (e) { /* mensajes no-JSON, ignorar */ }
+  });
+
+  // --- Lanzar Embedded Signup en modo COEXISTENCIA ---
+  function launchWhatsAppSignup() {
+    if (typeof FB === 'undefined') { setStatus('El SDK de Facebook no cargo. Refresca la pagina.', 'err'); showOut(); return; }
+    FB.login(function (response) {
+      showOut();
+      if (response.authResponse && response.authResponse.code) {
+        document.getElementById('code').textContent = response.authResponse.code;
+        if (statusEl.className.indexOf('ok') === -1) setStatus('Codigo recibido. Si no ves los IDs arriba, igual quedo conectado.', 'info');
+      } else {
+        setStatus('No se autorizo / cancelado.', 'err');
+      }
+    }, {
+      config_id: CONFIG_ID,
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: {
+        setup: {},
+        sessionInfoVersion: 3,
+        featureType: 'whatsapp_business_app_onboarding'   // <-- COEXISTENCIA (no migracion)
+      }
+    });
+  }
+</script>
+</body>
+</html>
