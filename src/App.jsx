@@ -1217,6 +1217,8 @@ function AdminPanel({user,onLogout}){
   const[usuarios,setUsuarios]=useState([]);const[loading,setLoading]=useState(true);
   const[selected,setSelected]=useState(null);const[renewLoading,setRenew]=useState(null);
   const[showCreate,setShowCreate]=useState(false);const[creating,setCreating]=useState(false);
+  const[showGymBuscar,setShowGymBuscar]=useState(false);
+  const[gymNro,setGymNro]=useState("");const[gymLoading,setGymLoading]=useState(false);const[gymError,setGymError]=useState("");
   const[msg,setMsg]=useState(null);const[resetPwdId,setResetPwdId]=useState(null);const[resetPwdVal,setResetPwdVal]=useState("");
   const[editCondId,setEditCondId]=useState(null);const[editCondVal,setEditCondVal]=useState("");
   const[editPerfilId,setEditPerfilId]=useState(null);
@@ -1347,13 +1349,45 @@ function AdminPanel({user,onLogout}){
           ))}
         </div>
         <div style={{marginBottom:"20px",display:"flex",gap:"10px",flexWrap:"wrap"}}>
-          <button onClick={()=>setShowCreate(!showCreate)} style={{padding:"12px 24px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
+          <button onClick={()=>{setShowCreate(!showCreate);setShowGymBuscar(false);}} style={{padding:"12px 24px",background:`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
             {showCreate?"✕ CANCELAR":"+ NUEVO SOCIO / DEMO"}
+          </button>
+          <button onClick={()=>{setShowGymBuscar(!showGymBuscar);setShowCreate(false);setGymError("");setGymNro("");}} style={{padding:"12px 24px",background:showGymBuscar?`linear-gradient(135deg,#16a34a,#22c55e)`:"transparent",border:`1px solid ${showGymBuscar?"#16a34a":C.gray}`,borderRadius:"8px",color:showGymBuscar?C.white:C.gray,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
+            🔍 BUSCAR EN CGYM
           </button>
           <button onClick={()=>{setShowMedia(!showMedia);if(showCreate)setShowCreate(false);}} style={{padding:"12px 24px",background:showMedia?`linear-gradient(135deg,${C.fire},${C.red})`:"transparent",border:`1px solid ${showMedia?C.fire:C.gray}`,borderRadius:"8px",color:showMedia?C.white:C.gray,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
             📺 MEDIA EJERCICIOS
           </button>
         </div>
+        {showGymBuscar&&(
+          <div className="slide-up" style={{background:"#0d1f0d",border:"1px solid #16a34a",borderRadius:"12px",padding:"20px",marginBottom:"20px"}}>
+            <div style={{fontFamily:"Bebas Neue",fontSize:"16px",color:"#22c55e",letterSpacing:"2px",marginBottom:"12px"}}>🔍 BUSCAR SOCIO EN CGYM</div>
+            <div style={{fontSize:"12px",color:C.gray,fontFamily:"Barlow",marginBottom:"12px"}}>Ingresá el Nro. de Socio de Control Gym para importar sus datos automáticamente.</div>
+            <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
+              <input value={gymNro} onChange={e=>setGymNro(e.target.value.replace(/\D/g,""))} placeholder="Nro. Socio CGym" style={{...inputSt,flex:1,fontSize:"18px",textAlign:"center",letterSpacing:"2px"}} onKeyDown={async e=>{if(e.key==="Enter")await buscarEnGym();}}/>
+              <button onClick={async()=>{
+                if(!gymNro)return;
+                setGymLoading(true);setGymError("");
+                try{
+                  const r=await fetch(`http://localhost:8765/socio?nro=${gymNro}`);
+                  if(!r.ok){setGymError("Socio no encontrado en CGym");setGymLoading(false);return;}
+                  const d=await r.json();
+                  if(d.error){setGymError(d.error);setGymLoading(false);return;}
+                  setNewUser({
+                    dni:d.dni||"",nombre:d.nombre||"",apellido:d.apellido||"",
+                    password:d.dni||"",role:"usuario",isDemo:false,condicion_medica:"",
+                  });
+                  setShowCreate(true);setShowGymBuscar(false);
+                  showMsg(`✅ Datos importados: ${d.apellido}, ${d.nombre}`);
+                }catch(e){setGymError("Error al conectar con CGym — verificá que leer_gym.py esté corriendo");}
+                setGymLoading(false);
+              }} disabled={gymLoading||!gymNro} style={{padding:"12px 20px",background:gymLoading?"#333":"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:"8px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",cursor:gymLoading||!gymNro?"not-allowed":"pointer",whiteSpace:"nowrap"}}>
+                {gymLoading?"BUSCANDO...":"IMPORTAR →"}
+              </button>
+            </div>
+            {gymError&&<div style={{marginTop:"10px",color:C.fire,fontSize:"13px",fontFamily:"Barlow"}}>{gymError}</div>}
+          </div>
+        )}
         {showMedia&&<EjerciciosMediaAdmin/>}
         {showCreate&&(
           <div className="slide-up" style={{background:"#0d0d0d",border:`1px solid ${C.blueL}`,borderRadius:"12px",padding:"24px",marginBottom:"20px"}}>
@@ -1400,7 +1434,7 @@ function AdminPanel({user,onLogout}){
                     </div>
                     <div style={{fontSize:"12px",color:C.gray,marginTop:"2px"}}>DNI: {u.dni} · {u.role}</div>
                   </div>
-                  <div style={{display:"flex",alignItems:"center",gap:"8px"}}><DiasRestantesBadge fechaExp={u.fecha_expiracion}/><span style={{color:C.gray,fontSize:"12px"}}>{isOpen?"▲":"▼"}</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:"8px"}}><DiasRestantesBadge fechaExp={u.fecha_expiracion}/>{u.deuda>0&&<span style={{fontSize:"11px",background:"#7f1d1d",color:"#fca5a5",border:"1px solid #dc2626",borderRadius:"4px",padding:"1px 6px",fontFamily:"Bebas Neue",letterSpacing:"1px"}}>💳 ${u.deuda.toLocaleString()}</span>}<span style={{color:C.gray,fontSize:"12px"}}>{isOpen?"▲":"▼"}</span></div>
                 </div>
                 {isOpen&&(
                   <div style={{padding:"16px",borderTop:"1px solid #1a1a1a"}}>
@@ -1662,6 +1696,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
         </div>
         <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
           <DiasRestantesBadge fechaExp={user.fecha_expiracion}/>
+          {user.deuda>0&&<span style={{fontSize:"10px",background:"#7f1d1d",color:"#fca5a5",border:"1px solid #dc2626",borderRadius:"4px",padding:"2px 6px",fontFamily:"Bebas Neue",letterSpacing:"1px"}}>💳 DEUDA ${Number(user.deuda).toLocaleString()}</span>}
           {!isDemo&&<button onClick={()=>setShowPwd(true)} style={{padding:"6px 10px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"11px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif"}}>🔑</button>}
           <button onClick={()=>setShowLegal(true)} style={{padding:"6px 10px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"11px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif"}}>📄</button>
           <button onClick={onLogout} style={{padding:"6px 10px",background:"transparent",border:"1px solid #333",borderRadius:"6px",color:C.gray,fontSize:"11px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>SALIR</button>
