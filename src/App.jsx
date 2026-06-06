@@ -1369,7 +1369,7 @@ function AdminPanel({user,onLogout}){
                 if(!gymNro)return;
                 setGymLoading(true);setGymError("");
                 try{
-                  const r=await fetch(`http://localhost:8765/socio?nro=${gymNro}`);
+                  const r=await fetch(`${API}/api/gym/buscar-socio/${gymNro}`);
                   if(!r.ok){setGymError("Socio no encontrado en CGym");setGymLoading(false);return;}
                   const d=await r.json();
                   if(d.error){setGymError(d.error);setGymLoading(false);return;}
