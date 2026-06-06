@@ -1218,7 +1218,7 @@ function AdminPanel({user,onLogout}){
   const[selected,setSelected]=useState(null);const[renewLoading,setRenew]=useState(null);
   const[showCreate,setShowCreate]=useState(false);const[creating,setCreating]=useState(false);
   const[showGymBuscar,setShowGymBuscar]=useState(false);
-  const[gymNro,setGymNro]=useState("");const[gymLoading,setGymLoading]=useState(false);const[gymError,setGymError]=useState("");
+  const[gymNro,setGymNro]=useState("");const[gymLoading,setGymLoading]=useState(false);const[gymError,setGymError]=useState("");const[gymVencimiento,setGymVencimiento]=useState(null);
   const[msg,setMsg]=useState(null);const[resetPwdId,setResetPwdId]=useState(null);const[resetPwdVal,setResetPwdVal]=useState("");
   const[editCondId,setEditCondId]=useState(null);const[editCondVal,setEditCondVal]=useState("");
   const[editPerfilId,setEditPerfilId]=useState(null);
@@ -1296,9 +1296,9 @@ function AdminPanel({user,onLogout}){
   const crearUsuario=async()=>{
     if(!newUser.dni||!newUser.nombre||!newUser.apellido||!newUser.password){showMsg("⚠️ Completá todos los campos");return;}
     setCreating(true);
-    const res=await fetch(`${API}/api/admin/crear-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(newUser)});
+    const res=await fetch(`${API}/api/admin/crear-usuario`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...newUser,fechaExpiracion:gymVencimiento})});
     const data=await res.json();
-    if(data.success){setUsuarios(prev=>[data.usuario,...prev]);setNewUser({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});setShowCreate(false);showMsg("✅ Socio creado");}
+    if(data.success){setUsuarios(prev=>[data.usuario,...prev]);setNewUser({dni:"",nombre:"",apellido:"",password:"",role:"usuario",isDemo:false,condicion_medica:""});setGymVencimiento(null);setShowCreate(false);showMsg("✅ Socio creado");}
     else showMsg(`❌ ${data.error}`);
     setCreating(false);
   };
@@ -1377,6 +1377,7 @@ function AdminPanel({user,onLogout}){
                     dni:d.dni||"",nombre:d.nombre||"",apellido:d.apellido||"",
                     password:d.dni||"",role:"usuario",isDemo:false,condicion_medica:"",
                   });
+                  setGymVencimiento(d.vencimiento||null);
                   setShowCreate(true);setShowGymBuscar(false);
                   showMsg(`✅ Datos importados: ${d.apellido}, ${d.nombre}`);
                 }catch(e){setGymError("Error al conectar con CGym — verificá que leer_gym.py esté corriendo");}
