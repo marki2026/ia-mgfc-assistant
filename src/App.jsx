@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const WP_NUMBER = "543571587003";
@@ -226,6 +227,11 @@ function ExerciseModal({nombre,onClose,isAdmin}){
       .then(d=>{setMedia(d.media||null);setEditUrl(d.media?.gif_url||"");setEditDesc(d.media?.descripcion||"");setLoading(false);})
       .catch(()=>setLoading(false));
   },[nombre]);
+  useEffect(()=>{
+    const prev=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    return()=>{document.body.style.overflow=prev;};
+  },[]);
   const handleSave=async()=>{
     setSaving(true);
     try{
@@ -236,9 +242,9 @@ function ExerciseModal({nombre,onClose,isAdmin}){
     setSaving(false);
   };
   const videoId=getYouTubeId(media?.gif_url||"");
-  return(
-    <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:3000,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <div style={{background:"#0d0d0d",border:`2px solid ${C.blue}`,borderRadius:"16px 16px 0 0",padding:"20px",width:"100%",maxWidth:"640px",maxHeight:"88vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()} className="slide-up">
+  return createPortal(
+    <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:3000,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}} onClick={onClose}>
+      <div style={{background:"#0d0d0d",border:`2px solid ${C.blue}`,borderRadius:"16px",padding:"20px",width:"100%",maxWidth:"640px",maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()} className="slide-up">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
           <div style={{fontFamily:"Bebas Neue",fontSize:"17px",color:C.blue,letterSpacing:"2px"}}>▶ {nombre.toUpperCase()}</div>
           <button onClick={onClose} style={{background:"transparent",border:"none",color:C.gray,fontSize:"22px",cursor:"pointer"}}>✕</button>
@@ -271,7 +277,8 @@ function ExerciseModal({nombre,onClose,isAdmin}){
         )}
         <button onClick={onClose} style={{width:"100%",padding:"12px",background:"#111",border:"1px solid #222",borderRadius:"8px",color:C.gray,fontSize:"13px",fontFamily:"Bebas Neue",letterSpacing:"2px",cursor:"pointer",marginTop:"10px"}}>← VOLVER A LA RUTINA</button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -282,16 +289,29 @@ function RutinaContent({content,onExercise}){
       {lines.map((line,i)=>{
         const clean=line.replace(/\*\*/g,"").trim();
         if(!clean)return <div key={i} style={{height:"6px"}}/>;
-        const isExercicio=/[·×x]\s*\d|(?:series|reps|kg|\d+rm|descanso)/i.test(clean)&&!/^\s*[#\*]{2,}/.test(clean);
+        const isHeader=/^\s*[#\*]{2,}/.test(clean);
+        const tieneSetsReps=/[·×x]\s*\d|\d\s*[x×]\s*\d|\bseries\b|\brepeticiones\b|\breps?\b|\bdescanso\b|\bkg\b|\d+\s*rm\b|\bal fallo\b|\bsegundos?\b|\bminutos?\b|\bseg\b|\bmin\b/i.test(clean);
+        const esItemLista=/^\d+[\.\)]\s+\S/.test(clean);
+        const isExercicio=!isHeader&&(tieneSetsReps||esItemLista);
         let ejercicio=null;
         if(isExercicio){
-          const m=clean.match(/^[-–\*\d\.\)\s]*(.+?)(?:\s*[·:]\s*|\s+\d+\s*[x×]\s*\d|\s+x\s*\d)/i);
-          if(m)ejercicio=m[1].replace(/^[-–\*\s]+/,"").trim();
+          let s=clean.replace(/^[\s\-–—•\*]+/,"").replace(/^\d+\s*[\.\)]\s*/,"").trim();
+          const sep=s.match(/\s*(?:[·:]|—|(?:\s-\s)|\(|\d+\s*[x×]\s*\d+|[x×]\s*\d+)/i);
+          if(sep&&sep.index>0)s=s.slice(0,sep.index);
+          s=s.replace(/[\s\-–—,:]+$/,"").trim();
+          if(s&&s.length>=2&&!/^descanso\b/i.test(s))ejercicio=s;
         }
         return(
-          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"6px",marginBottom:"1px"}}>
+          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"8px",marginBottom:"2px"}}>
             <span style={{flex:1,whiteSpace:"pre-wrap"}}>{line}</span>
-            {ejercicio&&<button onClick={()=>onExercise(ejercicio)} title="Ver ejercicio" style={{flexShrink:0,background:"transparent",border:`1px solid ${C.blue}55`,borderRadius:"4px",color:C.blue,fontSize:"12px",padding:"1px 5px",cursor:"pointer",marginTop:"3px",lineHeight:"1.4"}}>👁️</button>}
+            {ejercicio&&(
+              <button onClick={()=>onExercise(ejercicio)} title="Ver video del ejercicio" aria-label="Ver video del ejercicio"
+                style={{flexShrink:0,display:"inline-flex",alignItems:"center",justifyContent:"center",
+                  width:"34px",height:"34px",background:`${C.blue}22`,border:`1.5px solid ${C.blueL}`,
+                  borderRadius:"8px",color:C.blueL,fontSize:"19px",cursor:"pointer",lineHeight:"1"}}>
+                👁️
+              </button>
+            )}
           </div>
         );
       })}
