@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Abrir Puerta — MG Fitness</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --txt:#e6edf3;
+    --accent:#2ea043; --accent2:#3fb950; --danger:#f85149; --muted:#8b949e;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:28px; padding:24px; min-height:100dvh;
+    /* Bloquea selección de texto y menú contextual del "mantener presionado" en el celu */
+    -webkit-user-select:none; user-select:none;
+    -webkit-touch-callout:none; touch-action:manipulation;
+  }
+  h1{ font-size:20px; font-weight:600; margin:0; text-align:center; color:var(--txt); }
+  .sub{ color:var(--muted); font-size:13px; margin-top:-16px; text-align:center; }
+
+  .btn{
+    position:relative; width:230px; height:230px; border-radius:50%;
+    background:var(--panel); border:3px solid #30363d; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:transform .08s ease, border-color .2s ease;
+    -webkit-user-select:none; user-select:none;
+  }
+  .btn:active{ transform:scale(.97); }
+  .btn.holding{ border-color:var(--accent2); }
+  .btn.done{ border-color:var(--accent2); background:#132a17; }
+  .btn.error{ border-color:var(--danger); background:#2a1416; }
+
+  /* Relleno de progreso que sube desde abajo durante el hold */
+  .fill{
+    position:absolute; left:0; bottom:0; width:100%; height:0%;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    transition:height .05s linear; z-index:1;
+  }
+  .label{ position:relative; z-index:2; text-align:center; pointer-events:none; }
+  .label .icon{ font-size:52px; line-height:1; }
+  .label .text{ display:block; margin-top:8px; font-size:15px; font-weight:600; }
+
+  #status{ font-size:14px; min-height:20px; text-align:center; color:var(--muted); }
+  #status.ok{ color:var(--accent2); }
+  #status.err{ color:var(--danger); }
+  .hint{ color:var(--muted); font-size:12px; text-align:center; max-width:260px; }
+</style>
+<meta name="theme-color" content="#0d1117">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIlB1ZXJ0YSBNRyBGaXRuZXNzIiwgInNob3J0X25hbWUiOiAiUHVlcnRhIE1HIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZDExMTciLCAidGhlbWVfY29sb3IiOiAiIzBkMTExNyIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQU1BQUFBREFDQVlBQUFCUzNHd0hBQUFFSVVsRVFWUjRuTzNkd1kwYlJ4Q0cwVm5EVngxMDBubnZDeWdKNTZFWUZJbGljQjVPd29EdUNtVjlJa1FUbE1RVmgxMVY4NytYQUFmZDliR0hYQ3puNmQzN0Q2OGJoUHFqK2dLZ2tnQ0lKZ0NpQ1lCb0FpQ2FBSWdtQUtJSmdHZ0NJSm9BaUNZQW9nbUFhQUlnbWdDSUpnQ2lDWUJvQWlDYUFJZ21BS0lKZ0dnQ0lKb0FpQ1lBb2dtQWFBSWcycC9WRjdESzg1ZVg2a3NZNTl2bnI5V1g4SEJQUi8xcFJBTy92eU1HY2FnQURQMDZSNG5oRUFFWS9EclRReGdkZ01Idlkyb0lJd013K0gxTkMyRlVBQVovamlraGpQazdnT0dmWmNwK2pRaGd5bUx5ZnhQMnJmVXQwSVFGNURaZGI0bmFuZ0NHLzFpNjdtZkxBTG91RnZmcHVLL3RBdWk0U095bjIvNjJDcURiNHZBWW5mYTVWUUN3V3BzQU9yMHI4SGhkOXJ0RkFGMFdnN1U2N0h0NUFCMFdnVHJWKzE4ZUFGUXFEYUM2Zm5xb25BTW5BTkhLQXZEdXo3bXFlWEFDRUswa0FPLytYRk14RjA0QW9pMFB3THMvUDdONlBwd0FSQk1BMFpZRzRQYUhXNnljRXljQTBRUkF0SmlmUjkvTHY1LytxYjZFWC9yNDkxL1ZsekRHc2hQZ0NQZi9FNFovMitaYzU4K3NtaGUzUURlYU5sVFRycmVLQUc0d2RaaW1YdmRLQWlDYUFJam1XNkFkVkg3cjRqYm5QazZBTzFWLzVWajkrdE1KNEE1ZGhxL0xkVXdrQUtJSmdHZ0NJSm9BaUNZQW9nbUFhQUlnbWdDSUpnQ2lDWUJvQWlDYUFJZ21BS0lKZ0dnQ0lKb0FpQ1lBb2dtQWFBSWdtZ0NJSmdDaUNZQm9BaUNhQUlnbUFLSUpnR2dDSUpvQWlDWUFvZ21BYUI2UTBkejVBekQ4RFByK25BQ05YVDc5eGROZzlpZUFwbjQwN0NMWWx3Q0lKZ0NpQ2FDcEgzM2c5VUY0WHdKbzdITFlEZi8rZkEzYW5LRi9MQ2NBMFFSQU5BRVFUUUJFRXdEUkJFQTBBUkJOQUVRVEFORUVRRFFCRUUwQVJCTUEwUVJBTkFFUVRRQkVFd0RSQkVBMEFSQk5BRVFUQU5FRVFEUUJFRTBBUkJNQTBRUkFOQUVRVFFCRUV3RFJCRUEwQVJCdFdRRGZQbjlkOVZJY3dLcDVjUUlRVFFCRUV3RFJsZ1l3OVhQQTFPZDBUYjN1bFhQaUJMalJ0V0hxOHRUMmE5Y3hkZmhYRThBYmRJekE4Ti9uNmQzN0Q2K3JYL1Q1eTh2cWwyU0kxYmZKVGdDaWxRUXc5Y013ajFVeEYwNEFvcFVGNEJUZ1hOVThPQUdJVmhxQVU0QnRxNTBESndEUnlnTndDbVNyM3YveUFMYXRmaEdvMFdIZld3U3diVDBXZzNXNjdIZWJBS0JDcXdDNnZDdndXSjMydVZVQTI5WnJjZGhmdC8xdEY4QzI5VnNrOXRGeFgxc0dzRzA5RjR2ZjEzVS9TLzRmNEszOC84QmNYUWYvcE8wSmNLNzdJbkxkaEgwYkVjQzJ6VmhNdnB1eVh5TnVnUzY1SmVwcnl1Q2ZqQXpnUkFoOVRCdjhrOUVCbkFpaHp0VEJQemxFQUNkQ1dHZjY0SjhjS29Cell0amZVWWIrM0dFRHVDU0l0enZpd0YrS0NRQ3VHZk4zQUhnRUFSQk5BRVFUQU5FRVFEUUJFRTBBUkJNQTBRUkFOQUVRVFFCRUV3RFJCRUEwQVJCTkFFUVRBTkVFUURRQkVFMEFSQk1BMFFSQU5BRVFUUUJFRXdEUi9nT2tzcys2Z2Q2bVN3QUFBQUJKUlU1RXJrSmdnZz09IiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9wbmciLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifSwgeyJzcmMiOiAiZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFnQUFBQUlBQ0FZQUFBRDBlTlQ2QUFBTTRVbEVRVlI0bk8zZHU1RVUyUlpBMGVZRktnSVNNam9ST0lFZjJEQ1dZQU4rNEFRUm80OHBQSUhQTkV4L3NxcnljMi91dGNUNVJHUlU1VDFuVjFaRHYzajErczIzT3dBZzVYOUhYd0FBc0Q4QkFBQkJBZ0FBZ2dRQUFBUUpBQUFJRWdBQUVDUUFBQ0JJQUFCQWtBQUFnQ0FCQUFCQkFnQUFnZ1FBQUFRSkFBQUlFZ0FBRUNRQUFDQklBQUJBa0FBQWdDQUJBQUJCQWdBQWdnUUFBQVFKQUFBSUVnQUFFQ1FBQUNCSUFBQkFrQUFBZ0NBQkFBQkJBZ0FBZ2dRQUFBUUpBQUFJRWdBQUVDUUFBQ0JJQUFCQWtBQUFnQ0FCQUFCQkFnQUFnZ1FBQUFRSkFBQUlFZ0FBRUNRQUFDQklBQUJBa0FBQWdDQUJBQUJCQWdBQWdnUUFBQVFKQUFBSUVnQUFFQ1FBQUNCSUFBQkFrQUFBZ0NBQkFBQkJBZ0FBZ2dRQUFBUUpBQUFJRWdBQUVDUUFBQ0JJQUFCQWtBQUFnQ0FCQUFCQkFnQUFnZ1FBQUFRSkFBQUlFZ0FBRUNRQUFDQklBQUJBa0FBQWdDQUJBQUJCQWdBQWdnUUFBQVFKQUFBSUVnQUFFUFR5NkF1QW45NStlbmYwSmNBdS92bnI3Nk12QWU1ZXZIcjk1dHZSRjBHSEpROVBFd2ZzUlFDd0djc2UxaUVLMklJQVlEVVdQdXhERUxBR0FjQk5MSDA0bGhqZ1dnS0FpMWo0TURaQndGSUNnRVVzZnBpTEVPQTVBb0JIV2Zwd0RtS0Fod2dBL3NQaWgzTVNBdHduQVBqRjRvY0dJY0RkblFESXMvU2hUUXgwQ1lBb2l4KzRUd2owK0dWQVFaWS84Q2R6b2NjVGdCQUhIRmpDMDRBR0FSQmc4UVBYRUFMbkpnQk96T0lIMWlBRXpzblBBSnlVNVErc3hUdzVKMDhBVHNaQkJiYmthY0I1ZUFKd0lwWS9zRFZ6NWp3RXdFazRsTUJlekp0ejhCWEE1QnhFNEVpK0VwaVhKd0FUcy95Qm81bEQ4eElBazNMb2dGR1lSM1B5RmNCa0hEUmdaTDRTbUljbkFCT3gvSUhSbVZQekVBQ1RjS2lBV1poWGN4QUFFM0NZZ05tWVcrTVRBSU56aUlCWm1WOWpFd0FEYzNpQTJabGo0eElBZzNKb2dMTXd6OFlrQUFia3NBQm5ZNjZOUndBTXhpRUJ6c3A4RzRzQUdJakRBWnlkT1RjT0FUQUlod0tvTU8vR0lBQUc0REFBTmViZThRVEF3UndDb01yOE81WUFPSkNiSDZnekI0OGpBQTdpcGdmNHpqdzhoZ0FBZ0NBQmNBQzFDL0E3YzNGL0FtQm5ibktBaDVtUCt4SUFPM0p6QXp6Tm5OeVBBQUNBSUFHd0UxVUxzSXg1dVE4QnNBTTNNOEJsek0zdENZQ051WWtCcm1OK2Jrc0FBRUNRQU5pUWVnVzRqVG02SFFHd0VUY3R3RHJNMDIwSUFBQUlFZ0FiVUtzQTZ6SlgxeWNBQUNCSUFLeE1wUUpzdzN4ZGx3QUFnQ0FCc0NKMUNyQXRjM1k5QW1BbGJrcUFmWmkzNnhBQUFCQWtBRmFnUmdIMlplN2VUZ0FBUUpBQUFJQWdBWEFqajZFQWptSCsza1lBQUVDUUFMaUIrZ1E0bGpsOFBRRUFBRUVDNEVxcUUyQU01dkYxQkFBQUJBa0FBQWdTQUZmd3VBbGdMT2J5NVFRQUFBUUpnQXVwVElBeG1jK1hFUUFBRUNRQUFDQklBQUJBa0FDNGdPK1hBTVptVGk4bkFBQWdTQUFBUUpBQVdNaGpKWUE1bU5mTENBQUFDQklBQUJBa0FBQWdTQUFzNFBza2dMbVkyODhUQUFBUTlQTG9DNEJaZmYzNDVlaEw0SWYzbno4Y2ZRa3dIUUVBRjdEMHgzVC9mUkVEc0l3QWdBVXMvbm44ZksrRUFEek56d0E4d3crU1lQblB5ZnVHK2YwMEFRQlBzRVRtNXYyRHh3a0FlSVRsY1E3ZVIzaVlBSUFIV0JybjR2MkUveElBOEFmTDRweThyL0E3QVFBQVFRSUE3dkVwOGR5OHYvQXZBZkFFZjRRRVlHN20rT01FQUFBRUNRRDR3ZVBoQnU4emZDY0FBQ0JJQUFCQWtBQUFnQ0FCQUFCQmZoMHc3TVN2cDEzT0QrckI5Z1FBYk16aXY5elAxMHdJd0haOEJRQWJzdnh2NC9XRDdRZ0EySWpsdFE2dkkyeERBTUFHTEsxMWVUMWhmUUlBVm1aWmJjUHJDdXNTQUFBUUpBQmdSVDZsYnN2ckMrc1JBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ1hoNTlBY0E1ZlAzNDVULy83UDNuRHdkY0NiQ0VBQUJ1OHREaS8vUGZDUUVZandBQXJ2TFU0bi9zdnhVQ01BNC9Bd0JjN0pMbHY4Yi9CNnhQQUFCQWtBQUFMbkxycDNoUEFXQU1BZ0FBZ2dRQXNOaGFuOTQ5QllEakNRQUFDQklBQUJBa0FBQWdTQUFBUUpBQUFCWmI2Mi95OHpjQ3d2RUVBQUFFQ1FEZ0lyZCtldmZwSDhZZ0FBQWdTQUFBRjd2MlU3eFAvekFPdnc0WXVNclBaYjdrYi9XeitHRThBZ0M0eVZNaFlQSER1QVFBc0FyTEh1Ymlad0FBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBSGpDUDMvOWZmUWxBSEFEYy94eEFnQUFnZ1FBQUFRSkFBQUlFZ0FBRUNRQUFDQklBQUJBa0FCNGhqOUNBakFuOC90cEFnQUFnZ1FBQUFRSkFBQUlFZ0FBRUNRQUZ2Q0RKQUJ6TWJlZkp3QUFJRWdBQUVDUUFBQ0FJQUd3a08rVEFPWmdYaThqQU9DSDk1OC9ISDBKN01EN0ROOEpBQUFJRWdBWDhGZ0pZR3ptOUhJQ0FPN3hlUGpjdkwvd0x3RUFBRUVDQVA1d3k2ZkVyeCsvckhnbC9PbVcxOWVuZi9pZEFMaVE3NWNhTEl0ejhYNDJtTStYRVFEd2lHdVhocWNBMjdqMmRiWDg0V0VDNEFvcXMwTUVqTUh5NXpubTh1VUVBRHhEQkJ6TDhvZHRDQUJZNFAzbkQxY3RGQkZ3bTJ0ZXYydmZLNmg1OGVyMW0yOUhYOFNzM241NmQvUWxjS0JMbDVPbHRKelhsa3Q0L0grZGwwZGZBTXpLMHRtTzF4YTI1eXVBRzZoT2dHT1p3OWNUQUFBUUpBQnVwRDRCam1IKzNrWUFBRUNRQUFDQUlBR3dBbytoQVBabDd0NU9BQUJBa0FCWWlSb0YySWQ1dXc0QnNDSTNKY0Myek5uMUNBQUFDQklBSzFPbkFOc3dYOWNsQUFBZ1NBQnNRS1VDck10Y1haOEFBSUFnQWJBUnRRcXdEdk4wR3dKZ1EyNWFnTnVZbzlzUkFBQVFKQUEycGw0QnJtTitia3NBN01CTkRIQVpjM043QW1BbmJtYUFaY3pMZlFnQUFBZ1NBRHRTdFFCUE15ZjNJd0IyNXVZR2VKajV1QzhCY0FBM09jRHZ6TVg5Q1FBQUNCSUFCMUc3QU4rWmg4Y1FBQWR5MHdOMTV1QnhCTURCM1B4QWxmbDNMQUV3QUljQXFESDNqaWNBQnVFd0FCWG0zUmdFd0VBY0N1RHN6TGx4Q0lEQk9CekFXWmx2WXhFQUEzSklnTE14MThZakFBYmxzQUJuWVo2TlNRQU16S0VCWm1lT2pVc0FETTdoQVdabGZvMU5BRXpBSVFKbVkyNk5Ud0JNd21FQ1ptRmV6VUVBVE1TaEFrWm5UczNqeGF2WGI3NGRmUkZjN3UybmQwZGZBc0F2RnY5OFBBR1lsTU1Hak1JOG1wTUFtSmhEQnh6TkhKcVhyd0JPd2xjQ3dKNHMvdmw1QW5BU0RpT3dGL1BtSEFUQWlUaVV3TmJNbWZQd0ZjQkorVW9BV0pQRmZ6NmVBSnlVd3dxc3hUdzVKMDhBQWp3TkFLNWg4WitiQUFnUkFzQVNGbitEQUFnU0FzQkRMUDRXUHdNUTVKQURmeklYZWp3QmlQTTBBTm9zL2k0QndDOWlBQm9zZmU3dUJBQVBFQUp3VGhZLzl3a0FIaVVFNEJ3c2ZoNGlBRmhFRE1CY0xIMmVJd0M0aUJDQXNWbjhMQ1VBdUlrZ2dHTlorRnhMQUxBYU1RRDdzUFJaZ3dCZ000SUExbUhoc3dVQndLNUVBVHpOc21jdkFvQmhpQU1xTEhsR0lBQUFJTWd2QXdLQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBZ1NBQUFRSkFBQUlFZ0FBRUNRQUFDQUlBRUFBRUVDQUFDQ0JBQUFCQWtBQUFnU0FBQVFKQUFBSUVnQUFFQ1FBQUNBSUFFQUFFRUNBQUNDQkFBQUJBa0FBQWdTQUFBUUpBQUFJRWdBQUVDUUFBQ0FJQUVBQUVFQ0FBQ0NCQUFBQkFrQUFBajZQK29XS3NnZXJoYVNBQUFBQUVsRlRrU3VRbUNDIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9wbmciLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifV19">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAEIUlEQVR4nO3dwY0bRxCG0VnDVx100nnvCygJ56EYFIlicB5OwoDuCmV9IkQTlMQVh11V87+XAAfd9bGHXCzn6d37D68bhPqj+gKgkgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIg2p/VF7DK85eX6ksY59vnr9WX8HBPR/1pRAO/vyMGcagADP06R4nhEAEY/DrTQxgdgMHvY2oIIwMw+H1NC2FUAAZ/jikhjPk7gOGfZcp+jQhgymLyfxP2rfUt0IQF5DZdb4nangCG/1i67mfLALouFvfpuK/tAui4SOyn2/62CqDb4vAYnfa5VQCwWpsAOr0r8Hhd9rtFAF0Wg7U67Ht5AB0WgTrV+18eAFQqDaC6fnqonAMnANHKAvDuz7mqeXACEK0kAO/+XFMxF04Aoi0PwLs/P7N6PpwARBMA0ZYG4PaHW6ycEycA0QRAtJifR9/Lv5/+qb6EX/r491/VlzDGshPgCPf/E4Z/2+Zc58+smhe3QDeaNlTTrreKAG4wdZimXvdKAiCaAIjmW6AdVH7r4jbnPk6AO1V/5Vj9+tMJ4A5dhq/LdUwkAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaB6Q0dz5AzD8DPr+nACNXT79xdNg9ieApn407CLYlwCIJgCiCaCpH33g9UF4XwJo7HLYDf/+fA3anKF/LCcA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBtWQDfPn9d9VIcwKp5cQIQTQBEEwDRlgYw9XPA1Od0Tb3ulXPiBLjRtWHq8tT2a9cxdfhXE8AbdIzA8N/n6d37D6+rX/T5y8vql2SI1bfJTgCilQQw9cMwj1UxF04AopUF4BTgXNU8OAGIVhqAU4Btq50DJwDRygNwCmSr3v/yALatfhGo0WHfWwSwbT0Wg3W67HebAKBCqwC6vCvwWJ32uVUA29Zrcdhft/1tF8C29Vsk9tFxX1sGsG09F4vf13U/S/4f4K38/8BcXQf/pO0JcK77InLdhH0bEcC2zVhMvpuyXyNugS65JepryuCfjAzgRAh9TBv8k9EBnAihztTBPzlEACdCWGf64J8cKoBzYtjfUYb+3GEDuCSItzviwF+KCQCuGfN3AHgEARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDR/gOkss+6gd6mSwAAAABJRU5ErkJggg==">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAEIUlEQVR4nO3dwY0bRxCG0VnDVx100nnvCygJ56EYFIlicB5OwoDuCmV9IkQTlMQVh11V87+XAAfd9bGHXCzn6d37D68bhPqj+gKgkgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIg2p/VF7DK85eX6ksY59vnr9WX8HBPR/1pRAO/vyMGcagADP06R4nhEAEY/DrTQxgdgMHvY2oIIwMw+H1NC2FUAAZ/jikhjPk7gOGfZcp+jQhgymLyfxP2rfUt0IQF5DZdb4nangCG/1i67mfLALouFvfpuK/tAui4SOyn2/62CqDb4vAYnfa5VQCwWpsAOr0r8Hhd9rtFAF0Wg7U67Ht5AB0WgTrV+18eAFQqDaC6fnqonAMnANHKAvDuz7mqeXACEK0kAO/+XFMxF04Aoi0PwLs/P7N6PpwARBMA0ZYG4PaHW6ycEycA0QRAtJifR9/Lv5/+qb6EX/r491/VlzDGshPgCPf/E4Z/2+Zc58+smhe3QDeaNlTTrreKAG4wdZimXvdKAiCaAIjmW6AdVH7r4jbnPk6AO1V/5Vj9+tMJ4A5dhq/LdUwkAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaB6Q0dz5AzD8DPr+nACNXT79xdNg9ieApn407CLYlwCIJgCiCaCpH33g9UF4XwJo7HLYDf/+fA3anKF/LCcA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBtWQDfPn9d9VIcwKp5cQIQTQBEEwDRlgYw9XPA1Od0Tb3ulXPiBLjRtWHq8tT2a9cxdfhXE8AbdIzA8N/n6d37D6+rX/T5y8vql2SI1bfJTgCilQQw9cMwj1UxF04AopUF4BTgXNU8OAGIVhqAU4Btq50DJwDRygNwCmSr3v/yALatfhGo0WHfWwSwbT0Wg3W67HebAKBCqwC6vCvwWJ32uVUA29Zrcdhft/1tF8C29Vsk9tFxX1sGsG09F4vf13U/S/4f4K38/8BcXQf/pO0JcK77InLdhH0bEcC2zVhMvpuyXyNugS65JepryuCfjAzgRAh9TBv8k9EBnAihztTBPzlEACdCWGf64J8cKoBzYtjfUYb+3GEDuCSItzviwF+KCQCuGfN3AHgEARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDR/gOkss+6gd6mSwAAAABJRU5ErkJggg==">
+</head>
+<body>
+
+  <h1>Acceso MG Fitness Center</h1>
+  <p class="sub">Mantené presionado 2 segundos para abrir</p>
+
+  <div id="btn" class="btn">
+    <div class="fill" id="fill"></div>
+    <div class="label">
+      <div class="icon">🔓</div>
+      <span class="text" id="btnText">MANTENÉ<br>PRESIONADO</span>
+    </div>
+  </div>
+
+  <div id="status">Listo</div>
+  <p class="hint">Soltá antes de tiempo para cancelar.</p>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN — completá estos dos valores
+   ============================================================ */
+
+// 1) URL pública del backend en Railway (SIN barra al final).
+//    Railway → servicio backend → Settings → Networking → Public Domain.
+const BACKEND_URL = "https://ai-mgfc-backend-production.up.railway.app/";
+
+// 2) Secreto del endpoint. Por defecto es "mg_gym_sync_2026".
+//    Si en Railway seteaste la variable GYM_SYNC_SECRET con otro valor, poné ESE acá.
+const GYM_SECRET = "mg_gym_sync_2026";
+
+const HOLD_MS = 2000; // duración del mantenido
+
+/* ============================================================ */
+
+const btn     = document.getElementById("btn");
+const fill    = document.getElementById("fill");
+const btnText = document.getElementById("btnText");
+const status  = document.getElementById("status");
+
+let rafId = null;
+let startTs = 0;
+let firing = false;   // evita disparos dobles
+let holding = false;
+
+function setStatus(msg, cls){
+  status.textContent = msg;
+  status.className = cls || "";
+}
+
+function startHold(){
+  if(firing || holding) return;
+  holding = true;
+  btn.classList.remove("done","error");
+  btn.classList.add("holding");
+  btnText.innerHTML = "SEGUÍ<br>APRETANDO";
+  setStatus("Manteniendo…");
+  startTs = performance.now();
+  tick();
+}
+
+function tick(){
+  const elapsed = performance.now() - startTs;
+  const pct = Math.min(100, (elapsed / HOLD_MS) * 100);
+  fill.style.height = pct + "%";
+  if(pct >= 100){
+    holding = false;
+    abrirPuerta();
+    return;
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function cancelHold(){
+  if(!holding) return;
+  holding = false;
+  cancelAnimationFrame(rafId);
+  fill.style.height = "0%";
+  btn.classList.remove("holding");
+  btnText.innerHTML = "MANTENÉ<br>PRESIONADO";
+  setStatus("Cancelado", "");
+}
+
+async function abrirPuerta(){
+  firing = true;
+  cancelAnimationFrame(rafId);
+  fill.style.height = "100%";
+  btn.classList.remove("holding");
+  btnText.innerHTML = "ABRIENDO…";
+  setStatus("Enviando comando…");
+
+  try{
+    const base = BACKEND_URL.replace(/\/+$/, ""); // quita barra(s) final(es)
+    const resp = await fetch(base + "/api/gym/abrir-puerta", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-gym-secret": GYM_SECRET
+      },
+      body: "{}"
+    });
+    const data = await resp.json().catch(()=>({}));
+
+    if(resp.ok && data.success){
+      btn.classList.add("done");
+      btnText.innerHTML = "✓ ABIERTO";
+      setStatus("Puerta abierta correctamente", "ok");
+    } else if(resp.status === 401){
+      throw new Error("Secreto incorrecto (401). Revisá GYM_SECRET.");
+    } else {
+      throw new Error(data.error || ("Error " + resp.status));
+    }
+  }catch(err){
+    btn.classList.add("error");
+    btnText.innerHTML = "✕ ERROR";
+    let msg = err.message || "Fallo de conexión";
+    if(/Failed to fetch|NetworkError|Load failed/i.test(msg)){
+      msg = "No se pudo conectar. Revisá BACKEND_URL y tu internet.";
+    }
+    setStatus(msg, "err");
+  }
+
+  // Resetear a los 2,5s para permitir otra apertura
+  setTimeout(()=>{
+    firing = false;
+    fill.style.height = "0%";
+    btn.classList.remove("done","error","holding");
+    btnText.innerHTML = "MANTENÉ<br>PRESIONADO";
+    setStatus("Listo", "");
+  }, 2500);
+}
+
+/* ---- Eventos: TOUCH (celu) + MOUSE (notebook) ---- */
+
+// Touch — clave para que funcione en el celular.
+btn.addEventListener("touchstart", (e)=>{ e.preventDefault(); startHold(); }, {passive:false});
+btn.addEventListener("touchend",   (e)=>{ e.preventDefault(); cancelHold(); }, {passive:false});
+btn.addEventListener("touchcancel",(e)=>{ e.preventDefault(); cancelHold(); }, {passive:false});
+
+// Mouse — notebook / escritorio.
+btn.addEventListener("mousedown", startHold);
+btn.addEventListener("mouseup",   cancelHold);
+btn.addEventListener("mouseleave",cancelHold);
+
+// Bloquea el menú contextual del "mantener presionado" en móvil.
+btn.addEventListener("contextmenu", (e)=> e.preventDefault());
+</script>
+</body>
+</html>
