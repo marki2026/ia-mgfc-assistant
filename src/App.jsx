@@ -306,10 +306,14 @@ function RutinaContent({content,onExercise}){
             <span style={{flex:1,whiteSpace:"pre-wrap"}}>{line}</span>
             {ejercicio&&(
               <button onClick={()=>onExercise(ejercicio)} title="Ver video del ejercicio" aria-label="Ver video del ejercicio"
-                style={{flexShrink:0,display:"inline-flex",alignItems:"center",justifyContent:"center",
-                  width:"34px",height:"34px",background:`${C.blue}22`,border:`1.5px solid ${C.blueL}`,
-                  borderRadius:"8px",color:C.blueL,fontSize:"19px",cursor:"pointer",lineHeight:"1"}}>
-                👁️
+                style={{flexShrink:0,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"5px",
+                  height:"40px",padding:"0 14px",
+                  background:"linear-gradient(135deg,#dc2626,#ef4444)",
+                  border:"none",borderRadius:"10px",color:"#fff",
+                  fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1.5px",
+                  cursor:"pointer",lineHeight:"1",whiteSpace:"nowrap",
+                  boxShadow:"0 2px 10px #dc262655"}}>
+                ▶ VIDEO
               </button>
             )}
           </div>
