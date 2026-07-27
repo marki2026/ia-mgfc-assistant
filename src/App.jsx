@@ -1138,6 +1138,108 @@ function PesajeTab({user}){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PAGOS
+// ═══════════════════════════════════════════════════════════════════════════════
+function PagosTab({user}){
+  const PLANES=[
+    {key:"mensual",   nombre:"MENSUAL",    precio:40000,  dias:30,  ahorro:null},
+    {key:"trimestral",nombre:"TRIMESTRAL", precio:105000, dias:90,  ahorro:"AHORRÁS $15.000"},
+  ];
+  const[creando,setCreando]=useState(false);
+  const[planSelec,setPlanSelec]=useState(null);
+  const[historial,setHistorial]=useState([]);
+  const[cargandoHist,setCargandoHist]=useState(true);
+
+  useEffect(()=>{
+    fetch(`${API}/api/pagos/historial/${user.id}`)
+      .then(r=>r.json()).then(d=>setHistorial(d.pagos||[])).catch(()=>{})
+      .finally(()=>setCargandoHist(false));
+  },[user.id]);
+
+  const pagar=async(plan)=>{
+    if(creando)return;
+    setCreando(true);setPlanSelec(plan);
+    try{
+      const r=await fetch(`${API}/api/pagos/crear-preferencia`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id,plan})});
+      const d=await r.json();
+      if(d.init_point) window.location.href=d.init_point;
+      else alert("Error al iniciar el pago. Intentá de nuevo.");
+    }catch{alert("Error de conexión. Intentá de nuevo.");}
+    setCreando(false);setPlanSelec(null);
+  };
+
+  const dias=getDiasRestantes(user.fecha_expiracion);
+  const vencido=dias!==null&&dias<0;
+  const porVencer=dias!==null&&dias>=0&&dias<=7;
+
+  return(
+    <div style={{paddingBottom:"30px"}}>
+      <div style={{...cardSt,border:`2px solid ${vencido?C.red:porVencer?C.gold:C.green}`,marginBottom:"16px"}}>
+        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.fire,letterSpacing:"2px",marginBottom:"12px"}}>💳 ESTADO DE MEMBRESÍA</div>
+        {user.fecha_expiracion?(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+              <span style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif"}}>Vencimiento</span>
+              <span style={{fontSize:"15px",color:C.white,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>{formatDate(user.fecha_expiracion)}</span>
+            </div>
+            <div style={{display:"flex",justifyContent:"center"}}><DiasRestantesBadge fechaExp={user.fecha_expiracion}/></div>
+          </div>
+        ):(
+          <div style={{color:C.gray,fontFamily:"Barlow, sans-serif",fontSize:"13px",textAlign:"center",padding:"8px 0"}}>Sin membresía activa</div>
+        )}
+      </div>
+
+      <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.grayL,letterSpacing:"2px",marginBottom:"12px"}}>RENOVAR MEMBRESÍA</div>
+      {PLANES.map(plan=>(
+        <div key={plan.key} style={{...cardSt,border:`1px solid ${C.blue}`,marginBottom:"14px",position:"relative"}}>
+          {plan.ahorro&&<div style={{position:"absolute",top:"-9px",right:"12px",background:C.green,color:"#000",fontSize:"10px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",padding:"2px 10px",borderRadius:"4px"}}>{plan.ahorro}</div>}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+            <div>
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"20px",color:C.white,letterSpacing:"2px"}}>{plan.nombre}</div>
+              <div style={{fontSize:"12px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>{plan.dias} días de acceso completo</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"24px",color:C.gold}}>${plan.precio.toLocaleString("es-AR")}</div>
+              <div style={{fontSize:"10px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>pesos argentinos</div>
+            </div>
+          </div>
+          <button onClick={()=>pagar(plan.key)} disabled={creando}
+            style={{width:"100%",padding:"14px",background:`linear-gradient(135deg,#009ee3,#0070c0)`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:creando?"not-allowed":"pointer",opacity:creando&&planSelec!==plan.key?0.5:1,transition:"all 0.2s"}}>
+            {creando&&planSelec===plan.key?"⏳ REDIRIGIENDO A MERCADO PAGO...":"💳 PAGAR CON MERCADO PAGO"}
+          </button>
+        </div>
+      ))}
+
+      <div style={{padding:"10px 14px",background:"#0a0a0a",border:"1px solid #1a1a1a",borderRadius:"8px",marginBottom:"16px"}}>
+        <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif",lineHeight:"1.8"}}>
+          ⚡ El pago extiende tu membresía desde el vencimiento actual.<br/>
+          🔒 Pago seguro procesado por Mercado Pago.<br/>
+          📲 Podés pagar con tarjeta, débito o saldo MP.
+        </div>
+      </div>
+
+      {!cargandoHist&&historial.length>0&&(
+        <div>
+          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.grayL,letterSpacing:"2px",marginBottom:"10px"}}>📋 HISTORIAL DE PAGOS</div>
+          {historial.map((p,i)=>(
+            <div key={i} style={{...cardSt,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+              <div>
+                <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"13px",color:C.white,letterSpacing:"1px"}}>{(p.plan||"").toUpperCase()}</div>
+                <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>{p.created_at?formatDate(p.created_at):""}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:"14px",color:C.green,fontFamily:"Bebas Neue, sans-serif"}}>${(p.monto||0).toLocaleString("es-AR")}</div>
+                <div style={{fontSize:"10px",color:C.green,fontFamily:"Barlow, sans-serif"}}>✅ Aprobado</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ESTADÍSTICAS
 // ═══════════════════════════════════════════════════════════════════════════════
 function Estadisticas({sesiones}){
@@ -1782,6 +1884,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
           {!isDemo&&<button style={tabSt(tab==="peso")} onClick={()=>setTab("peso")}>⚖️ PESO</button>}
           {!isDemo&&<button style={tabSt(tab==="stats")} onClick={()=>setTab("stats")}>📊 STATS</button>}
           {!isDemo&&<button style={tabSt(tab==="history")} onClick={()=>setTab("history")}>📅 HIST.</button>}
+          {!isDemo&&user?.role!=="admin"&&<button style={tabSt(tab==="pagos")} onClick={()=>setTab("pagos")}>💳 PAGOS</button>}
         </div>
 
         {tab==="form"&&(
@@ -1962,6 +2065,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
 
         {tab==="peso"&&!isDemo&&<PesajeTab user={user}/>}
         {tab==="stats"&&!isDemo&&<Estadisticas sesiones={sesiones.filter(s=>s.es_registro)}/>}
+        {tab==="pagos"&&!isDemo&&user?.role!=="admin"&&<PagosTab user={user}/>}
 
         {tab==="history"&&!isDemo&&(
           <div>
