@@ -323,6 +323,30 @@ function RutinaContent({content,onExercise}){
   );
 }
 
+// ─── HISTORY EXPANDED VIEW (con botones video en rutina) ─────────────────────
+function HistoryExpandedView({responseText,notaUsuario,isAdmin}){
+  const[exModal,setExModal]=useState(null);
+  const hp=parseResponse(responseText||"");
+  return(
+    <div>
+      <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.7",whiteSpace:"pre-wrap",background:"#0a0a0a",padding:"12px",borderRadius:"6px"}}>{responseText||"Sin respuesta registrada"}</div>
+      {hp.rutina&&(
+        <div style={{marginTop:"10px",padding:"12px",background:"#0a0a14",border:`1px solid #1a3a8f55`,borderRadius:"8px"}}>
+          <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",color:C.blue,letterSpacing:"2px",marginBottom:"8px"}}>🏋️ RUTINA — TOCÁ ▶ PARA VER VIDEO</div>
+          <RutinaContent content={hp.rutina} onExercise={setExModal}/>
+          {exModal&&<ExerciseModal nombre={exModal} onClose={()=>setExModal(null)} isAdmin={isAdmin}/>}
+        </div>
+      )}
+      {notaUsuario&&(
+        <div style={{marginTop:"10px",padding:"10px 12px",background:"#0a0f1a",border:`1px solid ${C.blueL}44`,borderRadius:"8px"}}>
+          <div style={{fontSize:"10px",color:C.blueL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",marginBottom:"4px"}}>📝 TU NOTA</div>
+          <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.6"}}>{notaUsuario}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── REFERENCIAS MODAL ────────────────────────────────────────────────────────
 function Referencias({onClose}){
   return(
@@ -1970,13 +1994,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
                         </div>
                         {isOpen&&(
                           <div style={{padding:"16px",borderTop:"1px solid #1a1a1a"}}>
-                            <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.7",whiteSpace:"pre-wrap",background:"#0a0a0a",padding:"12px",borderRadius:"6px"}}>{s.response_text||"Sin respuesta registrada"}</div>
-                            {s.nota_usuario&&(
-                              <div style={{marginTop:"10px",padding:"10px 12px",background:"#0a0f1a",border:`1px solid ${C.blueL}44`,borderRadius:"8px"}}>
-                                <div style={{fontSize:"10px",color:C.blueL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",marginBottom:"4px"}}>📝 TU NOTA</div>
-                                <div style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",lineHeight:"1.6"}}>{s.nota_usuario}</div>
-                              </div>
-                            )}
+                            <HistoryExpandedView responseText={s.response_text} notaUsuario={s.nota_usuario} isAdmin={user?.role==="admin"||modoDios}/>
                           </div>
                         )}
                       </div>
