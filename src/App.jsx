@@ -143,8 +143,8 @@ const cardSt={background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:"12px
 function LoadingButton({loading,done,onClick,children}){
   return(
     <div style={{position:"relative",overflow:"hidden",borderRadius:"8px",marginTop:"16px"}}>
-      <button onClick={onClick} disabled={loading} style={{width:"100%",padding:"16px",background:loading?"#1a1a1a":`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"20px",fontWeight:"900",letterSpacing:"3px",cursor:loading?"not-allowed":"pointer",fontFamily:"Bebas Neue, sans-serif",position:"relative",zIndex:1,boxShadow:loading?"none":`0 4px 24px ${C.red}66`}}>
-        {loading?"ANALIZANDO...":children}
+      <button onClick={onClick} disabled={loading} style={{width:"100%",padding:"16px",background:loading?"#1a1a1a":done?`linear-gradient(135deg,#1a3a1a,#16a34a)`:`linear-gradient(135deg,${C.red},${C.fire})`,border:done?"2px solid #16a34a":"none",borderRadius:"8px",color:C.white,fontSize:"20px",fontWeight:"900",letterSpacing:"3px",cursor:loading?"not-allowed":"pointer",fontFamily:"Bebas Neue, sans-serif",position:"relative",zIndex:1,boxShadow:loading?"none":done?"0 4px 24px #16a34a66":`0 4px 24px ${C.red}66`,transition:"all 0.3s"}}>
+        {loading?"⏳ ANALIZANDO...":done?"🔄 REALIZAR NUEVA CONSULTA":children}
       </button>
       {loading&&(
         <div style={{position:"absolute",bottom:0,left:0,height:"4px",background:`linear-gradient(90deg,${C.green},#86efac)`,animation:"progress-bar 12s ease forwards",borderRadius:"0 0 8px 8px",zIndex:2}}/>
@@ -1001,7 +1001,8 @@ function PerfilInicial({user, onCompletar}){
 
 function Login({onLogin}){
   const[dni,setDni]=useState("");const[password,setPassword]=useState("");
-  const[loading,setLoading]=useState(false);const[error,setError]=useState(null);
+  const[loading,setLoading]=useState(false);
+  const[consultaDone,setConsultaDone]=useState(false);const[error,setError]=useState(null);
   const[bloqueado,setBloqueado]=useState(false);const[dniGuardado,setDniGuardado]=useState("");
   const handleLogin=async()=>{
     if(!dni||!password){setError("Ingresá tu DNI y contraseña.");return;}
@@ -1796,7 +1797,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
       setEsperandoCoach(true);
       await new Promise(r=>setTimeout(r,(Math.random()*6+4)*1000));
       setEsperandoCoach(false);
-      setResult(data.text);
+      setResult(data.text);setConsultaDone(true);
       if(!isDemo){
         const esRegistro=!primerRegistroHecho;
         fetch(`${API}/api/sesion`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id,sesion:{entrenamiento:form.entrenamiento,peso:parseFloat(form.peso),descanso:form.descanso,energia:parseInt(form.energia),alimentacion:form.alimentacion,dolor:form.dolor||null,tiempo:form.tiempo,response_text:data.text,training_week:trainingWeek,is_deload:deload,streak},esRegistro})}).then(r=>r.json()).then(d=>{if(d.success){setSesiones(p=>[d.sesion,...p]);setConsultasHoy(c=>c+1);if(esRegistro)setPrimerRegistroHecho(true);setSesionIdActual(d.sesion.id);}}).catch(()=>{});
@@ -1818,7 +1819,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
   };
 
   const byWeek=sesiones.reduce((acc,s)=>{const k=`Semana ${s.training_week}${s.is_deload?" — DESCARGA":""}`;(acc[k]=acc[k]||[]).push(s);return acc;},{});
-  const tabSt=active=>({flex:1,padding:"10px",border:"none",borderRadius:"6px",background:active?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",color:active?C.white:C.gray,fontSize:"12px",fontWeight:"700",letterSpacing:"1px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif"});
+  const tabSt=active=>({flex:1,padding:"14px 8px",border:active?"none":`1px solid #333`,borderRadius:"10px",background:active?`linear-gradient(135deg,${C.red},${C.fire})`:"#161616",color:active?C.white:"#888",fontSize:"15px",fontWeight:"700",letterSpacing:"1.5px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif",boxShadow:active?`0 4px 16px ${C.red}55`:"none",transition:"all 0.2s"});
 
   return(
     <div style={{minHeight:"100vh",background:C.bg,color:C.white,fontFamily:"Barlow, sans-serif",position:"relative"}}>
@@ -1979,7 +1980,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
                   <button onClick={()=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero contratar MG+IA Personal Trainer 24/7.")}`,"_blank")} style={{padding:"12px 24px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>💬 CONTRATAR AHORA</button>
                 </div>
               ):(
-                <LoadingButton loading={loading} onClick={handleSubmit}>→ OBTENER DECISIÓN</LoadingButton>
+                <LoadingButton loading={loading} done={consultaDone} onClick={()=>{if(consultaDone){setConsultaDone(false);setResult(null);}else{handleSubmit();}}}>→ OBTENER DECISIÓN</LoadingButton>
               )}
             </div>
 
