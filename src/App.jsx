@@ -1002,7 +1002,7 @@ function PerfilInicial({user, onCompletar}){
 function Login({onLogin}){
   const[dni,setDni]=useState("");const[password,setPassword]=useState("");
   const[loading,setLoading]=useState(false);
-  const[consultaDone,setConsultaDone]=useState(false);const[error,setError]=useState(null);
+  const[error,setError]=useState(null);
   const[bloqueado,setBloqueado]=useState(false);const[dniGuardado,setDniGuardado]=useState("");
   const handleLogin=async()=>{
     if(!dni||!password){setError("Ingresá tu DNI y contraseña.");return;}
@@ -1696,6 +1696,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
   const[expandedId,setExp]=useState(null);
   const[result,setResult]=useState(null);
   const[loading,setLoading]=useState(false);
+  const[consultaDone,setConsultaDone]=useState(false);
   const[esperandoCoach,setEsperandoCoach]=useState(false);
   const[error,setError]=useState(null);
   const[showPwd,setShowPwd]=useState(false);
