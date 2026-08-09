@@ -1037,14 +1037,14 @@ function NovedadesCarousel(){
   return(
     <div style={{position:"relative",marginBottom:"20px",background:"linear-gradient(135deg,#2a0d00,#0d0d0d 60%)",border:"2px solid #f97316",borderRadius:"12px",padding:"20px 18px 16px",textAlign:"center",transition:"opacity 0.4s",opacity:visible?1:0,overflow:"hidden",animation:"novedad-border 2.2s ease-in-out infinite"}}>
       {/* cartel angulado esquina */}
-      <div style={{position:"absolute",top:"11px",left:"-38px",width:"150px",transform:"rotate(-45deg)",background:"repeating-linear-gradient(45deg,#dc2626,#dc2626 8px,#f97316 8px,#f97316 16px)",color:"#fff",fontSize:"9px",fontWeight:"900",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1.5px",padding:"3px 0",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,.5)",textShadow:"0 1px 2px rgba(0,0,0,.6)"}}>
-        NUEVO
+      <div style={{position:"absolute",top:"14px",left:"-42px",width:"170px",transform:"rotate(-45deg)",background:"repeating-linear-gradient(45deg,#dc2626,#dc2626 10px,#f97316 10px,#f97316 20px)",color:"#fff",fontSize:"13px",fontWeight:"900",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2.5px",padding:"5px 0",textAlign:"center",boxShadow:"0 3px 10px rgba(0,0,0,.6)",textShadow:"0 0 3px #000,0 0 3px #000,0 2px 2px #000",WebkitTextStroke:"0.5px #000",border:"1px solid rgba(255,255,255,.4)"}}>
+        ¡NUEVO!
       </div>
-      <div style={{fontSize:"11px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",color:"#fbbf24",marginBottom:"10px",marginTop:"2px",display:"flex",alignItems:"center",justifyContent:"center",gap:"7px",fontWeight:"700"}}>
-        <span style={{display:"inline-block",width:"7px",height:"7px",borderRadius:"50%",background:"#f97316",animation:"novedad-dot 1.3s infinite"}}/>
-        ⚡ NOVEDADES ⚡
+      <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"8px",background:"linear-gradient(90deg,#dc2626,#f97316)",color:"#fff",fontSize:"14px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",fontWeight:"900",padding:"6px 20px",borderRadius:"20px",marginBottom:"12px",marginTop:"6px",boxShadow:"0 0 18px rgba(249,115,22,.6)",textShadow:"0 1px 3px rgba(0,0,0,.5)"}}>
+        <span style={{display:"inline-block",width:"8px",height:"8px",borderRadius:"50%",background:"#fff",animation:"novedad-dot 1.3s infinite"}}/>
+        NOVEDADES
       </div>
-      <div style={{fontSize:"26px",marginBottom:"8px"}}>{nov.emoji}</div>
+      <div style={{fontSize:"32px",marginBottom:"8px"}}>{nov.emoji}</div>
       <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"16px",color:"#fff",fontWeight:"800",letterSpacing:"0.3px",lineHeight:"1.4",textShadow:"0 1px 4px rgba(249,115,22,.3)"}}>{nov.texto}</div>
       <div style={{display:"flex",justifyContent:"center",gap:"6px",marginTop:"14px"}}>
         {novedades.map((_,i)=>(
