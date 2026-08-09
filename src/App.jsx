@@ -1141,6 +1141,135 @@ function PesajeTab({user}){
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGOS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+function GymBroTab({user}){
+  const BACKEND=import.meta.env.VITE_BACKEND_URL||"https://ai-mgfc-backend-production.up.railway.app";
+  const[eventos,setEventos]=React.useState([]);
+  const[loading,setLoading]=React.useState(true);
+  const[showForm,setShowForm]=React.useState(false);
+  const[form,setForm]=React.useState({actividad:"",fecha:"",hora:"",cupos:1});
+  const[msg,setMsg]=React.useState("");
+
+  const cargarEventos=async()=>{
+    try{
+      const r=await fetch(`${BACKEND}/api/gymbro/eventos`);
+      const d=await r.json();
+      setEventos(d.eventos||[]);
+    }catch(e){}
+    setLoading(false);
+  };
+
+  React.useEffect(()=>{cargarEventos();},[]);
+
+  const crearEvento=async()=>{
+    if(!form.actividad||!form.fecha||!form.hora){setMsg("Completá todos los campos");return;}
+    try{
+      const r=await fetch(`${BACKEND}/api/gymbro/crear`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({user_id:user.id,nombre:`${user.nombre} ${user.apellido}`,actividad:form.actividad,fecha:form.fecha,hora:form.hora,cupos:form.cupos})
+      });
+      const d=await r.json();
+      if(d.success){setShowForm(false);setForm({actividad:"",fecha:"",hora:"",cupos:1});setMsg("✅ Evento creado!");cargarEventos();}
+      else setMsg(d.error||"Error al crear");
+    }catch(e){setMsg("Error de red");}
+  };
+
+  const sumarme=async(eventoId)=>{
+    try{
+      const r=await fetch(`${BACKEND}/api/gymbro/sumarme`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({evento_id:eventoId,user_id:user.id,nombre:`${user.nombre} ${user.apellido}`})
+      });
+      const d=await r.json();
+      if(d.success){setMsg("💪 ¡Te sumaste!");cargarEventos();}
+      else setMsg(d.error||"Error");
+    }catch(e){setMsg("Error de red");}
+    setTimeout(()=>setMsg(""),3000);
+  };
+
+  const hoy=new Date().toISOString().split("T")[0];
+
+  return(
+    <div style={{padding:"16px",maxWidth:"600px",margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+        <div style={{fontFamily:"Bebas Neue",fontSize:"24px",color:"#f97316",letterSpacing:"2px"}}>🤝 GYM-BRO</div>
+        <button onClick={()=>setShowForm(!showForm)} style={{background:"linear-gradient(135deg,#f97316,#dc2626)",border:"none",borderRadius:"8px",color:"#fff",padding:"10px 16px",fontFamily:"Bebas Neue",fontSize:"14px",letterSpacing:"1px",cursor:"pointer"}}>
+          {showForm?"✕ CANCELAR":"➕ CREAR EVENTO"}
+        </button>
+      </div>
+
+      {msg&&<div style={{background:"#1a1a1a",border:"1px solid #f97316",borderRadius:"8px",padding:"10px",marginBottom:"12px",color:"#f97316",textAlign:"center",fontSize:"14px"}}>{msg}</div>}
+
+      {showForm&&(
+        <div style={{background:"#111",border:"1px solid #333",borderRadius:"12px",padding:"20px",marginBottom:"20px"}}>
+          <div style={{fontFamily:"Bebas Neue",fontSize:"16px",color:"#f97316",marginBottom:"16px",letterSpacing:"1px"}}>NUEVO EVENTO</div>
+          <input placeholder="¿Qué vas a entrenar?" value={form.actividad} onChange={e=>setForm({...form,actividad:e.target.value})}
+            style={{width:"100%",background:"#1a1a1a",border:"1px solid #333",borderRadius:"8px",padding:"10px",color:"#fff",marginBottom:"10px",boxSizing:"border-box"}}/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}}>
+            <input type="date" min={hoy} value={form.fecha} onChange={e=>setForm({...form,fecha:e.target.value})}
+              style={{background:"#1a1a1a",border:"1px solid #333",borderRadius:"8px",padding:"10px",color:"#fff"}}/>
+            <input type="time" value={form.hora} onChange={e=>setForm({...form,hora:e.target.value})}
+              style={{background:"#1a1a1a",border:"1px solid #333",borderRadius:"8px",padding:"10px",color:"#fff"}}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
+            <span style={{color:"#888",fontSize:"13px"}}>Cupos:</span>
+            {[1,2,3,4,5].map(n=>(
+              <button key={n} onClick={()=>setForm({...form,cupos:n})}
+                style={{width:"36px",height:"36px",borderRadius:"50%",border:"none",background:form.cupos===n?"#f97316":"#222",color:"#fff",cursor:"pointer",fontWeight:"700"}}>
+                {n}
+              </button>
+            ))}
+          </div>
+          <button onClick={crearEvento} style={{width:"100%",background:"linear-gradient(135deg,#f97316,#dc2626)",border:"none",borderRadius:"8px",color:"#fff",padding:"12px",fontFamily:"Bebas Neue",fontSize:"16px",letterSpacing:"2px",cursor:"pointer"}}>
+            PUBLICAR EVENTO
+          </button>
+        </div>
+      )}
+
+      {loading&&<div style={{textAlign:"center",color:"#555",padding:"40px"}}>Cargando eventos...</div>}
+
+      {!loading&&eventos.length===0&&(
+        <div style={{textAlign:"center",color:"#555",padding:"40px"}}>
+          <div style={{fontSize:"48px",marginBottom:"12px"}}>🏋️</div>
+          <div style={{fontFamily:"Bebas Neue",fontSize:"18px",letterSpacing:"1px"}}>No hay eventos activos</div>
+          <div style={{fontSize:"13px",marginTop:"8px"}}>¡Sé el primero en crear uno!</div>
+        </div>
+      )}
+
+      {eventos.map(ev=>{
+        const esMio=ev.user_id===user.id;
+        const yaSume=(ev.sumados||[]).find(s=>s.user_id===user.id);
+        const cuposLibres=ev.cupos-(ev.sumados||[]).length;
+        const fechaStr=new Date(ev.fecha+"T12:00:00").toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"});
+        return(
+          <div key={ev.id} style={{background:"#111",border:esMio?"1px solid #f97316":"1px solid #222",borderRadius:"12px",padding:"16px",marginBottom:"12px"}}>
+            {esMio&&<div style={{fontSize:"10px",color:"#f97316",fontFamily:"Bebas Neue",letterSpacing:"1px",marginBottom:"8px"}}>TU EVENTO</div>}
+            <div style={{fontFamily:"Bebas Neue",fontSize:"20px",color:"#fff",letterSpacing:"1px",marginBottom:"4px"}}>💪 {ev.actividad}</div>
+            <div style={{fontSize:"13px",color:"#888",marginBottom:"4px"}}>👤 {ev.nombre}</div>
+            <div style={{fontSize:"13px",color:"#f97316",marginBottom:"8px"}}>📅 {fechaStr} · {ev.hora}hs</div>
+            {(ev.sumados||[]).length>0&&(
+              <div style={{fontSize:"12px",color:"#4ade80",marginBottom:"8px"}}>
+                ✅ Se sumaron: {(ev.sumados||[]).map(s=>s.nombre).join(", ")}
+              </div>
+            )}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontSize:"12px",color:cuposLibres>0?"#888":"#ef4444"}}>
+                👥 {cuposLibres>0?`${cuposLibres} cupo${cuposLibres>1?"s":""} libre${cuposLibres>1?"s":""}`:"Sin cupos"}
+              </div>
+              {!esMio&&(
+                <button onClick={()=>sumarme(ev.id)} disabled={!!yaSume||cuposLibres===0}
+                  style={{background:yaSume?"#1a3a1a":cuposLibres===0?"#1a1a1a":"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:"8px",color:yaSume?"#4ade80":cuposLibres===0?"#555":"#fff",padding:"8px 16px",fontFamily:"Bebas Neue",fontSize:"13px",letterSpacing:"1px",cursor:yaSume||cuposLibres===0?"not-allowed":"pointer"}}>
+                  {yaSume?"✅ SUMADO":"💪 ME SUMO"}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function PagosTab({user}){
   const PLANES=[
     {key:"mensual",   nombre:"MENSUAL",    precio:40000,  dias:30,  ahorro:null},
@@ -1887,6 +2016,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
           {!isDemo&&<button style={tabSt(tab==="stats")} onClick={()=>setTab("stats")}>📊 STATS</button>}
           {!isDemo&&<button style={tabSt(tab==="history")} onClick={()=>setTab("history")}>📅 HIST.</button>}
           {!isDemo&&user?.role!=="admin"&&<button style={tabSt(tab==="pagos")} onClick={()=>setTab("pagos")}>💳 PAGOS</button>}
+          {!isDemo&&user?.es_socio_mg&&<button style={tabSt(tab==="gymbro")} onClick={()=>setTab("gymbro")}>🤝 GYM-BRO</button>}
         </div>
 
         {tab==="form"&&(
@@ -2068,6 +2198,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
         {tab==="peso"&&!isDemo&&<PesajeTab user={user}/>}
         {tab==="stats"&&!isDemo&&<Estadisticas sesiones={sesiones.filter(s=>s.es_registro)}/>}
         {tab==="pagos"&&!isDemo&&user?.role!=="admin"&&<PagosTab user={user}/>}
+        {tab==="gymbro"&&!isDemo&&user?.es_socio_mg&&<GymBroTab user={user}/>}
 
         {tab==="history"&&!isDemo&&(
           <div>
