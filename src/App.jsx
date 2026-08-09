@@ -1144,11 +1144,11 @@ function PesajeTab({user}){
 
 function GymBroTab({user}){
   const BACKEND=import.meta.env.VITE_BACKEND_URL||"https://ai-mgfc-backend-production.up.railway.app";
-  const[eventos,setEventos]=React.useState([]);
-  const[loading,setLoading]=React.useState(true);
-  const[showForm,setShowForm]=React.useState(false);
-  const[form,setForm]=React.useState({actividad:"",fecha:"",hora:"",cupos:1});
-  const[msg,setMsg]=React.useState("");
+  const[eventos,setEventos]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[showForm,setShowForm]=useState(false);
+  const[form,setForm]=useState({actividad:"",fecha:"",hora:"",cupos:1});
+  const[msg,setMsg]=useState("");
 
   const cargarEventos=async()=>{
     try{
@@ -1159,7 +1159,7 @@ function GymBroTab({user}){
     setLoading(false);
   };
 
-  React.useEffect(()=>{cargarEventos();},[]);
+  useEffect(()=>{cargarEventos();},[]);
 
   const crearEvento=async()=>{
     if(!form.actividad||!form.fecha||!form.hora){setMsg("Completá todos los campos");return;}
