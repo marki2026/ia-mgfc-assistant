@@ -301,6 +301,12 @@ function RutinaContent({content,onExercise}){
           s=s.replace(/[\s\-–—,:]+$/,"").trim();
           if(s&&s.length>=2&&!/^descanso\b/i.test(s))ejercicio=s;
         }
+        const headerClean=clean.replace(/^#+\s*/,"").replace(/\*\*/g,"").trim();
+        if(isHeader)return(
+          <div key={i} style={{margin:"16px 0 8px",padding:"8px 14px",background:"#1a0a00",border:"1px solid #f97316",borderRadius:"8px",borderLeft:"4px solid #f97316"}}>
+            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"2px",color:"#f97316",fontWeight:"700"}}>{headerClean}</span>
+          </div>
+        );
         return(
           <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"8px",marginBottom:"2px"}}>
             <span style={{flex:1,whiteSpace:"pre-wrap"}}>{line}</span>
@@ -999,6 +1005,50 @@ function PerfilInicial({user, onCompletar}){
   );
 }
 
+
+// ── NOVEDADES CAROUSEL ────────────────────────────────────────────────────────
+function NovedadesCarousel(){
+  const BACKEND=import.meta.env.VITE_BACKEND_URL||"https://ai-mgfc-backend-production.up.railway.app";
+  const[novedades,setNovedades]=useState([
+    {emoji:"💳",texto:"Pagá tu cuota desde la app de forma segura"},
+    {emoji:"🤝",texto:"Programá entrenamientos con tu GYM-BRO"},
+    {emoji:"🤖",texto:"Obtené tu rutina personalizada con IA 24/7"},
+    {emoji:"⚖️",texto:"Registrá tu peso y seguí tu progreso"},
+  ]);
+  const[actual,setActual]=useState(0);
+  const[visible,setVisible]=useState(true);
+
+  useEffect(()=>{
+    fetch(`${BACKEND}/api/novedades`).then(r=>r.json()).then(d=>{if(d.novedades&&d.novedades.length>0)setNovedades(d.novedades);}).catch(()=>{});
+  },[]);
+
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      setVisible(false);
+      setTimeout(()=>{setActual(p=>(p+1)%novedades.length);setVisible(true);},400);
+    },4000);
+    return()=>clearInterval(t);
+  },[novedades.length]);
+
+  if(!novedades.length)return null;
+  const nov=novedades[actual];
+  return(
+    <div style={{marginBottom:"20px",background:"linear-gradient(135deg,#1a0800,#0d0d0d)",border:"1px solid #f9731644",borderRadius:"12px",padding:"16px",textAlign:"center",transition:"opacity 0.4s",opacity:visible?1:0}}>
+      <div style={{fontSize:"10px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",color:"#f97316",marginBottom:"8px",display:"flex",alignItems:"center",justifyContent:"center",gap:"6px"}}>
+        <span style={{display:"inline-block",width:"6px",height:"6px",borderRadius:"50%",background:"#f97316",animation:"pulse-dot 1.5s infinite"}}/>
+        NOVEDADES
+      </span>
+      <div style={{fontSize:"22px",marginBottom:"6px"}}>{nov.emoji}</div>
+      <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"15px",color:"#fff",fontWeight:"600",letterSpacing:"0.5px",lineHeight:"1.4"}}>{nov.texto}</div>
+      <div style={{display:"flex",justifyContent:"center",gap:"6px",marginTop:"12px"}}>
+        {novedades.map((_,i)=>(
+          <div key={i} onClick={()=>setActual(i)} style={{width:i===actual?"20px":"6px",height:"6px",borderRadius:"3px",background:i===actual?"#f97316":"#333",transition:"all 0.3s",cursor:"pointer"}}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Login({onLogin}){
   const[dni,setDni]=useState("");const[password,setPassword]=useState("");
   const[loading,setLoading]=useState(false);
@@ -1036,6 +1086,7 @@ function Login({onLogin}){
           <h1 style={{fontFamily:"Bebas Neue, Impact, sans-serif",fontSize:"clamp(24px,7vw,38px)",letterSpacing:"2px",lineHeight:"1.1",background:"linear-gradient(180deg,#ffffff 0%,#f97316 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>MG+IA PERSONAL TRAINER 24/7</h1>
           <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"13px",color:C.gold,fontWeight:"700",letterSpacing:"4px",marginTop:"6px"}}>DECISIONES CON 100% ACTITUD!</div>
         </div>
+        <NovedadesCarousel/>
         <div style={{background:"#0d0d0d",border:"1px solid #222",borderRadius:"12px",padding:"28px"}}>
           <div style={{marginBottom:"16px"}}><label style={labelSt}>DNI</label><input type="text" value={dni} onChange={e=>setDni(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="Número de documento" style={inputSt} autoComplete="off"/></div>
           <div style={{marginBottom:"24px"}}><label style={labelSt}>Contraseña</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" style={inputSt} autoComplete="off"/></div>
@@ -1949,7 +2000,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
   };
 
   const byWeek=sesiones.reduce((acc,s)=>{const k=`Semana ${s.training_week}${s.is_deload?" — DESCARGA":""}`;(acc[k]=acc[k]||[]).push(s);return acc;},{});
-  const tabSt=active=>({flex:1,padding:"14px 8px",border:active?"none":`1px solid #333`,borderRadius:"10px",background:active?`linear-gradient(135deg,${C.red},${C.fire})`:"#161616",color:active?C.white:"#888",fontSize:"15px",fontWeight:"700",letterSpacing:"1.5px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif",boxShadow:active?`0 4px 16px ${C.red}55`:"none",transition:"all 0.2s"});
+  const tabSt=active=>({flex:1,padding:"14px 8px",border:active?"none":"1px solid #444",borderRadius:"10px",background:active?`linear-gradient(135deg,${C.red},${C.fire})`:"#252525",color:active?"#fff":"#ccc",fontSize:"15px",fontWeight:"700",letterSpacing:"1.5px",cursor:"pointer",fontFamily:"Bebas Neue, sans-serif",boxShadow:active?`0 4px 16px ${C.red}55`:"0 2px 6px #0005",transition:"all 0.2s"});
 
   return(
     <div style={{minHeight:"100vh",background:C.bg,color:C.white,fontFamily:"Barlow, sans-serif",position:"relative"}}>
