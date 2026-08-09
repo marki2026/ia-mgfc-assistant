@@ -1037,7 +1037,7 @@ function NovedadesCarousel(){
       <div style={{fontSize:"10px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",color:"#f97316",marginBottom:"8px",display:"flex",alignItems:"center",justifyContent:"center",gap:"6px"}}>
         <span style={{display:"inline-block",width:"6px",height:"6px",borderRadius:"50%",background:"#f97316",animation:"pulse-dot 1.5s infinite"}}/>
         NOVEDADES
-      </span>
+      </div>
       <div style={{fontSize:"22px",marginBottom:"6px"}}>{nov.emoji}</div>
       <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"15px",color:"#fff",fontWeight:"600",letterSpacing:"0.5px",lineHeight:"1.4"}}>{nov.texto}</div>
       <div style={{display:"flex",justifyContent:"center",gap:"6px",marginTop:"12px"}}>
