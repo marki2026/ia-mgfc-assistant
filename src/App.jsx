@@ -29,6 +29,8 @@ GLOBAL_STYLE.textContent = `
   @keyframes btn-pulse { 0%,100%{box-shadow:0 4px 30px rgba(249,115,22,.65)} 50%{box-shadow:0 6px 55px rgba(249,115,22,.95)} }
   @keyframes glow-logo { 0%,100%{filter:drop-shadow(0 0 24px rgba(249,115,22,.7)) drop-shadow(0 0 48px rgba(220,38,38,.4))} 50%{filter:drop-shadow(0 0 50px rgba(251,191,36,1)) drop-shadow(0 0 80px rgba(249,115,22,.6))} }
   @keyframes arrow { from{transform:translateX(0)} to{transform:translateX(6px)} }
+  @keyframes novedad-border { 0%,100%{box-shadow:0 0 16px rgba(249,115,22,.5), inset 0 0 24px rgba(249,115,22,.06)} 50%{box-shadow:0 0 32px rgba(251,191,36,.75), inset 0 0 32px rgba(249,115,22,.14)} }
+  @keyframes novedad-dot { 0%,100%{opacity:1;box-shadow:0 0 6px #f97316} 50%{opacity:.3;box-shadow:0 0 2px #f97316} }
   .slide-up { animation: slide-up 0.4s ease forwards; }
   .pulse-fire { animation: pulse-fire 2.5s ease infinite; }
   .pulse-btn { animation: pulse-btn 2s ease infinite; }
@@ -1033,16 +1035,20 @@ function NovedadesCarousel(){
   if(!novedades.length)return null;
   const nov=novedades[actual];
   return(
-    <div style={{marginBottom:"20px",background:"linear-gradient(135deg,#1a0800,#0d0d0d)",border:"1px solid #f9731644",borderRadius:"12px",padding:"16px",textAlign:"center",transition:"opacity 0.4s",opacity:visible?1:0}}>
-      <div style={{fontSize:"10px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",color:"#f97316",marginBottom:"8px",display:"flex",alignItems:"center",justifyContent:"center",gap:"6px"}}>
-        <span style={{display:"inline-block",width:"6px",height:"6px",borderRadius:"50%",background:"#f97316",animation:"pulse-dot 1.5s infinite"}}/>
-        NOVEDADES
+    <div style={{position:"relative",marginBottom:"20px",background:"linear-gradient(135deg,#2a0d00,#0d0d0d 60%)",border:"2px solid #f97316",borderRadius:"12px",padding:"20px 18px 16px",textAlign:"center",transition:"opacity 0.4s",opacity:visible?1:0,overflow:"hidden",animation:"novedad-border 2.2s ease-in-out infinite"}}>
+      {/* cartel angulado esquina */}
+      <div style={{position:"absolute",top:"11px",left:"-38px",width:"150px",transform:"rotate(-45deg)",background:"repeating-linear-gradient(45deg,#dc2626,#dc2626 8px,#f97316 8px,#f97316 16px)",color:"#fff",fontSize:"9px",fontWeight:"900",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1.5px",padding:"3px 0",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,.5)",textShadow:"0 1px 2px rgba(0,0,0,.6)"}}>
+        NUEVO
       </div>
-      <div style={{fontSize:"22px",marginBottom:"6px"}}>{nov.emoji}</div>
-      <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"15px",color:"#fff",fontWeight:"600",letterSpacing:"0.5px",lineHeight:"1.4"}}>{nov.texto}</div>
-      <div style={{display:"flex",justifyContent:"center",gap:"6px",marginTop:"12px"}}>
+      <div style={{fontSize:"11px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",color:"#fbbf24",marginBottom:"10px",marginTop:"2px",display:"flex",alignItems:"center",justifyContent:"center",gap:"7px",fontWeight:"700"}}>
+        <span style={{display:"inline-block",width:"7px",height:"7px",borderRadius:"50%",background:"#f97316",animation:"novedad-dot 1.3s infinite"}}/>
+        ⚡ NOVEDADES ⚡
+      </div>
+      <div style={{fontSize:"26px",marginBottom:"8px"}}>{nov.emoji}</div>
+      <div style={{fontFamily:"Barlow Condensed, sans-serif",fontSize:"16px",color:"#fff",fontWeight:"800",letterSpacing:"0.3px",lineHeight:"1.4",textShadow:"0 1px 4px rgba(249,115,22,.3)"}}>{nov.texto}</div>
+      <div style={{display:"flex",justifyContent:"center",gap:"6px",marginTop:"14px"}}>
         {novedades.map((_,i)=>(
-          <div key={i} onClick={()=>setActual(i)} style={{width:i===actual?"20px":"6px",height:"6px",borderRadius:"3px",background:i===actual?"#f97316":"#333",transition:"all 0.3s",cursor:"pointer"}}/>
+          <div key={i} onClick={()=>setActual(i)} style={{width:i===actual?"22px":"6px",height:"6px",borderRadius:"3px",background:i===actual?"linear-gradient(90deg,#f97316,#fbbf24)":"#333",transition:"all 0.3s",cursor:"pointer"}}/>
         ))}
       </div>
     </div>
