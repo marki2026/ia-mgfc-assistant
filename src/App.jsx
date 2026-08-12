@@ -299,48 +299,76 @@ function ExerciseModal({nombre,onClose,isAdmin}){
   );
 }
 
+// Convierte el texto crudo de la rutina en bloques tipados: header, ejercicio (fila con
+// UN solo icono), nota (línea en *cursiva* pegada al ejercicio anterior) o texto plano.
+// Antes se decidía "esto es un ejercicio" por si la línea contenía palabras como
+// "series"/"kg"/"seg" — eso también le ponía el botón a líneas de indicaciones o
+// metadata ("Total:", "Hidratación:", notas en cursiva) que casualmente usaban esas
+// palabras. Ahora SOLO las líneas de lista numerada (el formato que la IA usa siempre
+// para listar ejercicios) generan una fila con botón.
+function parseRutinaBlocks(content){
+  const blocks=[];
+  content.split("\n").forEach(line=>{
+    const clean=line.replace(/\*\*/g,"").trim();
+    if(!clean){blocks.push({type:"space"});return;}
+    if(/^\s*[#\*]{2,}/.test(clean)){
+      blocks.push({type:"header",text:clean.replace(/^[#\*\s]+/,"").replace(/[\*\s]+$/,"").trim()});
+      return;
+    }
+    const esItemLista=/^\d+[\.\)]\s+\S/.test(clean);
+    if(esItemLista){
+      let s=clean.replace(/^\d+\s*[\.\)]\s*/,"").trim();
+      const sep=s.match(/\s*(?:[·:]|—|(?:\s-\s)|\d+\s*[x×]\s*\d+|[x×]\s*\d+)/i);
+      let nombre=s,detalle="";
+      if(sep&&sep.index>0){nombre=s.slice(0,sep.index).trim();detalle=s.slice(sep.index).replace(/^[\s·:—-]+/,"").trim();}
+      nombre=nombre.replace(/[\s\-–—,:]+$/,"").trim();
+      if(nombre&&nombre.length>=2&&!/^descanso\b/i.test(nombre)){
+        blocks.push({type:"exercise",nombre,detalle});
+        return;
+      }
+    }
+    if(/^\*[^*].*\*$/.test(clean)){
+      const nota=clean.replace(/^\*/,"").replace(/\*$/,"").trim();
+      const last=blocks[blocks.length-1];
+      if(last&&last.type==="exercise"){last.nota=nota;return;}
+      blocks.push({type:"nota",text:nota});
+      return;
+    }
+    blocks.push({type:"text",text:clean});
+  });
+  return blocks;
+}
+
 function RutinaContent({content,onExercise}){
-  const lines=content.split("\n");
+  const blocks=parseRutinaBlocks(content);
   return(
-    <div style={{fontSize:"15px",fontFamily:"Barlow, sans-serif",color:C.white,lineHeight:"1.7"}}>
-      {lines.map((line,i)=>{
-        const clean=line.replace(/\*\*/g,"").trim();
-        if(!clean)return <div key={i} style={{height:"6px"}}/>;
-        const isHeader=/^\s*[#\*]{2,}/.test(clean);
-        // Antes filtraba por "¿tiene pinta de sets/reps?" y dejaba afuera rutinas con otro formato.
-        // Ahora: toda línea de contenido que no sea header lleva botón de video, sin excepción.
-        const isExercicio=!isHeader;
-        let ejercicio=null;
-        if(isExercicio){
-          let s=clean.replace(/^[\s\-–—•\*]+/,"").replace(/^\d+\s*[\.\)]\s*/,"").trim();
-          const sep=s.match(/\s*(?:[·:]|—|(?:\s-\s)|\(|\d+\s*[x×]\s*\d+|[x×]\s*\d+)/i);
-          if(sep&&sep.index>0)s=s.slice(0,sep.index);
-          s=s.replace(/[\s\-–—,:]+$/,"").trim();
-          if(s&&s.length>=2&&!/^descanso\b/i.test(s))ejercicio=s;
-        }
-        const headerClean=clean.replace(/^#+\s*/,"").replace(/\*\*/g,"").trim();
-        if(isHeader)return(
+    <div style={{fontSize:"15px",fontFamily:"Barlow, sans-serif",color:C.white,lineHeight:"1.6"}}>
+      {blocks.map((b,i)=>{
+        if(b.type==="space")return <div key={i} style={{height:"6px"}}/>;
+        if(b.type==="header")return(
           <div key={i} style={{margin:"16px 0 8px",padding:"8px 14px",background:"#1a0a00",border:"1px solid #f97316",borderRadius:"8px",borderLeft:"4px solid #f97316"}}>
-            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"2px",color:"#f97316",fontWeight:"700"}}>{headerClean}</span>
+            <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",letterSpacing:"2px",color:"#f97316",fontWeight:"700"}}>{b.text}</span>
           </div>
         );
-        return(
-          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"8px",marginBottom:"2px"}}>
-            <span style={{flex:1,whiteSpace:"pre-wrap"}}>{line}</span>
-            {ejercicio&&(
-              <button onClick={()=>onExercise(ejercicio)} title="Ver video del ejercicio" aria-label="Ver video del ejercicio"
-                style={{flexShrink:0,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"5px",
-                  height:"40px",padding:"0 14px",
-                  background:"linear-gradient(135deg,#dc2626,#ef4444)",
-                  border:"none",borderRadius:"10px",color:"#fff",
-                  fontSize:"13px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1.5px",
-                  cursor:"pointer",lineHeight:"1",whiteSpace:"nowrap",
-                  boxShadow:"0 2px 10px #dc262655"}}>
-                ▶ VIDEO
-              </button>
-            )}
+        if(b.type==="exercise")return(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",marginBottom:"6px",background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:"8px"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:"700",color:"#fff"}}>{b.nombre}</div>
+              {b.detalle&&<div style={{fontSize:"12.5px",color:C.grayL,marginTop:"2px"}}>{b.detalle}</div>}
+              {b.nota&&<div style={{fontSize:"11.5px",color:C.gold,marginTop:"2px",fontStyle:"italic"}}>{b.nota}</div>}
+            </div>
+            <button onClick={()=>onExercise(b.nombre)} title="Ver video del ejercicio" aria-label="Ver video del ejercicio"
+              style={{flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",
+                width:"38px",height:"38px",
+                background:"linear-gradient(135deg,#dc2626,#ef4444)",
+                border:"none",borderRadius:"10px",color:"#fff",fontSize:"16px",
+                cursor:"pointer",boxShadow:"0 2px 10px #dc262655"}}>
+              ▶
+            </button>
           </div>
         );
+        if(b.type==="nota")return <div key={i} style={{fontSize:"12.5px",color:C.gold,fontStyle:"italic",marginBottom:"6px",paddingLeft:"4px"}}>{b.text}</div>;
+        return <div key={i} style={{whiteSpace:"pre-wrap",marginBottom:"4px"}}>{b.text}</div>;
       })}
     </div>
   );
