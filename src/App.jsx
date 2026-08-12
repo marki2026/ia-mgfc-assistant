@@ -292,9 +292,9 @@ function RutinaContent({content,onExercise}){
         const clean=line.replace(/\*\*/g,"").trim();
         if(!clean)return <div key={i} style={{height:"6px"}}/>;
         const isHeader=/^\s*[#\*]{2,}/.test(clean);
-        const tieneSetsReps=/[·×x]\s*\d|\d\s*[x×]\s*\d|\bseries\b|\brepeticiones\b|\breps?\b|\bdescanso\b|\bkg\b|\d+\s*rm\b|\bal fallo\b|\bsegundos?\b|\bminutos?\b|\bseg\b|\bmin\b/i.test(clean);
-        const esItemLista=/^\d+[\.\)]\s+\S/.test(clean);
-        const isExercicio=!isHeader&&(tieneSetsReps||esItemLista);
+        // Antes filtraba por "¿tiene pinta de sets/reps?" y dejaba afuera rutinas con otro formato.
+        // Ahora: toda línea de contenido que no sea header lleva botón de video, sin excepción.
+        const isExercicio=!isHeader;
         let ejercicio=null;
         if(isExercicio){
           let s=clean.replace(/^[\s\-–—•\*]+/,"").replace(/^\d+\s*[\.\)]\s*/,"").trim();
