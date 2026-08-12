@@ -105,6 +105,18 @@ function buildSystemPrompt(isDemo,incluirRutina,nivelRutina,incluirTablero){
   return`Actúa como sistema experto en entrenamiento físico. Rol: Coach de decisiones — directo, sin motivación vacía.\n\nVALORES: DESCANSO:1h-8h+ · ENERGÍA:1-10 · ALIMENTACIÓN:MUY MALA/MALA/NORMAL/BIEN/MUY BIEN · TIEMPO:30min-120min+\n\nREGLAS:\n- Una decisión clara y directa\n- Analizá historial: sobreentrenamiento, grupos repetidos <48h, rachas sin descanso\n- Mismo grupo <48h: ALERTA\n- >6 días consecutivos: recuperación\n- Semana DESCARGA: intensidad 50-60%\n- Si tiene condición médica: SIEMPRE priorizarla\n- Si practica disciplina deportiva: orientar para complementarla\n- Si MUJER EN ETAPA MENSTRUAL: baja-media intensidad, movilidad, sin esfuerzo máximo\n- Dolor: considerarlo siempre\n- Si el historial incluye RUTINAS PREVIAS EJECUTADAS: analizalas obligatoriamente. Podés repetir el estímulo muscular pero con ejercicios DISTINTOS. PROHIBIDO dar la misma rutina exacta. Si el entrenamiento es igual a las últimas 2 sesiones, cambiá al menos el 60% de los ejercicios${nivelInfo}\n${incluirRutina?"\nAL GENERAR RUTINA:\n- PRIORIDAD MÁXIMA: la rutina DEBE entrenar el/los grupo(s) muscular(es) o tipo de entrenamiento que el usuario escribió en 'Entrenamiento' — es lo que decidió entrenar hoy y NO debe reemplazarse por otro grupo distinto. Si detectás sobreentrenamiento de ese grupo (<48h), mantené el grupo solicitado pero reducí volumen/intensidad y avisá en ALERTA\n- Adaptá al nivel indicado, tiempo disponible, dolor y energía\n- Formato: Nombre · Series x Reps · Técnica si aplica · Nota si hay dolor":""}\n\nFORMATO (etiquetas exactas):\nDECISIÓN PRINCIPAL:\nINTENSIDAD RECOMENDADA:\nBAJA / MEDIA / ALTA\nAJUSTE DE DESCANSO:\nAJUSTE DE ALIMENTACIÓN:\nALERTA:\n(si aplica, sino: Ninguna)\nCONSULTAR A COACH:\nSÍ / NO\nMOTIVO:\n(máx 2 líneas)\n${incluirRutina?"---\nRUTINA DEL DÍA:\n(Lista numerada según nivel)":""}\n\n${incluirTablero?`TABLERO TÁCTICO OBLIGATORIO: El usuario solicitó explícitamente el tablero táctico. DEBÉS incluirlo siempre al final de tu respuesta, incluso si el ejercicio no es de desplazamiento — adaptá uno de los ejercicios para que tenga componente espacial en cancha.`:`TABLERO TÁCTICO (SOLO si la disciplina es fútbol/hockey/básquet/vóley Y la rutina incluye ejercicio de desplazamiento en cancha con conos, patrones o movimiento espacial):`}\nAgregá al final del response, en una sola línea:\nTABLERO:{"campo":"futbol|hockey|basket|voley","elementos":[{"tipo":"cono|jugador|pelota|zona","x":0.0,"y":0.0,"color":"naranja|amarillo|rojo|azul|blanco"},...],"trayectorias":[{"de":{"x":0.0,"y":0.0},"a":{"x":0.0,"y":0.0},"tipo":"sprint|trote|cambio_ritmo|lateral|retroceso","orden":1},...],"descripcion":"descripción breve del ejercicio"}\nCOORDENADAS: x=0 izquierda, x=1 derecha, y=0 arco/red/aro propio, y=1 fondo campo del jugador. Máximo 6 elementos y 4 trayectorias.\nSin texto extra.`;
 }
 
+// Busca la etiqueta de una sección de forma tolerante: sin importar mayúsc/minúsc,
+// y aunque la IA agregue texto extra antes de los ":" (ej: "RUTINA DEL DÍA (avanzado):").
+// Antes se buscaba el string EXACTO "RUTINA DEL DÍA:" con indexOf — si la IA formateaba
+// distinto una sola vez, la sección entera de rutina se perdía dentro de MOTIVO y
+// ningún ejercicio de esa consulta mostraba botón de video.
+function findLabelIndex(text,label,fromIndex=0){
+  const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  const re=new RegExp(escaped+"[^\\n:]{0,60}:","i");
+  const m=text.slice(fromIndex).match(re);
+  return m?{start:fromIndex+m.index,end:fromIndex+m.index+m[0].length}:null;
+}
+
 function parseResponse(text){
   const parsed={};
   // Strip TABLERO block before parsing sections
@@ -112,12 +124,15 @@ function parseResponse(text){
   if(tableroMatch){try{parsed.tablero=JSON.parse(tableroMatch[1]);}catch(e){parsed.tablero=null;}}
   const cleanText=tableroMatch?text.slice(0,tableroMatch.index):text;
   SECTIONS.forEach((s,i)=>{
-    const start=cleanText.indexOf(s.label+":");
-    if(start===-1)return;
-    const nextLabels=SECTIONS.slice(i+1).map(ns=>ns.label+":");
+    const found=findLabelIndex(cleanText,s.label);
+    if(!found)return;
+    const nextLabels=SECTIONS.slice(i+1).map(ns=>ns.label);
     let end=cleanText.length;
-    nextLabels.forEach(nl=>{const idx=cleanText.indexOf(nl,start);if(idx!==-1&&idx<end)end=idx;});
-    parsed[s.key]=cleanText.slice(start+s.label.length+1,end).replace(/^---\s*/gm,"").trim();
+    nextLabels.forEach(nl=>{
+      const nf=findLabelIndex(cleanText,nl,found.end);
+      if(nf&&nf.start<end)end=nf.start;
+    });
+    parsed[s.key]=cleanText.slice(found.end,end).replace(/^---\s*/gm,"").trim();
   });
   return parsed;
 }
