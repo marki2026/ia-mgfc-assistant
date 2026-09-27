@@ -315,9 +315,9 @@ function parseRutinaBlocks(content){
       blocks.push({type:"header",text:clean.replace(/^[#\*\s]+/,"").replace(/[\*\s]+$/,"").trim()});
       return;
     }
-    const esItemLista=/^\d+[\.\)]\s+\S/.test(clean);
+    const esItemLista=/^(?:\d+[\.\)]\s+|[-•]\s+)\S/.test(clean);
     if(esItemLista){
-      let s=clean.replace(/^\d+\s*[\.\)]\s*/,"").trim();
+      let s=clean.replace(/^(?:\d+\s*[\.\)]\s*|[-•]\s+)/,"").trim();
       const sep=s.match(/\s*(?:[·:]|—|(?:\s-\s)|\d+\s*[x×]\s*\d+|[x×]\s*\d+)/i);
       let nombre=s,detalle="";
       if(sep&&sep.index>0){nombre=s.slice(0,sep.index).trim();detalle=s.slice(sep.index).replace(/^[\s·:—-]+/,"").trim();}
@@ -1938,6 +1938,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
   const[notaRutina,setNotaRutina]=useState("");
   const[notaGuardada,setNotaGuardada]=useState(false);
   const[sesionIdActual,setSesionIdActual]=useState(null);
+  const[formStep,setFormStep]=useState(0);
   // Cargar form desde localStorage si existe
   const FORM_KEY=`mgfc_form_${user.id}`;
   const savedForm=()=>{try{const s=JSON.parse(localStorage.getItem(FORM_KEY)||"null");return s||null;}catch{return null;}};
@@ -2122,97 +2123,134 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
         {tab==="form"&&(
           <>
             <div style={cardSt}>
-              <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"12px"}}>
-                <button onClick={()=>setShowRef(true)} style={{padding:"6px 14px",background:"#111",border:`1px solid ${C.gold}`,borderRadius:"6px",color:C.gold,fontSize:"12px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📖 GUÍA DE VALORES</button>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
-                <div><label style={labelSt}>Peso (kg)</label><input name="peso" value={form.peso} onChange={handleChange} placeholder="76.5" style={inputDone(form.peso)}/></div>
-                <div><label style={labelSt}>Descanso</label><select name="descanso" value={form.descanso} onChange={handleChange} style={inputDone(form.descanso)}>{["1h","2h","3h","4h","5h","6h","7h","8h+"].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div><label style={labelSt}>Energía (1-10)</label><select name="energia" value={form.energia} onChange={handleChange} style={inputDone(form.energia)}>{[1,2,3,4,5,6,7,8,9,10].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div><label style={labelSt}>Alimentación</label><select name="alimentacion" value={form.alimentacion} onChange={handleChange} style={inputDone(form.alimentacion)}>{["MUY MALA","MALA","NORMAL","BIEN","MUY BIEN"].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Entrenamiento del día</label><input name="entrenamiento" value={form.entrenamiento} onChange={handleChange} placeholder="ej: musculación, glúteos y femorales" style={inputDone(form.entrenamiento)}/></div>
-                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Dolor (opcional)</label><input name="dolor" value={form.dolor} onChange={handleChange} placeholder="ej: hombro derecho leve / ninguno" style={inputDone(form.dolor)}/></div>
-                <div style={{gridColumn:"1/-1"}}><label style={labelSt}>¿Practicás alguna disciplina deportiva?</label><select name="disciplina" value={form.disciplina} onChange={handleChange} style={inputDone(form.disciplina)}>{DISCIPLINAS.map(d=><option key={d}>{d}</option>)}</select></div>
-                <div style={{gridColumn:"1/-1"}}>
-                  <label style={labelSt}>Sexo</label>
-                  <div style={{display:"flex",gap:"10px"}}>
-                    {["hombre","mujer"].map(s=>(
-                      <button key={s} onClick={()=>setForm(f=>({...f,sexo:s,etapaMenstrual:s==="hombre"?false:f.etapaMenstrual}))} style={{flex:1,padding:"12px",background:form.sexo===s?(s==="hombre"?`linear-gradient(135deg,${C.blue},${C.blueL})`:"linear-gradient(135deg,#be185d,#ec4899)"):"#111",border:`1px solid ${form.sexo===s?(s==="hombre"?C.blueL:"#ec4899"):"#333"}`,borderRadius:"8px",color:C.white,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer",transition:"all 0.2s"}}>
-                        {s==="hombre"?"♂ HOMBRE":"♀ MUJER"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {form.sexo==="mujer"&&(
-                  <div style={{gridColumn:"1/-1",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"8px",padding:"14px"}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px"}}>
-                      <div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:"#f9a8d4",letterSpacing:"1px"}}>🌸 ETAPA MENSTRUAL ACTIVA</div><div style={{fontSize:"12px",color:"#9d174d",marginTop:"2px"}}>La IA adaptará la rutina e intensidad</div></div>
-                      <Toggle value={form.etapaMenstrual} onChange={()=>setForm(f=>({...f,etapaMenstrual:!f.etapaMenstrual}))}/>
-                    </div>
-                    <div style={{fontSize:"11px",color:"#9d174d",fontFamily:"Barlow, sans-serif",lineHeight:"1.5"}}>
-                      ℹ️ Recomendaciones orientativas, no constituyen consejo médico.{" "}
-                      <button onClick={()=>setShowTerminos(true)} style={{background:"transparent",border:"none",color:"#f9a8d4",textDecoration:"underline",cursor:"pointer",fontSize:"11px",fontFamily:"Barlow, sans-serif",padding:0}}>Ver Términos y Condiciones</button>
-                    </div>
-                  </div>
-                )}
-                <div><label style={labelSt}>Tiempo disponible</label><select name="tiempo" value={form.tiempo} onChange={handleChange} style={inputSt}>{["30min","45min","60min","75min","90min","120min+"].map(v=><option key={v}>{v}</option>)}</select></div>
-                <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:"16px",paddingTop:"22px"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-                    <Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/>
-                    <span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span>
-                    {isDemo&&<span style={{fontSize:"10px",color:"#b45309",fontFamily:"Barlow, sans-serif"}}>Solo Standard/PRO</span>}
-                  </div>
-                  {(isPro||modoDios)&&detectarCampo(form.disciplina)!==null&&(
-                    <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-                      <Toggle value={form.quiereTablero} onChange={()=>setForm(f=>({...f,quiereTablero:!f.quiereTablero}))}/>
-                      <span style={{fontSize:"12px",color:form.quiereTablero?"#34d399":C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>📋 TABLERO TÉCNICO</span>
-                      <span style={{fontSize:"10px",color:"#60a5fa",fontFamily:"Barlow, sans-serif"}}>⭐ PRO</span>
-                    </div>
-                  )}
-                </div>
-                {isDemo&&form.quiereRutina&&(
-                  <div style={{marginTop:"8px",padding:"8px 12px",background:"#0a0800",border:"1px solid #92400e",borderRadius:"6px",fontSize:"12px",color:C.gold,fontFamily:"Barlow, sans-serif"}}>
-                    🔒 La rutina no se muestra en modo DEMO. Disponible en versión Standard o PRO.
-                  </div>
-                )}
-              </div>
-
-              {!isDemo&&form.quiereRutina&&(
-                <div className="slide-up" style={{marginTop:"14px",padding:"14px",background:"#0a0a0a",border:`1px solid ${C.fire}`,borderRadius:"10px"}}>
-                  <label style={{...labelSt,color:C.fire,marginBottom:"10px"}}>NIVEL DE ENTRENAMIENTO</label>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
-                    {NIVELES.map(n=>(
-                      <button key={n.v} onClick={()=>setForm(f=>({...f,nivelRutina:n.v}))} style={{padding:"10px",background:form.nivelRutina===n.v?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",border:`1px solid ${form.nivelRutina===n.v?C.fire:"#333"}`,borderRadius:"8px",cursor:"pointer",textAlign:"left"}}>
-                        <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:form.nivelRutina===n.v?C.white:C.grayL,letterSpacing:"1px"}}>{n.v}</div>
-                        <div style={{fontSize:"10px",color:form.nivelRutina===n.v?"#fff9":"#475569",fontFamily:"Barlow, sans-serif",marginTop:"3px",lineHeight:"1.4"}}>{n.d}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {!isDemo&&consultasHoy>=1&&consultasHoy<limiteConsultas&&<div style={{marginTop:"12px",padding:"10px 14px",background:"#0a0f00",border:"1px solid #365314",borderRadius:"6px",fontSize:"12px",color:"#86efac",fontFamily:"Barlow, sans-serif"}}>ℹ️ Esta consulta es orientativa — ya registraste tu sesión del día.</div>}
-              {!isDemo&&sesiones.length>0&&(
-                <div style={{marginTop:"12px",padding:"12px",background:"#0a0a0a",borderRadius:"8px",border:"1px solid #1a1a1a"}}>
-                  <div style={{fontSize:"11px",color:C.gray,letterSpacing:"0.15em",marginBottom:"8px",fontFamily:"Bebas Neue, sans-serif"}}>🕐 ÚLTIMAS SESIONES</div>
-                  {sesiones.filter(s=>s.es_registro).slice(0,3).map(s=>(
-                    <div key={s.id} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid #111"}}>
-                      <span style={{fontSize:"12px",color:C.grayL}}>{s.entrenamiento}</span>
-                      <span style={{fontSize:"11px",color:C.gray}}>Sem {s.training_week} · {dayLabel(s.created_at)}</span>
+              {/* Step indicator */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px",paddingBottom:"16px",borderBottom:"1px solid #1a1a1a"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                  {[{n:1,label:"ESTADO"},{n:2,label:"ENTRENAMIENTO"}].map((step,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                      {i>0&&<div style={{width:"24px",height:"2px",background:formStep>0?`linear-gradient(90deg,${C.fire},${C.blueL})`:"#222",transition:"background 0.4s"}}/>}
+                      <div style={{display:"flex",alignItems:"center",gap:"6px",opacity:formStep===i?1:0.45,transition:"opacity 0.3s"}}>
+                        <div style={{width:"24px",height:"24px",borderRadius:"50%",background:formStep===i?`linear-gradient(135deg,${C.red},${C.fire})`:formStep>i?"#15803d":"#1a1a1a",border:`2px solid ${formStep===i?C.fire:formStep>i?C.green:"#333"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontFamily:"Bebas Neue",color:"#fff",transition:"all 0.3s"}}>{formStep>i?"✓":step.n}</div>
+                        <span style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"11px",letterSpacing:"1.5px",color:formStep===i?C.white:C.gray}}>{step.label}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
-              )}
-              {error&&<div style={{marginTop:"12px",padding:"10px 14px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:"#fca5a5",fontSize:"13px"}}>{error}</div>}
-              {isDemo&&consultasHoy>=3?(
-                <div style={{marginTop:"16px",padding:"16px",background:"#1a0f00",border:`2px solid ${C.gold}`,borderRadius:"8px",textAlign:"center"}}>
-                  <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"18px",color:C.gold,letterSpacing:"2px",marginBottom:"8px"}}>🔒 CONSULTAS DEMO AGOTADAS</div>
-                  <p style={{fontSize:"13px",color:C.grayL,fontFamily:"Barlow, sans-serif",marginBottom:"12px"}}>Suscribite para acceso completo.</p>
-                  <button onClick={()=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero contratar MG+IA Personal Trainer 24/7.")}`,"_blank")} style={{padding:"12px 24px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"8px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>💬 CONTRATAR AHORA</button>
+                <button onClick={()=>setShowRef(true)} style={{padding:"5px 10px",background:"#111",border:`1px solid ${C.gold}44`,borderRadius:"6px",color:C.gold,fontSize:"11px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>📖 GUÍA</button>
+              </div>
+
+              {/* Sliding panels */}
+              <div style={{overflow:"hidden"}}>
+                <div style={{display:"flex",width:"200%",transition:"transform 0.45s cubic-bezier(0.4,0,0.2,1)",transform:`translateX(${formStep===0?"0":"-50%"})`}}>
+
+                  {/* PANEL 1: ¿CÓMO TE SENTÍS? */}
+                  <div style={{width:"50%"}}>
+                    <div style={{marginBottom:"16px"}}>
+                      <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"22px",color:C.fire,letterSpacing:"2px"}}>¿CÓMO TE SENTÍS?</div>
+                      <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>Registrá tu estado físico del día</div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                      <div><label style={labelSt}>Peso (kg)</label><input name="peso" value={form.peso} onChange={handleChange} placeholder="76.5" style={inputDone(form.peso)}/></div>
+                      <div><label style={labelSt}>Descanso</label><select name="descanso" value={form.descanso} onChange={handleChange} style={inputDone(form.descanso)}>{["1h","2h","3h","4h","5h","6h","7h","8h+"].map(v=><option key={v}>{v}</option>)}</select></div>
+                      <div><label style={labelSt}>Energía (1-10)</label><select name="energia" value={form.energia} onChange={handleChange} style={inputDone(form.energia)}>{[1,2,3,4,5,6,7,8,9,10].map(v=><option key={v}>{v}</option>)}</select></div>
+                      <div><label style={labelSt}>Alimentación</label><select name="alimentacion" value={form.alimentacion} onChange={handleChange} style={inputDone(form.alimentacion)}>{["MUY MALA","MALA","NORMAL","BIEN","MUY BIEN"].map(v=><option key={v}>{v}</option>)}</select></div>
+                      <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Dolor (opcional)</label><input name="dolor" value={form.dolor} onChange={handleChange} placeholder="ej: hombro derecho leve / ninguno" style={inputDone(form.dolor)}/></div>
+                      <div style={{gridColumn:"1/-1"}}>
+                        <label style={labelSt}>Sexo</label>
+                        <div style={{display:"flex",gap:"10px"}}>
+                          {["hombre","mujer"].map(s=>(
+                            <button key={s} onClick={()=>setForm(f=>({...f,sexo:s,etapaMenstrual:s==="hombre"?false:f.etapaMenstrual}))} style={{flex:1,padding:"12px",background:form.sexo===s?(s==="hombre"?`linear-gradient(135deg,${C.blue},${C.blueL})`:"linear-gradient(135deg,#be185d,#ec4899)"):"#111",border:`1px solid ${form.sexo===s?(s==="hombre"?C.blueL:"#ec4899"):"#333"}`,borderRadius:"8px",color:C.white,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer",transition:"all 0.2s"}}>
+                              {s==="hombre"?"♂ HOMBRE":"♀ MUJER"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {form.sexo==="mujer"&&(
+                        <div style={{gridColumn:"1/-1",background:"#1a0a14",border:"1px solid #9d174d",borderRadius:"8px",padding:"14px"}}>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px"}}>
+                            <div><div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:"#f9a8d4",letterSpacing:"1px"}}>🌸 ETAPA MENSTRUAL ACTIVA</div><div style={{fontSize:"12px",color:"#9d174d",marginTop:"2px"}}>La IA adaptará la rutina e intensidad</div></div>
+                            <Toggle value={form.etapaMenstrual} onChange={()=>setForm(f=>({...f,etapaMenstrual:!f.etapaMenstrual}))}/>
+                          </div>
+                          <div style={{fontSize:"11px",color:"#9d174d",fontFamily:"Barlow, sans-serif",lineHeight:"1.5"}}>
+                            ℹ️ Recomendaciones orientativas, no constituyen consejo médico.{" "}
+                            <button onClick={()=>setShowTerminos(true)} style={{background:"transparent",border:"none",color:"#f9a8d4",textDecoration:"underline",cursor:"pointer",fontSize:"11px",fontFamily:"Barlow, sans-serif",padding:0}}>Ver Términos y Condiciones</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={()=>setFormStep(1)} style={{width:"100%",marginTop:"20px",padding:"14px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"10px",color:"#fff",fontSize:"17px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"3px",cursor:"pointer",boxShadow:`0 4px 20px ${C.red}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
+                      SIGUIENTE → ¿QUÉ ENTRENÁS?
+                    </button>
+                  </div>
+
+                  {/* PANEL 2: ¿QUÉ ENTRENÁS HOY? */}
+                  <div style={{width:"50%"}}>
+                    <div style={{marginBottom:"16px"}}>
+                      <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"22px",color:C.blueL,letterSpacing:"2px"}}>¿QUÉ ENTRENÁS HOY?</div>
+                      <div style={{fontSize:"11px",color:C.gray,fontFamily:"Barlow, sans-serif"}}>Configurá tu sesión de entrenamiento</div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                      <div style={{gridColumn:"1/-1"}}><label style={labelSt}>Entrenamiento del día</label><input name="entrenamiento" value={form.entrenamiento} onChange={handleChange} placeholder="ej: musculación, glúteos y femorales" style={inputDone(form.entrenamiento)}/></div>
+                      <div style={{gridColumn:"1/-1"}}><label style={labelSt}>¿Practicás alguna disciplina deportiva?</label><select name="disciplina" value={form.disciplina} onChange={handleChange} style={inputDone(form.disciplina)}>{DISCIPLINAS.map(d=><option key={d}>{d}</option>)}</select></div>
+                      <div><label style={labelSt}>Tiempo disponible</label><select name="tiempo" value={form.tiempo} onChange={handleChange} style={inputSt}>{["30min","45min","60min","75min","90min","120min+"].map(v=><option key={v}>{v}</option>)}</select></div>
+                      <div style={{display:"flex",flexDirection:"column",justifyContent:"flex-end",gap:"10px",paddingBottom:"4px"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                          <Toggle value={form.quiereRutina} onChange={()=>setForm(f=>({...f,quiereRutina:!f.quiereRutina}))}/>
+                          <span style={{fontSize:"12px",color:C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>INCLUIR RUTINA</span>
+                          {isDemo&&<span style={{fontSize:"10px",color:"#b45309",fontFamily:"Barlow, sans-serif"}}>Solo PRO</span>}
+                        </div>
+                        {(isPro||modoDios)&&detectarCampo(form.disciplina)!==null&&(
+                          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                            <Toggle value={form.quiereTablero} onChange={()=>setForm(f=>({...f,quiereTablero:!f.quiereTablero}))}/>
+                            <span style={{fontSize:"12px",color:form.quiereTablero?"#34d399":C.grayL,fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px"}}>📋 TABLERO</span>
+                            <span style={{fontSize:"10px",color:"#60a5fa"}}>⭐ PRO</span>
+                          </div>
+                        )}
+                      </div>
+                      {isDemo&&form.quiereRutina&&(
+                        <div style={{gridColumn:"1/-1",padding:"8px 12px",background:"#0a0800",border:"1px solid #92400e",borderRadius:"6px",fontSize:"12px",color:C.gold}}>
+                          🔒 La rutina no se muestra en modo DEMO. Disponible en versión Standard o PRO.
+                        </div>
+                      )}
+                    </div>
+                    {!isDemo&&form.quiereRutina&&(
+                      <div className="slide-up" style={{marginTop:"14px",padding:"14px",background:"#0a0a0a",border:`1px solid ${C.fire}`,borderRadius:"10px"}}>
+                        <label style={{...labelSt,color:C.fire,marginBottom:"10px"}}>NIVEL DE ENTRENAMIENTO</label>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                          {NIVELES.map(n=>(
+                            <button key={n.v} onClick={()=>setForm(f=>({...f,nivelRutina:n.v}))} style={{padding:"10px",background:form.nivelRutina===n.v?`linear-gradient(135deg,${C.red},${C.fire})`:"#111",border:`1px solid ${form.nivelRutina===n.v?C.fire:"#333"}`,borderRadius:"8px",cursor:"pointer",textAlign:"left"}}>
+                              <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"14px",color:form.nivelRutina===n.v?C.white:C.grayL,letterSpacing:"1px"}}>{n.v}</div>
+                              <div style={{fontSize:"10px",color:form.nivelRutina===n.v?"#fff9":"#475569",fontFamily:"Barlow, sans-serif",marginTop:"3px",lineHeight:"1.4"}}>{n.d}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {!isDemo&&consultasHoy>=1&&consultasHoy<limiteConsultas&&<div style={{marginTop:"12px",padding:"10px 14px",background:"#0a0f00",border:"1px solid #365314",borderRadius:"6px",fontSize:"12px",color:"#86efac",fontFamily:"Barlow, sans-serif"}}>ℹ️ Esta consulta es orientativa — ya registraste tu sesión del día.</div>}
+                    {!isDemo&&sesiones.length>0&&(
+                      <div style={{marginTop:"12px",padding:"12px",background:"#0a0a0a",borderRadius:"8px",border:"1px solid #1a1a1a"}}>
+                        <div style={{fontSize:"11px",color:C.gray,letterSpacing:"0.15em",marginBottom:"8px",fontFamily:"Bebas Neue, sans-serif"}}>🕐 ÚLTIMAS SESIONES</div>
+                        {sesiones.filter(s=>s.es_registro).slice(0,3).map(s=>(
+                          <div key={s.id} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid #111"}}>
+                            <span style={{fontSize:"12px",color:C.grayL}}>{s.entrenamiento}</span>
+                            <span style={{fontSize:"11px",color:C.gray}}>Sem {s.training_week} · {dayLabel(s.created_at)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {error&&<div style={{marginTop:"12px",padding:"10px 14px",background:"#1a0505",border:`1px solid ${C.red}`,borderRadius:"6px",color:"#fca5a5",fontSize:"13px"}}>{error}</div>}
+                    <div style={{display:"flex",gap:"10px",marginTop:"20px"}}>
+                      <button onClick={()=>setFormStep(0)} style={{flexShrink:0,padding:"14px 16px",background:"transparent",border:"1px solid #333",borderRadius:"10px",color:C.gray,fontSize:"15px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"1px",cursor:"pointer"}}>← VOLVER</button>
+                      {isDemo&&consultasHoy>=3?(
+                        <button onClick={()=>window.open(`https://wa.me/${WP_NUMBER}?text=${encodeURIComponent("Hola! Quiero contratar MG+IA Personal Trainer 24/7.")}`,"_blank")} style={{flex:1,padding:"14px",background:`linear-gradient(135deg,${C.red},${C.fire})`,border:"none",borderRadius:"10px",color:C.white,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>💬 CONTRATAR AHORA</button>
+                      ):(
+                        <div style={{flex:1}}><LoadingButton loading={loading} done={consultaDone} onClick={()=>{if(consultaDone){setConsultaDone(false);setResult(null);setFormStep(0);}else{handleSubmit();}}}>→ OBTENER DECISIÓN</LoadingButton></div>
+                      )}
+                    </div>
+                  </div>
+
                 </div>
-              ):(
-                <LoadingButton loading={loading} done={consultaDone} onClick={()=>{if(consultaDone){setConsultaDone(false);setResult(null);}else{handleSubmit();}}}>→ OBTENER DECISIÓN</LoadingButton>
-              )}
+              </div>
             </div>
 
             {/* PANTALLA ESPERA COACH */}
