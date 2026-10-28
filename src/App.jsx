@@ -254,34 +254,6 @@ function getVideoEmbed(url){
   if(yt){const vertical=/\/shorts\//.test(url||"");return{tipo:"youtube",id:yt,vertical,src:`https://www.youtube.com/embed/${yt}?autoplay=1&playsinline=1&rel=0&modestbranding=1${vertical?`&loop=1&playlist=${yt}`:""}`};}
   return null;
 }
-// Reproductor de YouTube con la IFrame API: detecta cuando YouTube rechaza el video
-// (embed bloqueado, restricción, error de reproducción) y avisa con onError.
-let ytApiPromise=null;
-function cargarYTApi(){
-  if(window.YT?.Player)return Promise.resolve(window.YT);
-  if(!ytApiPromise)ytApiPromise=new Promise(res=>{
-    const prev=window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady=()=>{prev&&prev();res(window.YT);};
-    const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.head.appendChild(s);
-  });
-  return ytApiPromise;
-}
-function YouTubePlayer({id,onError}){
-  const ref=useRef(null);
-  useEffect(()=>{
-    let player,vivo=true;
-    const t=setTimeout(()=>{if(vivo&&!player?.getPlayerState)onError?.("timeout");},12000);
-    cargarYTApi().then(YT=>{
-      if(!vivo||!ref.current)return;
-      player=new YT.Player(ref.current,{videoId:id,host:"https://www.youtube-nocookie.com",
-        playerVars:{playsinline:1,rel:0,modestbranding:1,origin:window.location.origin},
-        events:{onError:e=>{clearTimeout(t);onError?.(e.data);},onReady:()=>clearTimeout(t)}});
-    });
-    return()=>{vivo=false;clearTimeout(t);try{player?.destroy();}catch{}};
-  },[id]);
-  return <div style={{position:"absolute",inset:0}}><div ref={ref} style={{width:"100%",height:"100%"}}/></div>;
-}
-
 function ExerciseModal({nombre,onClose,isAdmin}){
   const[media,setMedia]=useState(null);
   const[loading,setLoading]=useState(true);
@@ -309,9 +281,7 @@ function ExerciseModal({nombre,onClose,isAdmin}){
     }catch(e){}
     setSaving(false);
   };
-  const[falloVideo,setFalloVideo]=useState(false);
-  useEffect(()=>setFalloVideo(false),[media?.gif_url]);
-  const video=falloVideo?null:getVideoEmbed(media?.gif_url||"");
+  const video=getVideoEmbed(media?.gif_url||"");
   const busqueda=encodeURIComponent(nombre+" técnica");
   return createPortal(
     <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:3000,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}} onClick={onClose}>
@@ -325,20 +295,24 @@ function ExerciseModal({nombre,onClose,isAdmin}){
         ):video?(
           <div>
             <div style={{position:"relative",width:"100%",maxWidth:video.vertical?"min(100%, calc(62vh * 9 / 16))":"100%",margin:"0 auto 12px",aspectRatio:video.vertical?"9 / 16":"16 / 9",borderRadius:"12px",overflow:"hidden",background:"#000",border:`1px solid ${video.tipo==="tiktok"?"#25f4ee":"#dc2626"}`}}>
-              {video.tipo==="youtube"
-                ?<YouTubePlayer key={video.id} id={video.id} onError={()=>{setFalloVideo(true);if(media&&!media.validado)fetch(`${API}/api/ejercicio-media/fallo`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:media.nombre,gif_url:media.gif_url})}).catch(()=>{});}}/>
-                :<iframe key={video.src} src={video.src} title={nombre} referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;fullscreen" allowFullScreen style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}/>}
+              <a href={video.tipo==="youtube"?`https://youtube.com/shorts/${video.id}`:media.gif_url} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0,display:"block",textDecoration:"none"}}>
+                {video.tipo==="youtube"
+                  ?<img src={`https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`} alt={nombre} style={{width:"100%",height:"100%",objectFit:"cover",filter:"brightness(.8)"}}/>
+                  :<div style={{width:"100%",height:"100%",background:"radial-gradient(circle at 30% 30%,#25f4ee55,transparent 50%),radial-gradient(circle at 70% 70%,#fe2c5555,transparent 50%),#0a0a0a"}}/>}
+                <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"12px"}}>
+                  <div style={{width:"78px",height:"78px",borderRadius:"50%",background:video.tipo==="youtube"?"#ff0000":"linear-gradient(135deg,#25f4ee,#fe2c55)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 6px 30px rgba(0,0,0,.6)",animation:"btn-pulse 2s ease infinite"}}>
+                    <div style={{width:0,height:0,borderTop:"16px solid transparent",borderBottom:"16px solid transparent",borderLeft:"26px solid #fff",marginLeft:"6px"}}/>
+                  </div>
+                  <div style={{fontFamily:"Bebas Neue",fontSize:"18px",letterSpacing:"2px",color:"#fff",textShadow:"0 2px 8px #000"}}>VER EN {video.tipo==="youtube"?"YOUTUBE":"TIKTOK"}</div>
+                </div>
+              </a>
             </div>
             {media?.descripcion&&<div style={{fontSize:"14px",color:C.white,fontFamily:"Barlow",lineHeight:"1.7",marginBottom:"12px",padding:"10px",background:"#181818",borderRadius:"8px"}}>{media.descripcion}</div>}
-            <div style={{display:"flex",gap:"8px",marginBottom:"4px"}}>
-              <a href={media.gif_url} target="_blank" rel="noreferrer" style={{flex:1,textAlign:"center",padding:"9px",border:"1px solid #3d3d3d",borderRadius:"8px",color:C.grayL,fontSize:"12px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>¿NO CARGA? ABRIR EN {video.tipo==="tiktok"?"TIKTOK":"YOUTUBE"} ↗</a>
-            </div>
           </div>
         ):(
           <div style={{textAlign:"center",padding:"24px 16px",border:"1px solid #343434",borderRadius:"10px",marginBottom:"12px"}}>
             <div style={{fontSize:"36px",marginBottom:"8px"}}>🎬</div>
-            <div style={{fontFamily:"Bebas Neue",fontSize:"14px",color:C.grayL,letterSpacing:"1px",marginBottom:"14px"}}>{falloVideo?"ESTE VIDEO NO SE PUEDE VER DENTRO DE LA APP":"MIRÁ LA TÉCNICA EN VIDEO CORTO"}</div>
-            {falloVideo&&media?.gif_url&&<a href={media.gif_url} target="_blank" rel="noreferrer" style={{display:"block",marginBottom:"10px",padding:"12px",border:"1px solid #dc2626",borderRadius:"8px",color:C.white,fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>▶ VER ESTE VIDEO EN YOUTUBE ↗</a>}
+            <div style={{fontFamily:"Bebas Neue",fontSize:"14px",color:C.grayL,letterSpacing:"1px",marginBottom:"14px"}}>MIRÁ LA TÉCNICA EN VIDEO CORTO</div>
             <div style={{display:"flex",gap:"10px",justifyContent:"center",flexWrap:"wrap"}}>
               <a href={`https://www.youtube.com/results?search_query=${busqueda}+shorts`} target="_blank" rel="noreferrer" style={{flex:"1 1 140px",padding:"12px 14px",background:"linear-gradient(135deg,#dc2626,#ef4444)",borderRadius:"8px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>▶ YOUTUBE SHORTS</a>
               <a href={`https://www.tiktok.com/search?q=${busqueda}`} target="_blank" rel="noreferrer" style={{flex:"1 1 140px",padding:"12px 14px",background:"linear-gradient(135deg,#111,#222)",border:"1px solid #25f4ee",boxShadow:"inset 0 0 0 1px #fe2c55",borderRadius:"8px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>♪ TIKTOK</a>
