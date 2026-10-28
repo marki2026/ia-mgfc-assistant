@@ -3,10 +3,10 @@ import { useState, useEffect, useCallback } from "react";
 // ─── SORTEOS SEMANALES ────────────────────────────────────────────────────────
 const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const IG = "mgfitnesscenter";
-const C = { fire:"#f97316", gold:"#fbbf24", red:"#dc2626", green:"#22c55e", white:"#fff", gray:"#64748b", grayL:"#94a3b8", blueL:"#2563eb", pink:"#ec4899" };
+const C = { fire:"#f97316", gold:"#fbbf24", red:"#dc2626", green:"#22c55e", white:"#fff", gray:"#8fa0b5", grayL:"#cbd5e1", blueL:"#2563eb", pink:"#ec4899" };
 const BEBAS = "Bebas Neue, sans-serif", BARLOW = "Barlow, sans-serif";
-const cardSt = { background:"#0d0d0d", border:"1px solid #1a1a1a", borderRadius:"12px", padding:"18px", marginBottom:"14px" };
-const inputSt = { width:"100%", background:"#111", border:"1px solid #2a2a2a", borderRadius:"8px", color:C.white, padding:"12px 14px", fontSize:"14px", outline:"none", fontFamily:BARLOW };
+const cardSt = { background:"linear-gradient(160deg,#191919,#0e0e0e)", border:"1px solid #2e2e2e", borderRadius:"12px", padding:"18px", marginBottom:"14px", boxShadow:"0 0 0 1px rgba(249,115,22,.07),0 8px 24px rgba(0,0,0,.45)" };
+const inputSt = { width:"100%", background:"#181818", border:"1px solid #3a3a3a", borderRadius:"8px", color:C.white, padding:"12px 14px", fontSize:"14px", outline:"none", fontFamily:BARLOW };
 const labelSt = { fontFamily:BEBAS, fontSize:"12px", color:C.grayL, letterSpacing:"2px", marginBottom:"6px", display:"block" };
 const btnSt = (bg, full=true) => ({ width:full?"100%":"auto", padding:"14px 18px", background:bg, border:"none", borderRadius:"8px", color:C.white, fontSize:"16px", fontFamily:BEBAS, letterSpacing:"2px", cursor:"pointer" });
 
@@ -108,7 +108,7 @@ function SubirFoto({ label, ayuda, valor, onChange, texto="📷 TOCÁ PARA SUBIR
 
 function Check({ ok, children }){
   return(
-    <div style={{display:"flex",gap:"10px",alignItems:"flex-start",padding:"10px 0",borderBottom:"1px solid #1a1a1a"}}>
+    <div style={{display:"flex",gap:"10px",alignItems:"flex-start",padding:"10px 0",borderBottom:"1px solid #2c2c2c"}}>
       <span style={{fontSize:"18px",lineHeight:1.2}}>{ok?"✅":"⬜"}</span>
       <div style={{fontFamily:BARLOW,fontSize:"14px",color:ok?C.white:C.grayL,lineHeight:1.5}}>{children}</div>
     </div>
@@ -329,7 +329,7 @@ export function SorteosAdmin(){
             <button onClick={()=>setSel(null)} style={{background:"transparent",border:"none",color:C.gray,fontSize:"18px",cursor:"pointer"}}>✕</button>
           </div>
           {parts.map(p=>(
-            <div key={p.id} style={{display:"flex",gap:"10px",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #1a1a1a",opacity:p.estado==="rechazada"?.45:1}}>
+            <div key={p.id} style={{display:"flex",gap:"10px",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #2c2c2c",opacity:p.estado==="rechazada"?.45:1}}>
               {[p.historia_url,p.requisito_url].filter(Boolean).map((u,i)=>(
                 <img key={i} src={u} alt="" onClick={()=>setZoom(u)} style={{width:"46px",height:"70px",objectFit:"cover",borderRadius:"6px",cursor:"zoom-in",border:"1px solid #333"}}/>
               ))}
