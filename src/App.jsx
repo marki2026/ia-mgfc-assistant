@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useSorteoActual, SorteoFlotante, SorteoTab, SorteosAdmin } from "./Sorteos.jsx";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const WP_NUMBER = "543571587003";
@@ -1609,6 +1610,7 @@ function AdminPanel({user,onLogout}){
   const[sesionesHoy,setSesionesHoy]=useState(new Set());
   const[ultimaActividad,setUltimaActividad]=useState({});
   const[showMedia,setShowMedia]=useState(false);
+  const[showSorteos,setShowSorteos]=useState(false);
 
   useEffect(()=>{
     fetch(`${API}/api/admin/usuarios`).then(r=>r.json()).then(d=>{if(d.success)setUsuarios(d.usuarios);setLoading(false);}).catch(()=>setLoading(false));
@@ -1738,7 +1740,11 @@ function AdminPanel({user,onLogout}){
           <button onClick={()=>{setShowMedia(!showMedia);if(showCreate)setShowCreate(false);}} style={{padding:"12px 24px",background:showMedia?`linear-gradient(135deg,${C.fire},${C.red})`:"transparent",border:`1px solid ${showMedia?C.fire:C.gray}`,borderRadius:"8px",color:showMedia?C.white:C.gray,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
             📺 MEDIA EJERCICIOS
           </button>
+          <button onClick={()=>setShowSorteos(!showSorteos)} style={{padding:"12px 24px",background:showSorteos?`linear-gradient(135deg,${C.pink},${C.fire})`:"transparent",border:`1px solid ${showSorteos?C.pink:C.gray}`,borderRadius:"8px",color:showSorteos?C.white:C.gray,fontSize:"16px",fontFamily:"Bebas Neue, sans-serif",letterSpacing:"2px",cursor:"pointer"}}>
+            🎁 SORTEOS
+          </button>
         </div>
+        {showSorteos&&<SorteosAdmin/>}
         {showGymBuscar&&(
           <div className="slide-up" style={{background:"#0d1f0d",border:"1px solid #16a34a",borderRadius:"12px",padding:"20px",marginBottom:"20px"}}>
             <div style={{fontFamily:"Bebas Neue",fontSize:"16px",color:"#22c55e",letterSpacing:"2px",marginBottom:"12px"}}>🔍 BUSCAR SOCIO EN CGYM</div>
@@ -1921,6 +1927,8 @@ function AdminPanel({user,onLogout}){
 // ═══════════════════════════════════════════════════════════════════════════════
 function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
   const[tab,setTab]=useState("form");
+  const[sorteoInfo,recargarSorteo]=useSorteoActual(!isDemo);
+  useEffect(()=>{if(tab==="sorteo")recargarSorteo();},[tab,recargarSorteo]);
   const[sesiones,setSesiones]=useState([]);
   const[expandedId,setExp]=useState(null);
   const[result,setResult]=useState(null);
@@ -2111,13 +2119,14 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
           ))}
         </div>
 
-        <div style={{display:"flex",gap:"6px",marginBottom:"14px"}}>
+        <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"14px"}}>
           <button style={tabSt(tab==="form")} onClick={()=>setTab("form")}>📋 HOY</button>
           {!isDemo&&<button style={tabSt(tab==="peso")} onClick={()=>setTab("peso")}>⚖️ PESO</button>}
           {!isDemo&&<button style={tabSt(tab==="stats")} onClick={()=>setTab("stats")}>📊 STATS</button>}
           {!isDemo&&<button style={tabSt(tab==="history")} onClick={()=>setTab("history")}>📅 HIST.</button>}
           {!isDemo&&user?.role!=="admin"&&<button style={tabSt(tab==="pagos")} onClick={()=>setTab("pagos")}>💳 PAGOS</button>}
           {!isDemo&&user?.es_socio_mg&&<button style={tabSt(tab==="gymbro")} onClick={()=>setTab("gymbro")}>🤝 GYM-BRO</button>}
+          {!isDemo&&(sorteoInfo?.sorteo||sorteoInfo?.ultimoGanador)&&<button style={tabSt(tab==="sorteo")} onClick={()=>setTab("sorteo")}>🎁 SORTEO</button>}
         </div>
 
         {tab==="form"&&(
@@ -2337,6 +2346,8 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
         {tab==="stats"&&!isDemo&&<Estadisticas sesiones={sesiones.filter(s=>s.es_registro)}/>}
         {tab==="pagos"&&!isDemo&&user?.role!=="admin"&&<PagosTab user={user}/>}
         {tab==="gymbro"&&!isDemo&&user?.es_socio_mg&&<GymBroTab user={user}/>}
+        {tab==="sorteo"&&!isDemo&&<SorteoTab info={sorteoInfo} recargar={recargarSorteo} irAConsulta={()=>{setTab("form");window.scrollTo({top:0,behavior:"smooth"});}}/>}
+        {!isDemo&&tab!=="sorteo"&&<SorteoFlotante info={sorteoInfo} onAbrir={()=>{setTab("sorteo");window.scrollTo({top:0,behavior:"smooth"});}}/>}
 
         {tab==="history"&&!isDemo&&(
           <div>
