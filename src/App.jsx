@@ -1372,8 +1372,8 @@ function GymBroTab({user}){
 
 function PagosTab({user}){
   const PLANES=[
-    {key:"mensual",   nombre:"MENSUAL",    precio:40000,  dias:30,  ahorro:null},
-    {key:"trimestral",nombre:"TRIMESTRAL", precio:105000, dias:90,  ahorro:"AHORRÁS $15.000"},
+    {key:"mensual",   nombre:"MENSUAL",    precio:50000,  dias:30,  ahorro:null},
+    {key:"trimestral",nombre:"TRIMESTRAL", precio:125000, dias:90,  ahorro:"AHORRÁS $25.000"},
   ];
   const[creando,setCreando]=useState(false);
   const[planSelec,setPlanSelec]=useState(null);
