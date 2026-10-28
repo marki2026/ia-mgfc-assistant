@@ -63,7 +63,7 @@ function loadSession(){try{const u=JSON.parse(localStorage.getItem("mgfc_user")|
 function clearSession(){localStorage.removeItem("mgfc_user");localStorage.removeItem("mgfc_token");}
 
 // ─── DATE HELPERS ─────────────────────────────────────────────────────────────
-function formatDateTime(iso){return new Date(iso).toLocaleString("es-AR",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+function formatDateTime(iso){return new Date(iso).toLocaleString("es-AR",{timeZone:"America/Argentina/Buenos_Aires",weekday:"short",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
 function formatDate(iso){return new Date(iso).toLocaleDateString("es-AR");}
 function getDaysSince(iso){return Math.floor((Date.now()-new Date(iso))/86400000);}
 function dayLabel(iso){const d=getDaysSince(iso);return d===0?"Hoy":d===1?"Ayer":`Hace ${d}d`;}
@@ -71,7 +71,9 @@ function getDiasRestantes(fechaExp){if(!fechaExp)return null;return Math.ceil((n
 function getTrainingWeek(fechaInicio){if(!fechaInicio)return 1;const days=Math.floor((new Date()-new Date(fechaInicio))/86400000);return Math.max(1,Math.floor(days/7)+1);}
 function isDeloadWeek(trainingWeek,sesiones){if(trainingWeek%4!==0)return false;if(sesiones.length<3)return false;const avg=sesiones.slice(0,5).reduce((s,x)=>s+(parseInt(x.energia)||5),0)/Math.min(sesiones.length,5);return avg<=5;}
 function computeStreak(sesiones){if(!sesiones.length)return 0;const sorted=[...sesiones].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));let streak=0,prev=new Date();prev.setHours(0,0,0,0);for(const s of sorted){const d=new Date(s.created_at);d.setHours(0,0,0,0);if(Math.round((prev-d)/86400000)<=1){streak++;prev=d;}else break;}return streak;}
-function getHorarioLabel(hora){if(hora>=5&&hora<12)return"🌅 Mañana";if(hora>=12&&hora<17)return"☀️ Tarde";if(hora>=17&&hora<21)return"🌆 Noche";return"🌙 Madrugada";}
+function getHorarioLabel(hora){if(hora>=6&&hora<12)return"🌅 Mañana";if(hora>=12&&hora<19)return"☀️ Tarde";if(hora>=19||hora<1)return"🌆 Noche";return"🌙 Madrugada";}
+// Hora real de la sesión en Argentina, calculada desde created_at (las sesiones viejas pueden tener hora_del_dia guardada en UTC)
+function horaSesionAR(s){if(s?.created_at){const h=Number(new Date(s.created_at).toLocaleString("en-US",{timeZone:"America/Argentina/Buenos_Aires",hour:"numeric",hour12:false}));if(!isNaN(h))return h%24;}return s?.hora_del_dia;}
 function isHoy(iso){const d=new Date(iso),h=new Date();return d.getDate()===h.getDate()&&d.getMonth()===h.getMonth()&&d.getFullYear()===h.getFullYear();}
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
@@ -236,8 +238,21 @@ function SectionCard({icon,label,content,isAlert,isRutina,isIntensity,extra,isDe
 // ─── EXERCISE MEDIA MODAL ────────────────────────────────────────────────────
 function getYouTubeId(url){
   if(!url)return null;
-  const m=url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([^&\n?#]{11})/);
+  const m=url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);
   return m?m[1]:null;
+}
+function getTikTokId(url){
+  if(!url)return null;
+  const m=url.match(/tiktok\.com\/(?:@[^/]+\/video|embed(?:\/v2)?|player\/v1)\/(\d{8,})/);
+  return m?m[1]:null;
+}
+// {tipo, id, vertical} o null
+function getVideoEmbed(url){
+  const tt=getTikTokId(url);
+  if(tt)return{tipo:"tiktok",id:tt,vertical:true,src:`https://www.tiktok.com/player/v1/${tt}?autoplay=1&loop=1&music_info=0&description=0&rel=0`};
+  const yt=getYouTubeId(url);
+  if(yt){const vertical=/\/shorts\//.test(url||"");return{tipo:"youtube",id:yt,vertical,src:`https://www.youtube.com/embed/${yt}?autoplay=1&playsinline=1&rel=0&modestbranding=1${vertical?`&loop=1&playlist=${yt}`:""}`};}
+  return null;
 }
 function ExerciseModal({nombre,onClose,isAdmin}){
   const[media,setMedia]=useState(null);
@@ -266,7 +281,8 @@ function ExerciseModal({nombre,onClose,isAdmin}){
     }catch(e){}
     setSaving(false);
   };
-  const videoId=getYouTubeId(media?.gif_url||"");
+  const video=getVideoEmbed(media?.gif_url||"");
+  const busqueda=encodeURIComponent(nombre+" técnica");
   return createPortal(
     <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:3000,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}} onClick={onClose}>
       <div style={{background:"linear-gradient(160deg,#181818,#0e0e0e)",border:`2px solid ${C.blue}`,borderRadius:"16px",padding:"20px",width:"100%",maxWidth:"640px",maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()} className="slide-up">
@@ -276,24 +292,30 @@ function ExerciseModal({nombre,onClose,isAdmin}){
         </div>
         {loading?(
           <div style={{textAlign:"center",padding:"40px",color:C.gray,fontFamily:"Bebas Neue",letterSpacing:"2px"}}>CARGANDO...</div>
-        ):videoId?(
+        ):video?(
           <div>
-            <div style={{position:"relative",paddingBottom:"56.25%",height:0,borderRadius:"10px",overflow:"hidden",marginBottom:"12px",background:"#000"}}>
-              <iframe src={`https://www.youtube.com/embed/${videoId}`} title={nombre} allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowFullScreen style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}}/>
+            <div style={{position:"relative",width:"100%",maxWidth:video.vertical?"min(100%, calc(62vh * 9 / 16))":"100%",margin:"0 auto 12px",aspectRatio:video.vertical?"9 / 16":"16 / 9",borderRadius:"12px",overflow:"hidden",background:"#000",border:`1px solid ${video.tipo==="tiktok"?"#25f4ee":"#dc2626"}`}}>
+              <iframe key={video.src} src={video.src} title={nombre} referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;fullscreen" allowFullScreen style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}/>
             </div>
             {media?.descripcion&&<div style={{fontSize:"14px",color:C.white,fontFamily:"Barlow",lineHeight:"1.7",marginBottom:"12px",padding:"10px",background:"#181818",borderRadius:"8px"}}>{media.descripcion}</div>}
+            <div style={{display:"flex",gap:"8px",marginBottom:"4px"}}>
+              <a href={media.gif_url} target="_blank" rel="noreferrer" style={{flex:1,textAlign:"center",padding:"9px",border:"1px solid #3d3d3d",borderRadius:"8px",color:C.grayL,fontSize:"12px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>¿NO CARGA? ABRIR EN {video.tipo==="tiktok"?"TIKTOK":"YOUTUBE"} ↗</a>
+            </div>
           </div>
         ):(
-          <div style={{textAlign:"center",padding:"28px",border:"1px solid #343434",borderRadius:"10px",marginBottom:"12px"}}>
+          <div style={{textAlign:"center",padding:"24px 16px",border:"1px solid #343434",borderRadius:"10px",marginBottom:"12px"}}>
             <div style={{fontSize:"36px",marginBottom:"8px"}}>🎬</div>
-            <div style={{fontFamily:"Bebas Neue",fontSize:"13px",color:C.gray,letterSpacing:"1px",marginBottom:"12px"}}>VIDEO NO ASIGNADO AÚN</div>
-            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(nombre+" ejercicio técnica correcta")}`} target="_blank" rel="noreferrer" style={{display:"inline-block",padding:"10px 20px",background:"linear-gradient(135deg,#dc2626,#ef4444)",borderRadius:"8px",color:C.white,fontSize:"13px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>🔍 BUSCAR EN YOUTUBE</a>
+            <div style={{fontFamily:"Bebas Neue",fontSize:"14px",color:C.grayL,letterSpacing:"1px",marginBottom:"14px"}}>MIRÁ LA TÉCNICA EN VIDEO CORTO</div>
+            <div style={{display:"flex",gap:"10px",justifyContent:"center",flexWrap:"wrap"}}>
+              <a href={`https://www.youtube.com/results?search_query=${busqueda}+shorts`} target="_blank" rel="noreferrer" style={{flex:"1 1 140px",padding:"12px 14px",background:"linear-gradient(135deg,#dc2626,#ef4444)",borderRadius:"8px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>▶ YOUTUBE SHORTS</a>
+              <a href={`https://www.tiktok.com/search?q=${busqueda}`} target="_blank" rel="noreferrer" style={{flex:"1 1 140px",padding:"12px 14px",background:"linear-gradient(135deg,#111,#222)",border:"1px solid #25f4ee",boxShadow:"inset 0 0 0 1px #fe2c55",borderRadius:"8px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",textDecoration:"none"}}>♪ TIKTOK</a>
+            </div>
           </div>
         )}
         {isAdmin&&(
           <div style={{borderTop:"1px solid #2c2c2c",paddingTop:"14px",marginTop:"4px"}}>
             <div style={{fontFamily:"Bebas Neue",fontSize:"12px",color:C.gold,letterSpacing:"1px",marginBottom:"8px"}}>⚙️ ADMIN — ASIGNAR VIDEO</div>
-            <input value={editUrl} onChange={e=>setEditUrl(e.target.value)} placeholder="URL de YouTube (ej: https://youtu.be/xxxxx)" style={{...inputSt,marginBottom:"8px",fontSize:"12px"}}/>
+            <input value={editUrl} onChange={e=>setEditUrl(e.target.value)} placeholder="Link de YouTube, Shorts o TikTok" style={{...inputSt,marginBottom:"8px",fontSize:"12px"}}/>
             <textarea value={editDesc} onChange={e=>setEditDesc(e.target.value)} placeholder="Descripción técnica del ejercicio (opcional)" rows={2} style={{...inputSt,resize:"vertical",fontSize:"12px",marginBottom:"8px"}}/>
             <button onClick={handleSave} disabled={saving||!editUrl} style={{width:"100%",padding:"10px",background:saved?"#16a34a":`linear-gradient(135deg,${C.blue},${C.blueL})`,border:"none",borderRadius:"6px",color:C.white,fontSize:"14px",fontFamily:"Bebas Neue",letterSpacing:"1px",cursor:saving||!editUrl?"not-allowed":"pointer"}}>
               {saving?"GUARDANDO...":saved?"✅ GUARDADO":"💾 GUARDAR VIDEO"}
@@ -330,6 +352,7 @@ function parseRutinaBlocks(content){
       let nombre=s,detalle="";
       if(sep&&sep.index>0){nombre=s.slice(0,sep.index).trim();detalle=s.slice(sep.index).replace(/^[\s·:—-]+/,"").trim();}
       nombre=nombre.replace(/[\s\-–—,:]+$/,"").trim();
+      nombre=nombre.replace(/^[a-hA-H]\d?\s*[\.\)]\s+/,"").trim(); // "a. Curl…" / "A1) Press…" (biseries)
       if(nombre&&nombre.length>=2&&!/^descanso\b/i.test(nombre)){
         blocks.push({type:"exercise",nombre,detalle});
         return;
@@ -1493,7 +1516,7 @@ function Estadisticas({sesiones}){
   if(sesiones.length<3)return <div style={{textAlign:"center",padding:"40px 24px",color:C.gray,fontSize:"14px",fontFamily:"Barlow, sans-serif"}}>Necesitás al menos 3 sesiones para ver estadísticas.</div>;
   const porSemana=sesiones.reduce((acc,s)=>{const k=`S${s.training_week}`;if(!acc[k])acc[k]={energias:[],count:0};acc[k].energias.push(parseInt(s.energia)||0);acc[k].count++;return acc;},{});
   const semanas=Object.entries(porSemana).slice(-8).map(([sem,d])=>({sem,energia:(d.energias.reduce((a,b)=>a+b,0)/d.energias.length).toFixed(1),count:d.count}));
-  const horarios=sesiones.reduce((acc,s)=>{if(s.hora_del_dia!==undefined){const h=getHorarioLabel(s.hora_del_dia);acc[h]=(acc[h]||0)+1;}return acc;},{});
+  const horarios=sesiones.reduce((acc,s)=>{{const hh=horaSesionAR(s);if(hh===undefined||hh===null)return acc;const h=getHorarioLabel(hh);acc[h]=(acc[h]||0)+1;}return acc;},{});
   const horarioFav=Object.entries(horarios).sort((a,b)=>b[1]-a[1])[0];
   const grupos=sesiones.reduce((acc,s)=>{if(s.entrenamiento){const g=s.entrenamiento.split(",")[0].trim().toUpperCase();acc[g]=(acc[g]||0)+1;}return acc;},{});
   const grupoTop=Object.entries(grupos).sort((a,b)=>b[1]-a[1])[0];
@@ -1572,7 +1595,7 @@ function EjerciciosMediaAdmin(){
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
           {filtered.map(ej=>{
-            const videoId=getYouTubeId(ej.gif_url||"");
+            const videoId=getVideoEmbed(ej.gif_url||"")?.id;
             const isEditing=editId===ej.id||editId===ej.nombre;
             return(
               <div key={ej.nombre} style={{background:"#181818",border:`1px solid ${ej.gif_url?"#1a3a1a":"#2a1a1a"}`,borderRadius:"8px",padding:"12px"}}>
@@ -1584,7 +1607,7 @@ function EjerciciosMediaAdmin(){
                     {ej.descripcion&&<div style={{fontSize:"11px",color:C.gray,marginTop:"3px",fontFamily:"Barlow",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"280px"}}>{ej.descripcion}</div>}
                   </div>
                   <div style={{display:"flex",gap:"6px",flexShrink:0}}>
-                    {videoId&&<a href={`https://youtu.be/${videoId}`} target="_blank" rel="noreferrer" style={{padding:"5px 10px",background:"#1a0000",border:"1px solid #dc2626",borderRadius:"5px",color:"#ef4444",fontSize:"11px",fontFamily:"Bebas Neue",textDecoration:"none",letterSpacing:"1px"}}>▶ VER</a>}
+                    {videoId&&<a href={ej.gif_url} target="_blank" rel="noreferrer" style={{padding:"5px 10px",background:"#1a0000",border:"1px solid #dc2626",borderRadius:"5px",color:"#ef4444",fontSize:"11px",fontFamily:"Bebas Neue",textDecoration:"none",letterSpacing:"1px"}}>▶ VER</a>}
                     <button onClick={()=>isEditing?cancelEdit():startEdit(ej)} style={{padding:"5px 10px",background:isEditing?"#1a1a1a":"transparent",border:`1px solid ${isEditing?"#333":C.blue}`,borderRadius:"5px",color:isEditing?C.gray:C.blue,fontSize:"11px",fontFamily:"Bebas Neue",letterSpacing:"1px",cursor:"pointer"}}>
                       {isEditing?"CANCELAR":"✏️ EDITAR"}
                     </button>
@@ -2381,7 +2404,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
                         <div onClick={()=>setExp(isOpen?null:s.id)} style={{padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                           <div>
                             <div style={{fontFamily:"Bebas Neue, sans-serif",fontSize:"15px",color:C.white,letterSpacing:"1px"}}>{s.entrenamiento}</div>
-                            <div style={{fontSize:"11px",color:C.gray,marginTop:"2px"}}>{formatDateTime(s.created_at)}{s.hora_del_dia!==undefined?` · ${getHorarioLabel(s.hora_del_dia)}`:""}</div>
+                            <div style={{fontSize:"11px",color:C.gray,marginTop:"2px"}}>{formatDateTime(s.created_at)}{horaSesionAR(s)!=null?` · ${getHorarioLabel(horaSesionAR(s))}`:""}</div>
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
                             {hp.intensidad&&<span style={{fontSize:"11px",fontFamily:"Bebas Neue, sans-serif",color:intColor,border:`1px solid ${intColor}`,borderRadius:"4px",padding:"2px 7px"}}>{hp.intensidad}</span>}
