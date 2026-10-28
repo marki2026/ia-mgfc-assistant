@@ -1065,7 +1065,16 @@ function NovedadesCarousel(){
   const[visible,setVisible]=useState(true);
 
   useEffect(()=>{
-    fetch(`${BACKEND}/api/novedades`).then(r=>r.json()).then(d=>{if(d.novedades&&d.novedades.length>0)setNovedades(d.novedades);}).catch(()=>{});
+    Promise.all([
+      fetch(`${BACKEND}/api/novedades`).then(r=>r.json()).catch(()=>({})),
+      fetch(`${BACKEND}/api/sorteo/publico`).then(r=>r.json()).catch(()=>({})),
+    ]).then(([n,s])=>{
+      const extra=[];
+      if(s?.activo){const dia=new Date(`${s.activo.fecha_sorteo}T12:00:00-03:00`).toLocaleDateString("es-AR",{weekday:"long",day:"2-digit",month:"2-digit"});extra.push({emoji:"🎁",texto:`SORTEO ${dia.toUpperCase()}: ${s.activo.premio}. Hacé tu consulta semanal y participá desde la app`});}
+      if(s?.ganador)extra.push({emoji:"🏆",texto:`¡${s.ganador.ganador_nombre} ganó el sorteo: ${s.ganador.premio}!`});
+      const base=n?.novedades?.length?n.novedades:null;
+      setNovedades(prev=>[...extra,...(base||prev)]);
+    });
   },[]);
 
   useEffect(()=>{
@@ -2126,7 +2135,7 @@ function Coach({user,onLogout,isDemo,limiteConsultas,isPro,modoDios}){
           {!isDemo&&<button style={tabSt(tab==="history")} onClick={()=>setTab("history")}>📅 HIST.</button>}
           {!isDemo&&user?.role!=="admin"&&<button style={tabSt(tab==="pagos")} onClick={()=>setTab("pagos")}>💳 PAGOS</button>}
           {!isDemo&&user?.es_socio_mg&&<button style={tabSt(tab==="gymbro")} onClick={()=>setTab("gymbro")}>🤝 GYM-BRO</button>}
-          {!isDemo&&(sorteoInfo?.sorteo||sorteoInfo?.ultimoGanador)&&<button style={tabSt(tab==="sorteo")} onClick={()=>setTab("sorteo")}>🎁 SORTEO</button>}
+          {!isDemo&&<button style={tabSt(tab==="sorteo")} onClick={()=>setTab("sorteo")}>🎁 SORTEO</button>}
         </div>
 
         {tab==="form"&&(

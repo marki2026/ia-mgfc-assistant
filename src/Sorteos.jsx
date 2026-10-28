@@ -57,7 +57,7 @@ export function useSorteoActual(activo){
   const[info,setInfo]=useState(null);
   const recargar=useCallback(()=>{
     if(!activo) return;
-    api("/api/sorteo/actual").then(setInfo).catch(()=>setInfo(null));
+    api("/api/sorteo/actual").then(setInfo).catch(()=>setInfo({sorteo:null,ultimoGanador:null}));
   },[activo]);
   useEffect(()=>{ recargar(); },[recargar]);
   return [info, recargar];
