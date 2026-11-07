@@ -234,6 +234,9 @@ export function SorteosAdmin(){
   const[msg,setMsg]=useState("");
   const[ganador,setGanador]=useState(null);
   const[zoom,setZoom]=useState(null);
+  const[socios,setSocios]=useState(null);   // null = buscador cerrado
+  const[busca,setBusca]=useState("");
+  const[agregando,setAgregando]=useState(null);
 
   const aviso = t => { setMsg(t); setTimeout(()=>setMsg(""),4500); };
   const cargar = useCallback(()=>{
@@ -243,7 +246,7 @@ export function SorteosAdmin(){
   useEffect(()=>{ cargar(); },[cargar]);
 
   const abrir = async s => {
-    setSel(s); setGanador(null);
+    setSel(s); setGanador(null); setSocios(null);
     try{ const d=await api(`/api/admin/sorteo/${s.id}/participantes`); setParts(d.participantes); setSel(d.sorteo); }
     catch(e){ aviso("❌ "+e.message); }
   };
@@ -260,8 +263,24 @@ export function SorteosAdmin(){
     }catch(e){ aviso("❌ "+e.message); }
     setGuardando(false);
   };
+  const abrirBuscador = async ()=>{
+    setBusca("");
+    try{ const d=await api("/api/admin/sorteo-socios"); setSocios(d.socios); }
+    catch(e){ aviso("❌ "+e.message); }
+  };
+  const agregar = async soc => {
+    const ya = parts.find(p=>p.user_id===soc.id);
+    if(ya&&ya.estado!=="rechazada"&&!window.confirm(`${soc.nombre} ${soc.apellido} ya participa. ¿Marcarlo como agregado a mano (elegible sin requisitos)?`)) return;
+    setAgregando(soc.id);
+    try{
+      await api(`/api/admin/sorteo/${sel.id}/agregar-participante`,{method:"POST",body:JSON.stringify({userId:soc.id})});
+      const d=await api(`/api/admin/sorteo/${sel.id}/participantes`); setParts(d.participantes);
+      aviso(`✅ ${soc.nombre} ${soc.apellido} agregado`);
+    }catch(e){ aviso("❌ "+e.message); }
+    setAgregando(null);
+  };
   const cambiarEstado = async (id, estado) => {
-    try{ await api("/api/admin/sorteo/participacion-estado",{method:"POST",body:JSON.stringify({id,estado})}); setParts(ps=>ps.map(p=>p.id===id?{...p,estado,elegible:estado!=="rechazada"&&p.consultas>0}:p)); }
+    try{ await api("/api/admin/sorteo/participacion-estado",{method:"POST",body:JSON.stringify({id,estado})}); setParts(ps=>ps.map(p=>p.id===id?{...p,estado,elegible:estado!=="rechazada"&&(p.consultas>0||p.manual)}:p)); }
     catch(e){ aviso("❌ "+e.message); }
   };
   const sortear = async ()=>{
@@ -335,7 +354,9 @@ export function SorteosAdmin(){
               ))}
               <div style={{flex:1,minWidth:0,fontFamily:BARLOW}}>
                 <div style={{color:C.white,fontSize:"14px",fontWeight:600}}>{p.nombre} {p.apellido}</div>
-                <div style={{fontSize:"11px",color:p.consultas>0?C.green:C.red}}>{p.consultas} consulta(s) en la semana {p.consultas>0?"✓":"✗ NO ELEGIBLE"}</div>
+                {p.manual
+                  ?<div style={{fontSize:"11px",color:C.gold}}>➕ AGREGADO POR ADMIN · sin requisitos</div>
+                  :<div style={{fontSize:"11px",color:p.consultas>0?C.green:C.red}}>{p.consultas} consulta(s) en la semana {p.consultas>0?"✓":"✗ NO ELEGIBLE"}</div>}
                 <div style={{fontSize:"11px",color:p.estado==="aprobada"?C.green:p.estado==="rechazada"?C.red:C.gold}}>{p.estado.toUpperCase()}</div>
               </div>
               {sel.estado==="activo"&&<div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
@@ -345,6 +366,37 @@ export function SorteosAdmin(){
             </div>
           ))}
           {parts.length===0&&<div style={{color:C.gray,fontFamily:BARLOW,fontSize:"13px",padding:"8px 0"}}>Todavía nadie se anotó.</div>}
+
+          {sel.estado!=="publicado"&&(socios===null
+            ?<button onClick={abrirBuscador} style={{...btnSt("#1f1f1f"),marginTop:"12px",border:`1px dashed ${C.gold}`,color:C.gold}}>➕ AGREGAR PARTICIPANTE</button>
+            :<div style={{marginTop:"12px",padding:"10px",border:`1px dashed ${C.gold}`,borderRadius:"10px"}}>
+              <div style={{display:"flex",gap:"8px",alignItems:"center",marginBottom:"8px"}}>
+                <input autoFocus style={{...inputSt,flex:1}} value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar por nombre, apellido o DNI"/>
+                <button onClick={()=>setSocios(null)} style={{background:"transparent",border:"none",color:C.gray,fontSize:"18px",cursor:"pointer"}}>✕</button>
+              </div>
+              {busca.trim().length<2
+                ?<div style={{fontSize:"12px",color:C.gray,fontFamily:BARLOW}}>Escribí al menos 2 letras. Entra elegible sin consulta ni historia.</div>
+                :(()=>{
+                  const q=busca.trim().toLowerCase();
+                  const res=socios.filter(u=>`${u.nombre||""} ${u.apellido||""} ${u.dni||""}`.toLowerCase().includes(q)).slice(0,12);
+                  if(!res.length) return <div style={{fontSize:"12px",color:C.gray,fontFamily:BARLOW}}>Sin resultados.</div>;
+                  return res.map(u=>{
+                    const ya=parts.find(p=>p.user_id===u.id&&p.estado!=="rechazada");
+                    return(
+                      <div key={u.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"8px 0",borderBottom:"1px solid #222",fontFamily:BARLOW}}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{color:C.white,fontSize:"14px"}}>{u.nombre} {u.apellido}</div>
+                          <div style={{color:C.gray,fontSize:"11px"}}>DNI {u.dni}{ya?(ya.manual?" · ya agregado":" · ya participa"):""}</div>
+                        </div>
+                        {ya?.manual
+                          ?<span style={{color:C.green,fontSize:"18px"}}>✓</span>
+                          :<button onClick={()=>agregar(u)} disabled={agregando===u.id} style={{...btnSt(C.gold,false),padding:"6px 12px",fontSize:"12px",color:"#000"}}>{agregando===u.id?"⏳":"➕ AGREGAR"}</button>}
+                      </div>
+                    );
+                  });
+                })()}
+            </div>
+          )}
 
           {sel.estado!=="publicado"&&(
             <div style={{marginTop:"14px"}}>
